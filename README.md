@@ -80,7 +80,7 @@ After preparing these files, write the parameters in prod/doseScaling\_cfg.py
 # In the cfg file, you should fill the parameter dictionary.
 parameters = {
   "virtualSID":230,
-  "DoseScalingF":10000,
+  "DoseScalingF":10000, # It is inserted in the reading phase space file.
   "nNodes": 0, # Number of threads
   "nHistory": 2000, # Number of history of MC
   # Relative path from data directory
@@ -97,11 +97,16 @@ Then, run the python with this script.
 python3 doseScaling_cfg.py
 ```
 
-Update: output of each instance, class explanation, final result and plot.
-
-It returns scaling factor and after finishing the post-process, modified dcm file is made.
+When you run this command, it makes topas input parameter file first with topas running command script.
+Then, it reads the script and executes Topas.
+After topas run, it draws dose vs depth plot and calculates the scaling factor.
+Finally, with this scalling factor, it makes a new dicom dose file containing mc data to analyze the plan.
 
 #### Customization
+
+### Explanation
+#### Functions
+#### Configuration file
 
 
 
