@@ -38,22 +38,25 @@ bash Anaconda3-2020.11-Linux-x86_64.sh
 4. Initialize conda. If you type 'yes' after installation, conda is initialized automaticcaly. If not, follow the message in the terminal.
 5. Conda base is activated automattically after the installation. You can deactivate this by following command.
 
-```
+```python
 conda config --set auto_activate_base false
 ```
 
 6. Create and activate the virtual environment
 
-```
+```python
 conda update -n base -c defaults conda # update conda
 #conda create -n {name} python={version}
 conda create -n py39 python=3.9 # make conda environment
 conda activate py39 # activate conda
 conda deactivate # deactivate conda
+```
 
 ## Installation of required packages
 
-```
+Before installation of required packages, activate conda environment.
+
+```python
 conda install matplotlib
 conda install -c conda-forge pydicom
 conda install numpy
