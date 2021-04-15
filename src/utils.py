@@ -12,8 +12,8 @@ def make_component(parameters, variables):
     
     return component
 
-def show_CT(self, CTname):
-    CT = dicom.dcmread(os.path.join(self.para['DicomDirectory'],CTname))
+def show_CT(path, CTname):
+    CT = dicom.dcmread(os.path.join(path,CTname))
 
     plt.imshow(CT.pixel_array, cmap=plt.cm.bone)
     plt.show()

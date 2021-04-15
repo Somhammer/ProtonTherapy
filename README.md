@@ -1,4 +1,4 @@
-ProtonTherapy Simulation Tool
+Proton Therapy Simulation Tool
 -------------
 The ProtonTherapy Simulation Tool makes the TOPAS input parameter files with easy modifying parameters value and executes the TOPAS with the parameter file.
 

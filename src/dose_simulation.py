@@ -4,14 +4,18 @@ from datetime import datetime
 import math
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import pydicom as dicom
 
-import src.utils as ut
 import src.abclass as abcls
 import src.getconvalgo as convalgo
 
-class GenerateDSFInput(abcls.GenerateInput):
+class DoseSimulation(abcls.Process):
+    @dataclass
+    class CTinfo:
+        pixel_spacing: list = field(default_factory=list)
+        position: list = field(default_factory=list)
+        thickness: float = None
+
     @dataclass
     class Geometry:
         manufacturer: str = None
@@ -65,12 +69,6 @@ class GenerateDSFInput(abcls.GenerateInput):
         self.base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
         sys.path.append(self.base_path)
         
-        self.outdir = os.path.join(self.base_path, 'prod', datetime.today().strftime('%Y%m%d'))
-        if not os.path.exists(self.outdir):
-            os.makedirs(self.outdir)
-        if not os.path.exists(os.path.join(self.outdir, 'contours')):
-            os.makedirs(os.path.join(self.outdir, 'contours'))
-
         self.para = para
         self.para['DicomDirectory'] = os.path.join(self.base_path, 'data', self.para['DicomDirectory'])
         
@@ -80,7 +78,13 @@ class GenerateDSFInput(abcls.GenerateInput):
         if len(empty_parameters) > 0:
             print("Please, fill the empty parameter:", empty_parameters)
             exit(0)
-        
+         
+        self.outdir = os.path.join(self.base_path, 'prod', self.para['Output'])
+        if not os.path.exists(self.outdir):
+            os.makedirs(self.outdir)
+        if not os.path.exists(os.path.join(self.outdir, 'contours')):
+            os.makedirs(os.path.join(self.outdir, 'contours'))
+       
         self.conv = convalgo.GetParaFromConvAlgo(os.path.join(self.base_path,'data'), self.para['ConvAlgo'])
                 
         tmp = []
@@ -91,7 +95,7 @@ class GenerateDSFInput(abcls.GenerateInput):
             elif i.startswith('RS'):
                 self.RTS = i
             elif i.startswith('RD'):
-                continue
+                self.RD = i 
             else:
                 tmp.append(i)
 
@@ -116,7 +120,8 @@ class GenerateDSFInput(abcls.GenerateInput):
         print("RT Structure:", self.RTS)
 
         del [[df]]
-
+        
+        self.ct = None
         self.geometry = []
         self.snout = []
         self.aperture = []
@@ -151,6 +156,11 @@ class GenerateDSFInput(abcls.GenerateInput):
             firstCT_z = firstCT_pos[2] - (imageZ - instance) * img_thick
 
         CT_center = (firstCT_z + lastCT_z) / 2.0
+        self.ct = self.CTinfo(
+          position = [float(firstCT_pos[0]), float(firstCT_pos[1]), lastCT_z],
+          pixel_spacing = img_pixel,
+          thickness = float(img_thick)
+        )
        
         print("===== CT information =====")
         print("Instance Number(Z):", instance)
@@ -362,6 +372,7 @@ class GenerateDSFInput(abcls.GenerateInput):
         import templates.components.geometry as ge
        
         tps = ['calculateDSF_beam%i.tps', 'recordPhaseSpace_beam%i.tps', 'readPhaseSpace_beam%i.tps']
+        readout = []
         for ibeam in range(len(self.compensator)):
             compen_name = os.path.join(self.outdir,'CompensatorFileInRowsDepths%d.rc' % ibeam)
             f_compensator = open(compen_name, 'w')
@@ -462,6 +473,9 @@ class GenerateDSFInput(abcls.GenerateInput):
                     contour = os.path.join(self.outdir, 'contours', 'contour_parallel%i.tps' % i)
                     fout.write("includeFile = " + contour + "\n")
 
+            read_out = os.path.join(self.outdir, 'doseAtPhantom_beam%i' % ibeam)
+            readout.append(read_out)
+
             template = read.template.format(
               path = path,
               manu = self.geometry[ibeam].manufacturer[0],
@@ -512,6 +526,15 @@ class GenerateDSFInput(abcls.GenerateInput):
 
             fout.close()
 
+        parameters = os.path.join(self.outdir, 'parameters.txt')
+        f = open(parameters, 'w')
+        tmp = str(self.ct).split('(')[-1]
+        tmp = tmp.replace(')','').replace('[','').replace('], ','\n')
+        f.write(tmp)
+        f.write("\nnbeam="+str(len(self.compensator)))
+        f.write("\ndose="+','.join(i for i in readout))
+        f.close()
+
         script = os.path.join(self.outdir, 'script.sh')
         f = open(script, 'w')
         for para in tps:
@@ -523,4 +546,144 @@ class GenerateDSFInput(abcls.GenerateInput):
         os.chmod(script, st.st_mode | stat.S_IEXEC)
         f.close()
 
-        return script 
+        return parameters, script
+
+    def calculate_sobp(self, files, per = 90.0, length = 10, scale_opt = 'dsf'):
+        """
+        This method calculates and returns the dose scale factor.
+        The scale factor is calculated between the middle of the SOBP +- range.
+        Parameters
+          files: Dose data files from TOPAS simulation. 
+                 It should contains dose data for each position.
+                 The data structure for each line is 'x y z dose'.
+          per: The criteria of SOBP. Unit is percent(%).
+          length: The range of average from middle of SOBP. Unit is millimeter(mm).
+          scale_opt: scale factor of dose plots. Available option is following:
+                 1. dsf(default): dose is scaled by the calculated dsf after calculation.
+                 2. percent: dose is scaled by maximum dose.
+                 3. number: dose is scaled by solid number. Write float number not 'number' string.
+        """
+        RTP = dicom.dcmread(os.path.join(self.para['DicomDirectory'], self.RTP))
+        # Converting dose data to pandas dataframe
+        scales = []
+        for ibeam in range(len(files)):
+            dose = os.path.join(self.outdir, files[ibeam])
+            if dose.endswith('csv'):
+                cols = ['x','y','z','dose']
+                data = pd.read_csv(os.path.join(self.base_path,dose), names = cols)
+                data = data.drop(data[data['x'].str.contains('#')].index).reset_index(drop=True)
+                print("Drop the rows having nan value")
+                print(data[data['dose'].str.contains('nan')])
+                data = data.drop(data[data['dose'].str.contains('nan')].index).reset_index(drop=True)
+                for col in cols:
+                    data[col] = pd.to_numeric(data[col])
+                axes = cols[:-1]
+                axis = cols[0]
+                for a in axes:
+                    if data[a].iloc[0] == data[a].iloc[-1]:
+                        data = data.drop(a, axis = 1)
+                    else:
+                        axis = a
+            elif dose.endswith('root'):
+                print("This format is not supported yet")
+                sys.exit()
+            elif dose.endswith('binary'):
+                print("This format is not supported yet")
+                sys.exit()
+            elif dose.endswith('xml'):
+                print("This format is not supported yet")
+                sys.exit()
+            elif dose.endswith('dcm'):
+                print("This format is not supported yet")
+                sys.exit()
+            else:
+                print("This format is not supported")
+                sys.exit()
+       
+            ntreatement = int(RTP.FractionGroupSequence[0].NumberOfFractionsPlanned)
+            target_dose = float(RTP.FractionGroupSequence[0].ReferencedBeamSequence[ibeam].BeamDose) # Gy
+
+            import matplotlib.pyplot as plt
+         
+            reverse = [data['dose'].iloc[i] for i in range(len(data['dose'])-1,-1,-1)]
+            data['dose'] = reverse
+            dose_max = data['dose'].max()
+            data['percent'] = data['dose']/dose_max*100
+            sobp = data[data['percent'] >= 90.0]
+            min = sobp[axis].idxmin()
+            max = sobp[axis].idxmax()
+            midpoint = (data[axis][max] + data[axis][min])/2.0
+            mid = data[(data[axis] >= midpoint - length) & (data[axis] <= midpoint + length)]
+            average = mid.mean()['dose']
+
+            nhistory_dsf = self.para['nHistory']
+            nhistory_pat = self.para['nHistory']
+            dose_scaling_factor = (target_dose * ntreatement * nhistory_dsf) / \
+              (average * self.para['PhaseReuse'] *nhistory_pat)
+            scales.append(dose_scaling_factor)
+           
+            print(f'{axis}-axis -----')
+            print(f'Dose scaling factor: {dose_scaling_factor:.5g}')
+            print(f'Average: {average:.5g}')
+            if scale_opt == 'dsf':
+                scale = dose_scaling_factor
+            elif scale_opt == 'percent':
+                scale = 1/dose_max*100
+            elif str(type(scale_opt)) != "<class 'str'>":
+                scale = float(scale_opt)
+            else:
+                scale = 1
+            data['dose'] = data['dose']*scale
+            
+            plt.rcParams["figure.figsize"] = (10,6)
+            plt.plot(data[axis], data['dose'], color='#1a168c')
+            plt.xlabel('Depth in water phantom (mm)')
+            plt.ylabel('Dose (Gy)')
+            plt.fill_between(data[axis][min:max], data['dose'][min:max], color='#56dee8', alpha=0.5)
+            plt.axhline(scale*dose_max*per/100, 0, 1, color='#f5427e', linestyle='--', linewidth='1.5')
+            plt.axvline(data[axis][min], 0, 1, color='#737873', linestyle='--', linewidth='1.5')
+            plt.axvline(data[axis][max], 0, 1, color='#737873', linestyle='--', linewidth='1.5')
+            plt.text(data[axis][0], data['dose'][min],
+              f'90% SOBP\nLength: {data[axis][max] - data[axis][min]} mm\nAverage: {average*scale:.5g} Gy')
+            plt.text(data[axis][min+1], data['dose'][0], f'{data[axis][min]}')
+            plt.text(data[axis][max+1], data['dose'][0], f'{data[axis][max]}')
+            plt.savefig(os.path.join(self.outdir,f'DoseVsDepth_beam{ibeam}.png'))
+            plt.close()
+
+        return scales
+    
+    def postprocess(self, parafile, scale):
+        para = {}
+        with open(parafile, 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                line = line.replace('\n','').replace(' ','')
+                line = line.split('=')
+                para[line[0]] = line[1].split(',')
+        
+        RD = dicom.dcmread(os.path.join(self.para['DicomDirectory'], self.RD))
+        result = os.path.join(self.outdir,'Result_'+self.RD)
+        RD.save_as(result)
+        result = dicom.dcmread(result)
+
+        first = dicom.dcmread(para['Dose'][0]+'.dcm')
+        result.NumberOfFrames = first.NumberOfFrames
+        result.Rows = first.Rows
+        result.Columns = first.Columns
+
+        mc_dose = []
+        for ibeam in range(int(para['nbeam'])):
+            mc = dicom.dcmread(para['Dose'][ibeam]+'.dcm')
+            mc_dose.append(list('f', np.array(mc.PixelData)))
+
+        dose = []
+        for i in range(len(RD.PixelData)/4):
+            value = 0.0
+            for ibeam in range(int(para['nbeam'])):
+                value += mc_dose[ibeam][i] * scale[ibeam]
+            dose.append(value)
+        byte_dose = bytes(np.array('f', dose))
+
+        result.PixelData = byte_dose
+        result.save_as(result)
+

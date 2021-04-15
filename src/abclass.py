@@ -1,6 +1,6 @@
 from abc import *
 
-class GenerateInput(metaclass=ABCMeta):
+class Process(metaclass=ABCMeta):
     @abstractmethod
     def set_parameters(self):
         pass
