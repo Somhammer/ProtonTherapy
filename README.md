@@ -74,7 +74,7 @@ This package requires the CT, RT, RS, RD and convAlgo files.
 * RS: the radio therapy structure file.
 * RD: the radio therapy dose file.
 * ConvAlgo(Convenient algorithm): Matching parameters between the plan and treatment machine.
-After preparing these files, write the parameters in prod/doseScaling\_cfg.py
+After preparing these files, write the parameters in prod/doseSimulation\_cfg.py
 
 ```python
 # In the cfg file, you should fill the parameter dictionary.
@@ -102,14 +102,51 @@ Then, it reads the script and executes Topas.
 After topas run, it draws dose vs depth plot and calculates the scaling factor.
 Finally, with this scalling factor, it makes a new dicom dose file containing mc data to analyze the plan.
 
-#### Customization
 
 ### Explanation
 #### Functions
-#### Configuration file
+##### config.py
+* Proton
+It loads module in src folder and runs the instances in module.
+  - load(self, module): It loads the module
+  - process(self, name): It runs the instance called name.
+  - Usage
+```python
+# prod/doseSimulation_cfg.py
+# Loading module 'dose_simulation'
+proton = cfg.Proton()
+proton.load('dose_simulation') 
+instance = proton.process('DoseSimulation')(parameters) # initialize
 
+# Run the instance
+instance.set_parameters()
+para, script = instance.write_scripts() 
+```
+*Topas
+It executes topas command
+  - run(self, cmd): run the commands. Input type can be str or list.
+  - Usage
+```
+topas = cfg.Topas()
+with open(script, 'r') as f: # read script file
+    cmd = f.readlines()
+topas.run(cmd)
+```
 
+#### getconvalgo.py
+It stores the machine's information. You can call the information like conv.modulator.
 
+#### Directories
+* src: python code directory
+* data: 
+  - Patient's dicom files are saved.
+  - Proton therapy machine's geometry is saved.
+  - Dicom structure is saved. 
+* templates:
+  - Topas parameter templates are saved. You can make custom topas structure using this templates. 
+* prod
+  - Configuration files and output are in this directory.
 
+### Customization
 
 
