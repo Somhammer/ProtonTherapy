@@ -102,6 +102,8 @@ Then, it reads the script and executes Topas.
 After topas run, it draws dose vs depth plot and calculates the scaling factor.
 Finally, with this scalling factor, it makes a new dicom dose file containing mc data to analyze the plan.
 
+<img src="fig/dose.png" width="40%" height="30%" title="dose vs depth"><\img>
+
 
 ### Explanation
 #### Functions
