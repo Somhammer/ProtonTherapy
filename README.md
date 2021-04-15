@@ -103,8 +103,37 @@ After topas run, it draws dose vs depth plot and calculates the scaling factor.
 <img src="figs/dose.png" width="100%" height="100%" title="dose vs depth"></img>
 Finally, with this scalling factor, it makes a new dicom dose file containing mc data to analyze the plan.
 
+##### Instances
+###### set\_parameter
+It reads dicom files and calculate the parmeters for writting the Topas input files.
+###### write\_scripts
+It writes the Topas input file and command script.
+* return
+  - para: it stores the number of beams and dose simulation output file names.
+  - script: command script file name.
+###### calculate\_sobp
+It calculates and returns the dose scale factor to fit the mc and patient data.
+The scale factor is calculated between the middle of the SOBP +- length.
+* parameter
+  - files: Dose data files from TOPAS simulation.
+           It should contains dose data for each position.
+           The data structure for each line is 'x y z dose'.
+  - per: The criteria of SOBP. Unit is percent.
+  - length: The range of average from middle of SOBP. Unit is millimeter.
+  - scale\_opt: Scale factor of dose plots. Available options is following:
+    + dsf(default): dose is scaled by the dose scale factor.
+    + percent: dose is scaled by maximum dose.
+    + para: dose is scaled by a number. Write flot number not 'number' string.
+* return
+  - Dose vs Depth in water phantom plot image files
+  - Dose scale factors
+###### postprocess
+It saves a new dicom dose file containing mc data.
+* parameter
+  - parafile: parameter file which was made before by set\_parameter
+  - sclae: dose scale factors caculated by calculate\_sobp
+
 ### Explanation
-#### Functions
 ##### config.py
 * Proton
 It loads module in src folder and runs the instances in module.
