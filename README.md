@@ -111,6 +111,7 @@ It loads module in src folder and runs the instances in module.
   - load(self, module): It loads the module
   - process(self, name): It runs the instance called name.
   - Usage
+
 ```python
 # prod/doseSimulation_cfg.py
 # Loading module 'dose_simulation'
@@ -126,7 +127,8 @@ para, script = instance.write_scripts()
 It executes topas command
   - run(self, cmd): run the commands. Input type can be str or list.
   - Usage
-```
+
+```python
 topas = cfg.Topas()
 with open(script, 'r') as f: # read script file
     cmd = f.readlines()
