@@ -133,7 +133,7 @@ It saves a new dicom dose file containing mc data.
   - parafile: parameter file which was made before by set\_parameter
   - sclae: dose scale factors caculated by calculate\_sobp
 
-### Explanation
+### Others 
 ##### config.py
 * Proton
 It loads module in src folder and runs the instances in module.
@@ -152,7 +152,7 @@ instance = proton.process('DoseSimulation')(parameters) # initialize
 instance.set_parameters()
 para, script = instance.write_scripts() 
 ```
-*Topas
+* Topas
 It executes topas command
   - run(self, cmd): run the commands. Input type can be str or list.
   - Usage
