@@ -100,10 +100,8 @@ python3 doseScaling_cfg.py
 When you run this command, it makes topas input parameter file first with topas running command script.
 Then, it reads the script and executes Topas.
 After topas run, it draws dose vs depth plot and calculates the scaling factor.
+<img src="figs/dose.png" width="100%" height="100%" title="dose vs depth"></img>
 Finally, with this scalling factor, it makes a new dicom dose file containing mc data to analyze the plan.
-
-<img src="fig/dose.png" width="40%" height="30%" title="dose vs depth"><\img>
-
 
 ### Explanation
 #### Functions
