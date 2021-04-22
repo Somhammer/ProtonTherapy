@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1298</width>
+    <height>577</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Proton Therapy Monte Carlo Simulation</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../icons/ncc.png</normaloff>../icons/ncc.png</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout_2">
+    <item row="0" column="1">
+     <widget class="QGraphicsView" name="graphicsNozzle">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <layout class="QGridLayout" name="gridLayout">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMaximumSize</enum>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item row="1" column="2" colspan="2">
+       <widget class="QTableWidget" name="tableComp"/>
+      </item>
+      <item row="3" column="2">
+       <widget class="QListView" name="listPatient"/>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <widget class="QLabel" name="labelCompTemp">
+        <property name="text">
+         <string>Template</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2" colspan="2">
+       <widget class="QLabel" name="labelComp">
+        <property name="text">
+         <string>Components</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QTextBrowser" name="textModule"/>
+      </item>
+      <item row="1" column="0" rowspan="3" colspan="2">
+       <widget class="QListWidget" name="listTemplate"/>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="labelPatient">
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QLabel" name="labelModule">
+        <property name="text">
+         <string>Module</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1298</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionFileNew"/>
+    <addaction name="actionFileOpen"/>
+    <addaction name="actionFileSave"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuComp">
+    <property name="title">
+     <string>Component</string>
+    </property>
+    <addaction name="actionCompNew"/>
+    <addaction name="actionCompLoad"/>
+    <addaction name="actionCompSave"/>
+    <addaction name="actionCompModify"/>
+   </widget>
+   <widget class="QMenu" name="menuPatient">
+    <property name="title">
+     <string>Patient</string>
+    </property>
+    <addaction name="actionPatientSetup"/>
+    <addaction name="actionPatientView"/>
+    <addaction name="actionPatientConv"/>
+   </widget>
+   <widget class="QMenu" name="menuSimulation">
+    <property name="title">
+     <string>Simulation</string>
+    </property>
+    <addaction name="actionSimLoad"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuComp"/>
+   <addaction name="menuPatient"/>
+   <addaction name="menuSimulation"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <action name="actionFileNew">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/new.png</normaloff>../icons/new.png</iconset>
+   </property>
+   <property name="text">
+    <string>New</string>
+   </property>
+   <property name="font">
+    <font/>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionFileOpen">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/open.png</normaloff>../icons/open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionFileSave">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/save.png</normaloff>../icons/save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/exit.png</normaloff>../icons/exit.png</iconset>
+   </property>
+   <property name="text">
+    <string>Exit</string>
+   </property>
+   <property name="statusTip">
+    <string>Quit Application</string>
+   </property>
+   <property name="font">
+    <font/>
+   </property>
+  </action>
+  <action name="actionSimLoad">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/open.png</normaloff>../icons/open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Simulation</string>
+   </property>
+  </action>
+  <action name="actionPatientSetup">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/open.png</normaloff>../icons/open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Setup</string>
+   </property>
+  </action>
+  <action name="actionPatientView">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/view.png</normaloff>../icons/view.png</iconset>
+   </property>
+   <property name="text">
+    <string>View</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="actionCompNew">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/new.png</normaloff>../icons/new.png</iconset>
+   </property>
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="actionCompLoad">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/open.png</normaloff>../icons/open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Load</string>
+   </property>
+  </action>
+  <action name="actionCompSave">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/save.png</normaloff>../icons/save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionCompAdd">
+   <property name="text">
+    <string>Add</string>
+   </property>
+  </action>
+  <action name="actionCompModify">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/write.png</normaloff>../icons/write.png</iconset>
+   </property>
+   <property name="text">
+    <string>Modify</string>
+   </property>
+  </action>
+  <action name="actionPatientConv">
+   <property name="text">
+    <string>ConvAlgo</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

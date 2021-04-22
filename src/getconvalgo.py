@@ -6,6 +6,7 @@ class GetParaFromConvAlgo():
     modulator = None # range modulator
     stop = None # stop position
     energy = None # beam energy
+    bcm_name = None
     time = None # BCM time
     bcm = None
 
@@ -22,10 +23,12 @@ class GetParaFromConvAlgo():
         wb = xl.open_workbook(os.path.join(self.path, self.conv))
         main = wb.sheet_by_name('Main')
         bcm = main.cell_value(35,2)
+        GetParaFromConvAlgo.bcm_name = bcm
 
         GetParaFromConvAlgo.fscatterer = []
         for col in range(2,main.ncols):
             if main.row_values(31)[col] == '': break
+            if str(type(main.row_values(31)[col])) == "<class 'str'>": continue
             GetParaFromConvAlgo.fscatterer.append(main.row_values(31)[col])
         GetParaFromConvAlgo.sscatterer = main.cell_value(37, 2)
         GetParaFromConvAlgo.modulator = main.cell_value(33, 2)
@@ -53,11 +56,13 @@ class GetParaFromConvAlgo():
         wb = xl.load_workbook(os.path.join(self.path, self.conv), data_only=True)
         main = wb['Main']
         bcm = main['C36'].value
+        GetParaFromConvAlgo.bcm_name = bcm
 
         GetParaFromConvAlgo.fscatterer = []
         for cell in main[32]:
             if cell.column < 3: continue
             if cell.value == None: break
+            if str(type(cell.value)) == "<class 'str'>": continue
             GetParaFromConvAlgo.fscatterer.append(cell.value)
         GetParaFromConvAlgo.sscatterer = main['C38'].value
         GetParaFromConvAlgo.modulator = main['C34'].value
