@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>747</width>
-    <height>597</height>
+    <width>600</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,38 +18,41 @@
     <normaloff>../icons/ncc.png</normaloff>../icons/ncc.png</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
-   <item row="2" column="1">
-    <widget class="QPushButton" name="pushNext">
+   <item row="0" column="0" colspan="2">
+    <widget class="QLabel" name="labelDir">
      <property name="text">
-      <string>Next &gt;</string>
+      <string>Directory: </string>
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item row="5" column="0">
     <widget class="QPushButton" name="pushPrev">
      <property name="text">
       <string>&lt; Prev</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="0" colspan="2">
+   <item row="5" column="2">
+    <widget class="QPushButton" name="pushNext">
+     <property name="text">
+      <string>Next &gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="3">
     <widget class="QComboBox" name="comboFiles"/>
    </item>
-   <item row="1" column="0" colspan="2">
-    <widget class="QGraphicsView" name="ctImage"/>
+   <item row="0" column="2">
+    <widget class="QPushButton" name="pushOpen">
+     <property name="text">
+      <string>Open</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="3">
+    <layout class="QGridLayout" name="gridLayout"/>
    </item>
   </layout>
-  <widget class="QWidget" name="gridLayoutWidget">
-   <property name="geometry">
-    <rect>
-     <x>70</x>
-     <y>50</y>
-     <width>160</width>
-     <height>80</height>
-    </rect>
-   </property>
-   <layout class="QGridLayout" name="gridLayout"/>
-  </widget>
  </widget>
  <resources/>
  <connections/>

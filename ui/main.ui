@@ -24,6 +24,9 @@
       <property name="enabled">
        <bool>true</bool>
       </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
      </widget>
     </item>
     <item row="0" column="0">
@@ -34,11 +37,118 @@
       <property name="bottomMargin">
        <number>0</number>
       </property>
-      <item row="1" column="2" colspan="2">
-       <widget class="QTableWidget" name="tableComp"/>
+      <item row="2" column="2">
+       <widget class="QLabel" name="labelPatient">
+        <property name="text">
+         <string>Patient</string>
+        </property>
+       </widget>
       </item>
       <item row="3" column="2">
-       <widget class="QListView" name="listPatient"/>
+       <widget class="QLabel" name="labelPatientDir">
+        <property name="text">
+         <string>Directory:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2" colspan="2">
+       <widget class="QTableWidget" name="tableComp">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Sunken</enum>
+        </property>
+        <property name="lineWidth">
+         <number>2</number>
+        </property>
+        <property name="midLineWidth">
+         <number>1</number>
+        </property>
+        <attribute name="verticalHeaderVisible">
+         <bool>false</bool>
+        </attribute>
+        <column>
+         <property name="text">
+          <string>Name</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignCenter</set>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Component</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignCenter</set>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Parent</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignCenter</set>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>HLX</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignCenter</set>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>HLY</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignCenter</set>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>HLZ</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignCenter</set>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>RotY</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignCenter</set>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>RotZ</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignCenter</set>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>TransY</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignCenter</set>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>TransZ</string>
+         </property>
+         <property name="textAlignment">
+          <set>AlignCenter</set>
+         </property>
+        </column>
+       </widget>
       </item>
       <item row="0" column="0" colspan="2">
        <widget class="QLabel" name="labelCompTemp">
@@ -54,23 +164,19 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="3">
-       <widget class="QTextBrowser" name="textModule"/>
+      <item row="4" column="2">
+       <widget class="QListWidget" name="listPatient"/>
       </item>
-      <item row="1" column="0" rowspan="3" colspan="2">
-       <widget class="QListWidget" name="listTemplate"/>
+      <item row="1" column="0" rowspan="4" colspan="2">
+       <widget class="QListWidget" name="listTemplates"/>
       </item>
-      <item row="2" column="2">
-       <widget class="QLabel" name="labelPatient">
+      <item row="4" column="3">
+       <widget class="QListWidget" name="listMacro"/>
+      </item>
+      <item row="2" column="3" rowspan="2">
+       <widget class="QLabel" name="labelMacro">
         <property name="text">
-         <string>TextLabel</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QLabel" name="labelModule">
-        <property name="text">
-         <string>Module</string>
+         <string>Macro</string>
         </property>
        </widget>
       </item>
@@ -101,10 +207,9 @@
     <property name="title">
      <string>Component</string>
     </property>
-    <addaction name="actionCompNew"/>
-    <addaction name="actionCompLoad"/>
-    <addaction name="actionCompSave"/>
+    <addaction name="actionCompAdd"/>
     <addaction name="actionCompModify"/>
+    <addaction name="actionCompDelete"/>
    </widget>
    <widget class="QMenu" name="menuPatient">
     <property name="title">
@@ -120,7 +225,17 @@
     </property>
     <addaction name="actionSimLoad"/>
    </widget>
+   <widget class="QMenu" name="menuTemplate">
+    <property name="title">
+     <string>Template</string>
+    </property>
+    <addaction name="actionTempNew"/>
+    <addaction name="actionTempLoad"/>
+    <addaction name="actionTempModify"/>
+    <addaction name="actionTempDelete"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuTemplate"/>
    <addaction name="menuComp"/>
    <addaction name="menuPatient"/>
    <addaction name="menuSimulation"/>
@@ -221,7 +336,7 @@
     <string>Ctrl+V</string>
    </property>
   </action>
-  <action name="actionCompNew">
+  <action name="actionTempNew">
    <property name="icon">
     <iconset>
      <normaloff>../icons/new.png</normaloff>../icons/new.png</iconset>
@@ -230,7 +345,7 @@
     <string>New</string>
    </property>
   </action>
-  <action name="actionCompLoad">
+  <action name="actionTempLoad">
    <property name="icon">
     <iconset>
      <normaloff>../icons/open.png</normaloff>../icons/open.png</iconset>
@@ -248,12 +363,7 @@
     <string>Save</string>
    </property>
   </action>
-  <action name="actionCompAdd">
-   <property name="text">
-    <string>Add</string>
-   </property>
-  </action>
-  <action name="actionCompModify">
+  <action name="actionTempModify">
    <property name="icon">
     <iconset>
      <normaloff>../icons/write.png</normaloff>../icons/write.png</iconset>
@@ -265,6 +375,52 @@
   <action name="actionPatientConv">
    <property name="text">
     <string>ConvAlgo</string>
+   </property>
+  </action>
+  <action name="actionTempDelete">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/delete.png</normaloff>../icons/delete.png</iconset>
+   </property>
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+  <action name="actionCompAdd">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/new.png</normaloff>../icons/new.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add</string>
+   </property>
+  </action>
+  <action name="actionTemplate">
+   <property name="text">
+    <string>Template</string>
+   </property>
+  </action>
+  <action name="actionComponent">
+   <property name="text">
+    <string>Component</string>
+   </property>
+  </action>
+  <action name="actionCompModify">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/write.png</normaloff>../icons/write.png</iconset>
+   </property>
+   <property name="text">
+    <string>Modify</string>
+   </property>
+  </action>
+  <action name="actionCompDelete">
+   <property name="icon">
+    <iconset>
+     <normaloff>../icons/delete.png</normaloff>../icons/delete.png</iconset>
+   </property>
+   <property name="text">
+    <string>Delete</string>
    </property>
   </action>
  </widget>
