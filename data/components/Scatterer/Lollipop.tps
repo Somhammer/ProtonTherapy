@@ -1,0 +1,21 @@
+s:Ge/Scatterer/Lollipop/Type = "Group"
+s:Ge/Scatterer/Lollipop/Parent = "Scatterer"
+d:Ge/Scatterer/Lollipop/TransX = 0.0 cm
+d:Ge/Scatterer/Lollipop/TransY = Ge/Scatterer/RotationCenterY cm
+d:Ge/Scatterer/Lollipop/TransZ = 0.0 cm
+d:Ge/Scatterer/Lollipop/RotX = 0.0 deg
+d:Ge/Scatterer/Lollipop/RotY = 0.0 deg
+d:Ge/Scatterer/Lollipop/RotZ	= Ge/Scatterer/RotZ_OutOfBeam deg
+
+s:Ge/Scatterer/Lollipop/Foil/Parent = "Scatterer/Lollipop"
+s:Ge/Scatterer/Lollipop/Foil/Type = "TsBox"
+s:Ge/Scatterer/Lollipop/Foil/Material = "Lexan"
+d:Ge/Scatterer/Lollipop/Foil/HLX = 0.0 cm 
+d:Ge/Scatterer/Lollipop/Foil/HLY = 0.0 cm
+d:Ge/Scatterer/Lollipop/Foil/HLZ = 0.0 cm
+d:Ge/Scatterer/Lollipop/Foil/TransX = 0 cm
+d:Ge/Scatterer/Lollipop/Foil/TransY = Ge/Scatterer/RotationCenterY + 0.0 cm
+d:Ge/Scatterer/Lollipop/Foil/TransZ = 0.0 cm
+d:Ge/Scatterer/Lollipop/Foil/RotX = 0.0 deg
+d:Ge/Scatterer/Lollipop/Foil/RotY = 0.0 deg
+d:Ge/Scatterer/Lollipop/Foil/RotZ = 0.0 dgg

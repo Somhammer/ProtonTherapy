@@ -1,0 +1,23 @@
+s:Ge/Scatterer/BrassBox/Parent = "Scatterer"
+s:Ge/Scatterer/BrassBox/Type = "TsCylinder"
+s:Ge/Scatterer/BrassBox/Material = "Brass"
+d:Ge/Scatterer/BrassBox/RMin = 0.0 cm
+d:Ge/Scatterer/BrassBox/RMax = 21.8 cm
+d:Ge/Scatterer/BrassBox/HL = 3.0 cm
+d:Ge/Scatterer/BrassBox/TransX = -13.0 cm
+d:Ge/Scatterer/BrassBox/TransY = 0.0 cm
+d:Ge/Scatterer/BrassBox/TransZ = 0.0 cm
+d:Ge/Scatterer/BrassBox/RotX = 0.0 deg
+d:Ge/Scatterer/BrassBox/RotY = 0.0 deg
+d:Ge/Scatterer/BrassBox/RotZ = 0.0 deg
+d:Ge/Scatterer/BrassBox/SPhi = 0.0 deg
+d:Ge/Scatterer/BrassBox/DPhi = 360.0 deg
+
+s:Ge/Scatterer/Holder/Type = "Group"
+s:Ge/Scatterer/Holder/Parent = "Scatterer/BrassBox"
+d:Ge/Scatterer/Holder/TransX = 0.0 cm
+d:Ge/Scatterer/Holder/TransY = 0.0 cm
+d:Ge/Scatterer/Holder/TransZ = 0.0 cm
+d:Ge/Scatterer/Holder/RotX = 0.0 deg
+d:Ge/Scatterer/Holder/RotY = 0.0 deg
+d:Ge/Scatterer/Holder/RotZ = 0.0 deg

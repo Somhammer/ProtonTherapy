@@ -1,0 +1,16 @@
+s:Ge/Snout/BrassCone/Parent	= "Snout"
+s:Ge/Snout/BrassCone/Type = "TsCylinder"
+s:Ge/Snout/BrassCone/Material	= "Brass"
+d:Ge/Snout/BrassCone/RMin = Ge/Snout/SNTTypeR1 mm
+d:Ge/Snout/BrassCone/RMax = Ge/Snout/SNTTypeR2 mm
+d:Ge/Snout/BrassCone/HL = 12.0 cm
+d:Ge/Snout/BrassCone/TransX = 0.0 cm
+d:Ge/Snout/BrassCone/TransY = 0.0 cm
+d:Ge/Snout/BrassCone/TransZ = Ge/Snout/Block/LowerEdge + Ge/Snout/BrassCone/HL cm
+d:Ge/Snout/BrassCone/RotX = 0.0 deg
+d:Ge/Snout/BrassCone/RotY = 0.0 deg
+d:Ge/Snout/BrassCone/RotZ = 0.0 deg
+d:Ge/Snout/BrassCone/SPhi = 0.0 deg
+d:Ge/Snout/BrassCone/DPhi = 360.0 deg
+s:Ge/Snout/BrassCone/DrawingStyle = "Solid"
+d:Ge/Snout/BrassCone/LowerEdge = Ge/Snout/BrassCone/TransZ + Ge/Snout/BrassCone/HL cm

@@ -1,0 +1,16 @@
+s:Ge/Dipole1/Type ="TsDipoleMagnet"
+s:Ge/Dipole1/Parent = "SMAG"
+s:Ge/Dipole1/Material = "Steel"
+d:Ge/Dipole1/HLX = 0.0 mm
+d:Ge/Dipole1/HLY = 0.0 mm
+d:Ge/Dipole1/HLZ = 0.0 mm
+d:Ge/Dipole1/TransX = 0.0 cm
+d:Ge/Dipole1/TransY = 0.0 cm
+d:Ge/Dipole1/TransZ = 0.0 mm
+d:Ge/Dipole1/RotX = 0.0 deg
+d:Ge/Dipole1/RotY = 0.0 deg
+d:Ge/Dipole1/RotZ = 0.0 deg
+u:Ge/Dipole1/DirectionX = 0.0
+u:Ge/Dipole1/DirectionY = 0.0
+u:Ge/Dipole1/DirectionZ = 0.0
+d:Ge/Dipole1/Strength = 0.0 tesla

@@ -75,7 +75,7 @@ class ComponentWindow(QDialog):
             self.value = None
             
             self.checked = None
-            
+
         def import_preset(self, name, path):
             self.layout = QBoxLayout(QBoxLayout.TopToBottom)
             self.checkbox = QCheckBox(name)
@@ -155,12 +155,12 @@ class ComponentWindow(QDialog):
         uic.loadUi(os.path.join(base_path,'ui','component.ui'), self)
 
         self.components = {
-          'MonitorElement':['Basis', 'Frame', 'Layer'],
-          'Scatterer':['Basis', 'Lollipop', 'LeadFoil','BrassBox','Holder','Hole','AirHole','LexanPolyCone','LeadPolyCone'],
+          'MonitorElement':['Basis', 'CylinderFrame', 'BoxFrame', 'CylinderLayer', 'BoxLayer'],
+          'Scatterer':['Basis', 'Scatterer1', 'Lollipop', 'Scatterer2', 'Holder', 'Hole'],
           'RangeModulator':['LargeWheel','SmallWheel'], 
           'SMAG':['Basis','Dipole'],
-          'VC':['Basis','Jaw'],
-          'Snout':['Basis','Block','Hole','BrassCone'],
+          'VC':['Basis','XJaws', 'YJaws'],
+          'Snout':['Basis','BrassBlock', 'BrassCone'],
           'Apperture':['Basis'],
           'Compensator':['Basis'],
           'PhaseSpaceVolume':['Basis'],
@@ -173,6 +173,7 @@ class ComponentWindow(QDialog):
             "import":[],
             "parameter":{}
         }
+        self.para_from_macro = []
 
         self._set_action()
         if component is not None:
@@ -218,7 +219,7 @@ class ComponentWindow(QDialog):
         if fname == "": return
         
         self.listConv.clear()
-        self.elements = []
+        self.elements = {}
         
         lst = fname.split('/')
         name = lst[-1]
@@ -395,7 +396,16 @@ class ComponentWindow(QDialog):
         widget.takeItem(widget.currentRow())
         
     def _modify_element(self):
-        return
+        widget = self.tabComp.currentWidget()
+        idx = widget.currentRow()
+        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        name = self.elements[subcomp][idx].get_full_name()
+        value = self.elements[subcomp][idx].value
+        modify = ModifyParameter(self,name,value)
+        r = modify.return_para()
+        if r:
+            self.elements[subcomp][idx].set_name(modify.name)
+            self.elements[subcomp][idx].set_value(modify.value)
 
     def _append_component(self):
         self.component['import'] = []
@@ -403,12 +413,12 @@ class ComponentWindow(QDialog):
             if item.checkbox.isChecked() == True:
                 text = f"includeFile = {item.value}"
                 self.component['import'].append(text)
-        self.component['parameter'] = {}
-        for key, value in self.elements.items():
-            self.component['parameter'][key] = []
-            for item in value:
-                text = f"{item.get_full_name()} = {item.value}"
-                self.component['parameter'][key].append(text)
+        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        self.component['parameter'][subcomp] = []
+        for item in self.elements[subcomp]:
+            text = f"{item.get_full_name()} = {item.value}"
+            self.component['parameter'][subcomp].append(text)
+        print(self.component['parameter'])
         self._update_preview()
 
     def _clear_elements(self):
@@ -450,6 +460,7 @@ class NewTab(QDialog):
     def __init__(self, parent, components):
         super(NewTab, self).__init__(parent)
         uic.loadUi(os.path.join(base_path,'ui','newtab.ui'), self)
+        self.setWindowTitle("New tab")
         
         for item in components:
             self.comboSubcomp.addItem(item)
@@ -465,6 +476,29 @@ class NewTab(QDialog):
     def _click_cancel(self):
         self.reject()
         
+    def return_para(self):
+        return super().exec_()
+    
+class ModifyParameter(QDialog):
+    def __init__(self, parent, name="", value=""):
+        super(ModifyParameter, self).__init__(parent)
+        uic.loadUi(os.path.join(base_path,'ui','modification.ui'), self)
+        self.name = name
+        self.value = value
+        
+        self.lineName.setText(self.name)
+        self.lineValue.setText(self.value)
+        
+        self.pushOk.clicked.connect(self.click_ok)
+        self.pushCancel.clicked.connect(self.click_cancel)
+        self.show()
+    
+    def click_ok(self):
+        self.accept()
+        
+    def click_cancel(self):
+        self.reject()
+    
     def return_para(self):
         return super().exec_()
 

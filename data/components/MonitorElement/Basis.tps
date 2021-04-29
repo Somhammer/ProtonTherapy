@@ -1,0 +1,15 @@
+s:Ge/MonitorChamber/Parent = "Gantry"
+s:Ge/MonitorChamber/Type = "TsBox"
+s:Ge/MonitorChamber/Material = "NiGas"
+d:Ge/MonitorChamber/HLX = 0.0 mm
+d:Ge/MonitorChamber/HLY = 0.0 mm
+d:Ge/MonitorChamber/HLZ = 0.0 mm
+d:Ge/MonitorChamber/RotX = 0.0 deg
+d:Ge/MonitorChamber/RotY = 0.0 deg
+d:Ge/MonitorChamber/RotZ = 0.0 deg
+d:Ge/MonitorChamber/TransX = 0.0 mm
+d:Ge/MonitorChamber/TransY = 0.0 mm
+d:Ge/MonitorChamber/MinusHL = Ge/MonitorChamber/HLZ mm * -1.0
+d:Ge/MonitorChamber/TransZ = 0.0 mm
+b:Ge/MonitorChamber/Include = "TRUE"
+s:Ge/MonitorChamber/Message = "Constructing IBA Monitor Chamber"
