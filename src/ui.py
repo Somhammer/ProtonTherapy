@@ -15,52 +15,6 @@ sys.path.append(base_path)
 form_class = uic.loadUiType(os.path.join(base_path,'ui','main.ui'))[0]
 extension = ["Text files (*.txt *.tps)", "Data files (*.dat)"]
 
-class SimulationWindow(QDialog):
-    def __init__(self, parent):
-        super(SimulationWindow, self).__init__(parent)
-        uic.loadUi(os.path.join(base_path,'ui','simulation.ui'), self)
-
-        self.functions = []
-        self.set_action()
-        self.show()
-
-    def set_action(self):
-        self.pushOpen.clicked.connect(self.open_macro)
-        self.pushAdd.clicked.connect(self.add_function)
-        self.pushAdd2.clicked.connect(self.add_function)
-        self.pushDelete.clicked.connect(self.delete_function)
-        self.pushOk.clicked.connect(self.click_ok)
-        self.pushCancel.clicked.connect(self.click_cancel)
-        
-        self.listAvailable.itemDoubleClicked.connect(self.add_function)
-        self.listAdded.itemDoubleClicked.connect(self.delete_function)
-
-    def open_macro(self):
-        fname = QFileDialog.getOpenFileName(self, filter = "Python files (*.py)")[0]
-        if fname == "": return
-        self.labelMacro.setText(" Macro: "+fname.split('/')[-1])
-        self.listAvailable.addItem(QListWidgetItem("item1"))
-        self.listAvailable.addItem(QListWidgetItem("item2"))
-        
-    def add_function(self):
-        item = self.listAvailable.currentItem()
-        if any(item.text() == i for i in self.functions): return
-        self.functions.append(item.text())
-        self.listAdded.addItem(QListWidgetItem(item.text()))
-
-    def delete_function(self):
-        idx = self.listAdded.currentRow()
-        self.listAdded.takeItem(idx)
-        
-    def click_ok(self):
-        self.accept()
-        
-    def click_cancel(self):
-        self.reject()
-        
-    def return_para(self):
-        return super().exec_()
-
 class ComponentWindow(QDialog):
     class Item(QWidget):
         # Write items in listWidget
@@ -75,66 +29,78 @@ class ComponentWindow(QDialog):
             self.value = None
             
             self.checked = None
+            
+            self.layout = QBoxLayout(QBoxLayout.LeftToRight)
+            self.label = QLabel()
+            self.checkbox = QCheckBox()
+            self.lineValue = QLineEdit()
 
         def import_preset(self, name, path):
-            self.layout = QBoxLayout(QBoxLayout.TopToBottom)
-            self.checkbox = QCheckBox(name)
-            #self.checkbox.setChecked(True)
-            #self.checkbox.stateChanged.connect(self.checkbox_state)
+            name = name.replace('\n','')
+            self.paraname = name
+            self.value = path
+            
+            self.layout.setDirection(QBoxLayout.TopToBottom)
+            self.checkbox.setText(name)
+            self.label.setText("("+path+")")
+            self.checkbox.setChecked(True)
             self.layout.addWidget(self.checkbox)
-            self.label = QLabel("("+path+")")
             self.layout.addWidget(self.label)
             self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
             self.setLayout(self.layout)
-            self.paraname = name
-            self.value = path
 
         def add_parameter(self, variable, default):
             variable = variable.replace("\n", "").replace("\t", "").replace(" ","")
             default = default.replace("\n","").replace("\t","").replace(" ","")
-            self.layout = QBoxLayout(QBoxLayout.LeftToRight)
-            self.label = QLabel(variable)
+
+            self.value = default
+            temp = variable.split('/')
+            self.paraname = temp[-1]
+            temp.pop()
+            temp = '/'.join(i for i in temp)
+            self.set_name(temp, init=True)
+            
+            self.layout.setDirection(QBoxLayout.LeftToRight)
+            self.label.setText(self.get_full_name())
+            self.lineValue.setText(str(self.value))
             self.layout.addWidget(self.label)
-            self.txt = QLineEdit(default)
-            self.layout.addWidget(self.txt)
+            self.layout.addWidget(self.lineValue)
             self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
             self.setLayout(self.layout)
-            self.value = default
-            
-            temp = variable.split(':')[-1].split('/')
-            if ':' in variable:
-                self.type = variable.split(':')[0]
-            self.paraname = temp[-1]
-            if len(temp) == 2:
-                self.name = temp[0]
-            elif len(temp) == 3:
-                self.category = temp[0]
-                self.name = temp[1]
-            elif len(temp) == 4:
-                self.category = temp[0]
-                self.name = temp[1]
-                self.subname = temp[2]
-            else:
-                return
 
         def set_value(self, value):
             self.value = value
-            self.txt.setText(value)
+            self.lineValue.setText(value)
             
-        def set_name(self, name, only_sub = False):
-            if only_sub:
-                self.subname = name
-            else:
-                temp = name.split('/')
-                self.name = temp[0]
-                self.subname = '/'.join(i for i in temp[1:])
+        def set_name(self, name, only_sub=False, init=False):
+            temp = name.split(':')
+            if ":" in name:
+                self.type = temp[0]
+            temp = temp[-1].split('/')
+            if len(temp) == 1:
+                if only_sub:
+                    self.subname = temp[0]
+                else:
+                    self.name = temp[0]
+            elif len(temp) == 2:
+                if only_sub:
+                    self.subname = '/'.join(i for i in temp)
+                elif init:
+                    self.category = temp[0]
+                    self.name = temp[1]
+                else:
+                    self.name = temp[0]
+                    self.subname = temp[-1]
+            elif len(temp) >= 3:
+                self.category = temp[0]
+                self.name = temp[1]
+                self.subname = '/'.join(i for i in temp[2:])
                 
-            if self.subname is not None:
-                name = f'{self.type}:{self.category}/{self.name}/{self.subname}/{self.paraname}'
-            else:
-                name = f'{self.type}:{self.category}/{self.name}/{self.paraname}'
-
-            self.label.setText(name)
+            self.label.setText(self.get_full_name())
+            
+        def set_paraname(self, name):
+            self.paraname = name
+            self.label.setText(self.get_full_name())
         
         def get_full_name(self):
             name = ""
@@ -148,6 +114,9 @@ class ComponentWindow(QDialog):
                 name += "/"+self.subname
             if self.paraname is not None:
                 name += "/"+self.paraname
+                
+            if self.category is None:
+                print(name)
             return name
                 
     def __init__(self, parent, component = None, modify = False):
@@ -195,8 +164,10 @@ class ComponentWindow(QDialog):
         self.lineName.returnPressed.connect(lambda: self._change_component_name(self.lineName.text()))
         ### Button
         self.pushAdd.clicked.connect(self._add_element)
-        self.pushClear.clicked.connect(self._clear_elements)
+        self.pushClearVals.clicked.connect(self._clear_elements)
         self.pushAppend.clicked.connect(self._append_component)
+        self.pushAppendAll.clicked.connect(lambda: self._append_component(add_all=True))
+        self.pushClearPrev.clicked.connect(self.clear_component)
         self.pushMake.clicked.connect(self._click_make)
         self.pushCancel.clicked.connect(self._click_cancel)
         ### Combo
@@ -273,8 +244,9 @@ class ComponentWindow(QDialog):
         item = QListWidgetItem(self.listImport)
         f = self.Item()
         f.import_preset(name, path)
-        f.checkbox.stateChanged.connect(self._append_component)
+        f.checkbox.stateChanged.connect(lambda: self._append_component(only_import=True))
         self.imported.append(f)
+        self._append_component(only_import=True)
         self.listImport.setItemWidget(item, f)
         self.listImport.addItem(item)
         item.setSizeHint(f.sizeHint())
@@ -340,13 +312,42 @@ class ComponentWindow(QDialog):
         self.tabComp.clear()
         self.elements = {}
         
+        if item == "Load":
+            subcomps = set()
+            dic2 = {"Basis":[]}
+            filename = QFileDialog.getOpenFileName(self, initialFilter = extension[0], filter='\n'.join(i for i in extension))[0]
+            if filename == "": return
+            f = open(filename, 'r')
+            lines = f.readlines()
+            for line in lines:
+                name = line.split('=')[0].split('/')
+                if len(name) <= 2: continue
+                elif len(name) == 3:
+                    if outtext == "CustomComponent":
+                        outtext = name[1]
+                elif len(name) >= 4:
+                    subcomps.add(name[2])
+            subcomps = list(subcomps)
+            subcomps.sort()
+            for subcomp in subcomps:
+                dic[item].append(subcomp)
+                dic2[subcomp] = []
+            for line in lines:
+                name = line.split('=')[0].split('/')
+                if len(name) < 4:
+                    dic2['Basis'].append(line)
+                else:
+                    dic2[name[2]].append(line)
+        
         for subcomp in dic[item]:
             if item == "Load":
-                filename = QFileDialog.getOpenFileName(self, initialFilter = extension[0], filter='\n'.join(i for i in extension))[0]
+                self._load_component(name = subcomp, filename = dic2[subcomp])
             else:
                 filename = os.path.join(base_path,'data/components',item,subcomp+'.tps')
-            self._load_component(name = subcomp, filename = filename)
+                self._load_component(name = subcomp, filename = filename)
         
+        if item == "Load":
+            self._append_component(add_all=True)
         self.lineOutput.setText(outtext)
 
     def _add_subcomponent(self):
@@ -359,15 +360,15 @@ class ComponentWindow(QDialog):
             subcomp = newtab.comboSubcomp.currentText()
             name = newtab.lineTabName.text()
             filename = os.path.join(base_path,'data/components',self.comboComp.currentText(),subcomp+'.tps')
-            index = self._load_component(name = name, filename = filename)
+            index = self._load_component(name=name, filename=filename)
             self.tabComp.setCurrentIndex(index)
-            self._change_component_name(name = name, only_sub = True)
+            self._change_component_name(name=name, only_sub=True)
 
-    def _change_component_name(self, name, only_sub = False):
+    def _change_component_name(self, name, only_sub=False):
         widget = self.tabComp.currentWidget()
         subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
         for item in self.elements[subcomp]:
-            item.set_name(name, only_sub)
+            item.set_name(name=name, only_sub=only_sub)
 
     def _add_element(self):
         widget = self.tabComp.currentWidget()
@@ -404,32 +405,51 @@ class ComponentWindow(QDialog):
         modify = ModifyParameter(self,name,value)
         r = modify.return_para()
         if r:
-            self.elements[subcomp][idx].set_name(modify.name)
+            name = modify.name.split('/')
+            paraname = name[-1]
+            name = '/'.join(i for i in name[:-1])
+            self.elements[subcomp][idx].set_paraname(paraname)
+            self.elements[subcomp][idx].set_name(name)
             self.elements[subcomp][idx].set_value(modify.value)
 
-    def _append_component(self):
+    def _append_component(self, only_import=False, add_all=False):
+        if len(self.elements) < 1: return
         self.component['import'] = []
         for item in self.imported:
             if item.checkbox.isChecked() == True:
                 text = f"includeFile = {item.value}"
                 self.component['import'].append(text)
-        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
-        self.component['parameter'][subcomp] = []
-        for item in self.elements[subcomp]:
-            text = f"{item.get_full_name()} = {item.value}"
-            self.component['parameter'][subcomp].append(text)
-        print(self.component['parameter'])
+        if only_import: 
+            self._update_preview()
+            return
+        
+        if add_all:
+            subcomps = list(self.elements.keys())
+        else:
+            subcomps = [self.tabComp.tabText(self.tabComp.currentIndex())]
+        for subcomp in subcomps:
+            self.component['parameter'][subcomp] = []
+            for item in self.elements[subcomp]:
+                text = f"{item.get_full_name()} = {item.value}"
+                self.component['parameter'][subcomp].append(text)
+        self._update_preview()
+        
+    def clear_component(self):
+        self.component['import'] = []
+        for subcomp in self.component['parameter'].keys():
+            self.component['parameter'][subcomp] = []
         self._update_preview()
 
     def _clear_elements(self):
         subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        if len(self.elements) < 1: return
         for item in self.elements[subcomp]:
             item.set_value(None)
 
     def _update_preview(self):
         text = ""
         text += "\n".join(i for i in self.component['import'])
-        if len(self.component['import']) > 1:
+        if len(self.component['import']) > 0:
             text += "\n\n"
         for key, value in self.component['parameter'].items():
             text += "\n".join(i for i in value)
@@ -488,12 +508,22 @@ class ModifyParameter(QDialog):
         
         self.lineName.setText(self.name)
         self.lineValue.setText(self.value)
+        self.lineName.returnPressed.connect(self.set_name)
+        self.lineValue.returnPressed.connect(self.set_value)
         
         self.pushOk.clicked.connect(self.click_ok)
         self.pushCancel.clicked.connect(self.click_cancel)
         self.show()
+        
+    def set_name(self):
+        self.name = self.lineName.text()
+    
+    def set_value(self):
+        self.value = self.lineValue.text()
     
     def click_ok(self):
+        self.set_name()
+        self.set_value()
         self.accept()
         
     def click_cancel(self):
@@ -560,6 +590,64 @@ class PatientWindow(QDialog):
             if self.comboFiles.currentIndex() == 0: return
             self.comboFiles.setCurrentIndex(self.comboFiles.currentIndex()-1)
     
+    def return_para(self):
+        return super().exec_()
+
+class SimulationWindow(QDialog):
+    def __init__(self, parent):
+        super(SimulationWindow, self).__init__(parent)
+        uic.loadUi(os.path.join(base_path,'ui','simulation.ui'), self)
+
+        self.functions = []
+        self.set_action()
+        self.show()
+
+    def set_action(self):
+        self.pushAdd.clicked.connect(self.add_function)
+        self.pushDelete.clicked.connect(self.delete_function)
+        self.pushOk.clicked.connect(self.click_ok)
+        self.pushCancel.clicked.connect(self.click_cancel)
+        
+        macros = ['DoseSimulation']
+        self.comboMacro.addItem('')
+        self.comboMacro.addItem('Open')
+        self.comboMacro.insertSeparator(2)
+        for macro in macros:
+            self.comboMacro.addItem(macro)
+        self.comboMacro.currentTextChanged.connect(self.open_macro)       
+        #self.listAvailable.itemDoubleClicked.connect(self.add_function)
+        #self.listAdded.itemDoubleClicked.connect(self.delete_function)
+
+    def open_macro(self):
+        if self.comboMacro.currentText() == 'Open':
+            fname = QFileDialog.getOpenFileName(self, filter = "Python files (*.py)")[0]
+            if fname == "": return
+            self.labelMacro.setText(" Custom File: "+fname.split('/')[-1])
+        import config as cfg
+        proton = cfg.Proton()
+        proton.load(fname)
+        processes = []
+        for i in proton.module.__dir__():
+            if i[0].isupper():  
+                processes.append(i)
+                self.listAvailable.addItem(QListWidgetItem(i))
+        
+    def add_function(self):
+        item = self.listAvailable.currentItem()
+        if any(item.text() == i for i in self.functions): return
+        self.functions.append(item.text())
+        self.listAdded.addItem(QListWidgetItem(item.text()))
+
+    def delete_function(self):
+        idx = self.listAdded.currentRow()
+        self.listAdded.takeItem(idx)
+        
+    def click_ok(self):
+        self.accept()
+        
+    def click_cancel(self):
+        self.reject()
+        
     def return_para(self):
         return super().exec_()
 
@@ -657,6 +745,9 @@ class MainWindow(QMainWindow, form_class):
         self.cfg = None
         self.templates = []
         self.components = []
+        # -> shoud be updated... 
+        # Shape: [component:{subcomponent:{parameter name:value, ...}, ...}, ...]
+
         self.patient = {"directory":"","files":[]}
         self.macros = []
         self.set_actions()
@@ -672,7 +763,7 @@ class MainWindow(QMainWindow, form_class):
         self.actionExit.triggered.connect(qApp.quit)
         ### Template
         self.actionTempNew.triggered.connect(self.new_template)
-        self.actionTempLoad.triggered.connect(self.load_template)
+        #self.actionTempLoad.triggered.connect(self.load_template)
         self.actionTempModify.triggered.connect(self.modify_template)
         self.actionTempDelete.triggered.connect(self.delete_template)
         ### Component
@@ -734,7 +825,6 @@ class MainWindow(QMainWindow, form_class):
         # Template
         self.listTemplates.setContextMenuPolicy(Qt.ActionsContextMenu)
         self.listTemplates.addAction(self.actionTempNew)
-        self.listTemplates.addAction(self.actionTempLoad)
         self.listTemplates.addAction(self.actionTempModify)
         self.listTemplates.addAction(self.actionTempDelete)
         self.listTemplates.addAction(self.actionCompAdd)
@@ -778,18 +868,6 @@ class MainWindow(QMainWindow, form_class):
         if r:
             self.generate_template(template.lineOutput.text(), template.component)
 
-    def load_template(self):
-        fname = QFileDialog.getOpenFileName(self, filter = '\n'.join(i for i in extension))[0]
-        if fname == "": return
-        
-        lst = fname.split('/')
-        name = lst[-1].split('.')[0]
-        dic = {}
-        dic['name'] = name
-        dic['file'] = '/'.join(i for i in lst)
-        template = ComponentWindow(self, dic)
-        self.generate_template(template.lineOutput.text(), template.component)
-        
     def modify_template(self):
         idx = self.listTemplates.currentRow()
         dic = self.templates[idx]
@@ -886,7 +964,6 @@ class MainWindow(QMainWindow, form_class):
         if r:
             self.patient['directory'] = pat.dirname
             self.patient['files'] = pat.files
-            
 
     def simulation(self):
         sim = SimulationWindow(self)
