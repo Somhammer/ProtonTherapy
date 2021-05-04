@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1298</width>
-    <height>577</height>
+    <height>586</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,40 +18,48 @@
     <normaloff>../icons/ncc.png</normaloff>../icons/ncc.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_2">
-    <item row="0" column="1">
-     <widget class="QGraphicsView" name="graphicsNozzle">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-     </widget>
-    </item>
+   <layout class="QGridLayout" name="gridLayout_4">
     <item row="0" column="0">
      <layout class="QGridLayout" name="gridLayout">
-      <property name="sizeConstraint">
-       <enum>QLayout::SetMaximumSize</enum>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <item row="2" column="2">
-       <widget class="QLabel" name="labelPatient">
+      <item row="0" column="0">
+       <widget class="QLabel" name="labelCompTemp">
         <property name="text">
-         <string>Patient</string>
+         <string>Template</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="2">
-       <widget class="QLabel" name="labelPatientDir">
+      <item row="1" column="0">
+       <widget class="QListWidget" name="listTemplates"/>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="1">
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="3" column="0">
+       <widget class="QLabel" name="labelConvalgo">
         <property name="text">
-         <string>Directory:</string>
+         <string>Convalgo</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="2" colspan="2">
+      <item row="5" column="0" rowspan="2">
+       <widget class="QListWidget" name="listConvalgo">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="QLabel" name="labelComp">
+        <property name="text">
+         <string>Components</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
        <widget class="QTableWidget" name="tableComp">
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
@@ -150,33 +158,68 @@
         </column>
        </widget>
       </item>
-      <item row="0" column="0" colspan="2">
-       <widget class="QLabel" name="labelCompTemp">
+      <item row="4" column="0">
+       <widget class="QLabel" name="labelConvalgoFile">
         <property name="text">
-         <string>Template</string>
+         <string>File:</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="2" colspan="2">
-       <widget class="QLabel" name="labelComp">
+      <item row="4" column="1">
+       <widget class="QLabel" name="labelPatientDir">
         <property name="text">
-         <string>Components</string>
+         <string>Directory:</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="2">
-       <widget class="QListWidget" name="listPatient"/>
+      <item row="5" column="1" rowspan="2">
+       <widget class="QListWidget" name="listPatient">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
       </item>
-      <item row="1" column="0" rowspan="4" colspan="2">
-       <widget class="QListWidget" name="listTemplates"/>
+      <item row="3" column="1">
+       <widget class="QComboBox" name="comboPatient"/>
       </item>
-      <item row="4" column="3">
-       <widget class="QListWidget" name="listMacro"/>
+     </layout>
+    </item>
+    <item row="0" column="2">
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="3" column="0">
+       <widget class="QGraphicsView" name="graphicsNozzle">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+       </widget>
       </item>
-      <item row="2" column="3" rowspan="2">
+      <item row="0" column="0">
        <widget class="QLabel" name="labelMacro">
         <property name="text">
          <string>Macro</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QListWidget" name="listMacro">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="labelGeometry">
+        <property name="text">
+         <string>Geometry</string>
         </property>
        </widget>
       </item>

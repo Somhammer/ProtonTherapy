@@ -8,6 +8,8 @@ class Proton():
         self.module = None
 
     def load(self, module):
+        module = module.replace('.py','')
+        module = module.split('/')[-1]
         try:
             del sys.modules[module]
         except BaseException as err:

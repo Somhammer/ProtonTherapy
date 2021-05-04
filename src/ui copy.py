@@ -11,28 +11,37 @@ from PyQt5 import uic
 
 import data
 
-form_class = uic.loadUiType(os.path.join(base_path,'ui','main.ui'))[0]
 base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 sys.path.append(base_path)
 
-g_text_extension = ["Text files (*.txt *.tps)", "Data files (*.dat)"]
-g_excel_extension = ["Excel files (*.xls *.xlms)"]
-
-g_template = []
-g_component = []
-g_patient = data.Patient()
+form_class = uic.loadUiType(os.path.join(base_path,'ui','main.ui'))[0]
+extension = ["Text files (*.txt *.tps)", "Data files (*.dat)"]
 
 class ComponentWindow(QDialog):
     class Item(QWidget):
         # Write items in listWidget
         def __init__(self):
             QWidget.__init__(self, flags=Qt.Widget)
+
+            self.type = None
+            self.category = None
+            self.name = None
+            self.subname = None
+            self.paraname = None
+            self.value = None
+            
+            self.checked = None
+            
             self.layout = QBoxLayout(QBoxLayout.LeftToRight)
             self.label = QLabel()
             self.checkbox = QCheckBox()
             self.lineValue = QLineEdit()
 
         def import_preset(self, name, path):
+            name = name.replace('\n','')
+            self.paraname = name
+            self.value = path
+            
             self.layout.setDirection(QBoxLayout.TopToBottom)
             self.checkbox.setText(name)
             self.label.setText("("+path+")")
@@ -42,130 +51,309 @@ class ComponentWindow(QDialog):
             self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
             self.setLayout(self.layout)
 
-        def add_parameter(self, name, value):
+        def add_parameter(self, variable, default):
+            variable = variable.replace("\n", "").replace("\t", "").replace(" ","")
+            default = default.replace("\n","").replace("\t","").replace(" ","")
+
+            self.value = default
+            temp = variable.split('/')
+            self.paraname = temp[-1]
+            temp.pop()
+            temp = '/'.join(i for i in temp)
+            self.set_name(temp, init=True)
+            
             self.layout.setDirection(QBoxLayout.LeftToRight)
-            self.label.setText(name)
-            self.lineValue.setText(value)
+            self.label.setText(self.get_full_name())
+            self.lineValue.setText(str(self.value))
             self.layout.addWidget(self.label)
             self.layout.addWidget(self.lineValue)
             self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
             self.setLayout(self.layout)
-        
-        def set_name(self, name):
-            self.label.setText(name)
+
+        def set_value(self, value):
+            self.value = value
+            self.lineValue.setText(value)
+            
+        def set_name(self, name, only_sub=False, init=False):
+            temp = name.split(':')
+            if ":" in name:
+                self.type = temp[0]
+            temp = temp[-1].split('/')
+            if len(temp) == 1:
+                if only_sub:
+                    self.subname = temp[0]
+                else:
+                    self.name = temp[0]
+            elif len(temp) == 2:
+                if only_sub:
+                    self.subname = '/'.join(i for i in temp)
+                elif init:
+                    self.category = temp[0]
+                    self.name = temp[1]
+                else:
+                    self.name = temp[0]
+                    self.subname = temp[-1]
+            elif len(temp) >= 3:
+                self.category = temp[0]
+                self.name = temp[1]
+                self.subname = '/'.join(i for i in temp[2:])
                 
-    def __init__(self, parent, fname=None):
+            self.label.setText(self.get_full_name())
+            
+        def set_paraname(self, name):
+            self.paraname = name
+            self.label.setText(self.get_full_name())
+        
+        def get_full_name(self):
+            name = ""
+            if self.type is not None:
+                name += self.type+":"
+            if self.category is not None:
+                name += self.category
+            if self.name is not None:
+                name += "/"+self.name
+            if self.subname is not None:
+                name += "/"+self.subname
+            if self.paraname is not None:
+                name += "/"+self.paraname
+                
+            if self.category is None:
+                print(name)
+            return name
+                
+    def __init__(self, parent, component = None, modify = False):
         super(ComponentWindow, self).__init__(parent)
         uic.loadUi(os.path.join(base_path,'ui','component.ui'), self)
-        
-        self.template = data.Component()
-        if fname is not None:
-            self.preload(fname)
 
-        self.set_action()
+        self.components = {
+          'MonitorElement':['Basis', 'CylinderFrame', 'BoxFrame', 'CylinderLayer', 'BoxLayer'],
+          'Scatterer':['Basis', 'Scatterer1', 'Lollipop', 'Scatterer2', 'Holder', 'Hole'],
+          'RangeModulator':['LargeWheel','SmallWheel'], 
+          'SMAG':['Basis','Dipole'],
+          'VC':['Basis','XJaws', 'YJaws'],
+          'Snout':['Basis','BrassBlock', 'BrassCone'],
+          'Apperture':['Basis'],
+          'Compensator':['Basis'],
+          'PhaseSpaceVolume':['Basis'],
+          'Contour':['Basis']
+        }
+        
+        self.convalgo = []
+        self.imported = []
+        self.elements = {}
+        self.component = {
+            "import":[],
+            "parameter":{}
+        }
+        self.para_from_macro = []
+
+        self._set_action()
+        if component is not None:
+            self._preload(component, modify)
+        if not modify:
+            self.accept()
+
         self.show()
         
-    def set_action(self):
+    def _set_action(self):
+        # Convalgo
+        self.pushConv.clicked.connect(self._load_convalgo)
         # Import
-        self.pushImport.clicked.connect(self.import_component)
+        self.pushImport.clicked.connect(self._open_component)
         # Element
         ### LineEdit
-        self.lineNewParaName.returnPressed.connect(self.add_element)
-        self.lineNewParaValue.returnPressed.connect(self.add_element)
-        self.lineName.returnPressed.connect(lambda: self.change_component_name(self.lineName.text()))
+        self.lineNewParaName.returnPressed.connect(self._add_element)
+        self.lineNewParaValue.returnPressed.connect(self._add_element)
+        self.lineName.returnPressed.connect(lambda: self._change_component_name(self.lineName.text()))
         ### Button
-        self.pushAdd.clicked.connect(self.add_element)
-        self.pushClearVals.clicked.connect(self.clear_elements)
-        self.pushAppend.clicked.connect(self.append_component)
-        self.pushAppendAll.clicked.connect(lambda: self.append_component(add_all=True))
+        self.pushAdd.clicked.connect(self._add_element)
+        self.pushClearVals.clicked.connect(self._clear_elements)
+        self.pushAppend.clicked.connect(self._append_component)
+        self.pushAppendAll.clicked.connect(lambda: self._append_component(add_all=True))
         self.pushClearPrev.clicked.connect(self.clear_component)
-        self.pushMake.clicked.connect(self.click_make)
-        self.pushCancel.clicked.connect(self.click_cancel)
+        self.pushMake.clicked.connect(self._click_make)
+        self.pushCancel.clicked.connect(self._click_cancel)
         ### Combo
-        self.comboComp.addItem('')
         self.comboComp.addItem('New')
         self.comboComp.addItem("Load")
         self.comboComp.insertSeparator(2)
         for key, value in self.components.items():
             self.comboComp.addItem(key)
-        self.comboComp.currentTextChanged.connect(lambda: self.new_template(self.comboComp.currentText()))
+        self.comboComp.currentTextChanged.connect(lambda: self._new_component(self.comboComp.currentText()))
         ### Element tab
         self.tabAddBtn = QToolButton()
         self.tabComp.setCornerWidget(self.tabAddBtn, Qt.TopRightCorner)
         self.tabAddBtn.setAutoRaise(True)
         self.tabAddBtn.setIcon(QIcon("../icons/new.png"))
-        self.tabAddBtn.clicked.connect(self.add_subcomponent)
-
-    def add_file(self, path, checkbox):
-        if checkbox.isChecked():
-            self.template.imported = path
-        else:
-            idx = self.template.imported.index(path)
-            self.template.imported.pop(idx)
-
-    def import_component(self):
-        fname = QFileDialog.getOpenFileName(self, initialFilter = g_text_extension[0], filter='\n'.join(i for i in g_text_extension))[0]
+        self.tabAddBtn.clicked.connect(self._add_subcomponent)
+        
+    def _load_convalgo(self):
+        excel_extension = "Excel files (*.xls *.xlms)"
+        fname = QFileDialog.getOpenFileName(self, filter = excel_extension)[0]
         if fname == "": return
-        self.template.imported = fname
+        
+        self.listConv.clear()
+        self.elements = {}
         
         lst = fname.split('/')
         name = lst[-1]
-        path = '/'.join(i for i in lst)
+        path = '/'.join(i for i in lst[:-1])
+        self.labelConv.setText("File: "+name)
+        import getconvalgo as gc
+        convalgo = gc.GetParaFromConvAlgo(path, name)
 
+        dic = {
+          '1st Scatterer':[convalgo.fscatterer, "int"],
+          '2nd Scatterer':[convalgo.sscatterer, "int"],
+          'Modulator':[convalgo.modulator, "int"],
+          'Stop Position':[convalgo.stop, "int"],
+          'Energy':[convalgo.energy, "float"],
+          'BCM':[convalgo.bcm_name, "str"]
+        }
+        nbeam = len(convalgo.fscatterer)
+        def convert(item, typ):
+            if typ == "int":
+                i = int(item)
+            elif typ == "float":
+                i = round(float(item),3)
+            else:
+                i = item
+            return i
+        for key, value in dic.items():
+            if str(type(value[0])) == "<class 'list'>":
+                for idx, val in enumerate(value[0]):
+                    value[0][idx] = convert(val, value[1])
+                if len(value[0]) == 1:
+                    s = str(value[0][0])
+                else:
+                    s = ', '.join(str(i) for i in value[0])
+            else:
+                s = convert(value[0], value[1])
+
+            para = QListWidgetItem(self.listConv)
+            parameter = self.Item()
+            parameter.add_parameter(key, str(s))
+            self.convalgo.append(parameter)
+            self.listConv.setItemWidget(para, parameter)
+            self.listConv.addItem(para)
+            para.setSizeHint(parameter.sizeHint())
+
+    def _import_component(self, fname):
+        lst = fname.split('/')
+        name = lst[-1]
+        path = '/'.join(i for i in lst)
+        if any(path == i.value for i in self.imported):
+            return
         item = QListWidgetItem(self.listImport)
         f = self.Item()
         f.import_preset(name, path)
-        f.checkbox.stateChanged.connect(lambda: self.add_file(path, f.checkbox)))
-        self.add_file(paty, f.checkbox)
+        f.checkbox.stateChanged.connect(lambda: self._append_component(only_import=True))
+        self.imported.append(f)
+        self._append_component(only_import=True)
         self.listImport.setItemWidget(item, f)
         self.listImport.addItem(item)
         item.setSizeHint(f.sizeHint())
-        self.update_preview()
 
-    def draw_para_widget(self, tabname):
+    def _open_component(self):
+        fname = QFileDialog.getOpenFileName(self, initialFilter = extension[0], filter='\n'.join(i for i in extension))[0]
+        if fname == "": return
+        self._import_component(fname)
+
+    def _load_component(self, name, filename):
         listPara = QListWidget()
         listPara.setContextMenuPolicy(Qt.ActionsContextMenu)
-        
-        actions = {"Add":self.add_element, "Modify":self.modify_element,
-                   "Delete":self.delete_element, "Clear":self.clear_elements}
+        self.elements[name] = []
+        actions = {"Add":self._add_element, "Modify":self._modify_element,
+                   "Delete":self._delete_element, "Clear":self._clear_elements}
         for key, value in actions.items():
             action = QAction(key, listPara)
             action.triggered.connect(value)
             listPara.addAction(action)
-        listPara.itemDoubleClicked.connect(self.modify_element)
         
-        paras = [i for i in self.template.subcomponent[tabname].parameters]
-        for para in paras:
-            name = f'{para.vtype}:{para.category}/{para.directory}/{para.name}'
-            witem = QListWidgetItem(listPara)
-            item = self.Item()
-            item.add_parameter(name, para.value)
-            istPara.setItemWidget(witem, item)
+        if str(type(filename)) == "<class 'list'>":
+            lines = filename
+        else:
+            try:
+                f = open(filename, 'r')
+                lines = f.readlines()
+            except:
+                index = self.tabComp.addTab(listPara, name)
+                return index
+        
+        maxlen = 1
+        for line in lines:
+            if line.startswith('#'): continue
+
+            line = line.replace('\t','').replace('\n', '').replace(' ', '')
+            if line == '': continue
+            line = line.split('=')
+            if line[0].startswith("includeFile"):
+                self._import_component(line[-1])
+                continue
+            if maxlen < len(line[0]): maxlen = len(line[0])
+            if any(line[0] == i.name for i in self.elements[name]): continue
+                
+            para = QListWidgetItem(listPara)
+            parameter = self.Item()
+            parameter.add_parameter(line[0], line[1])
+            self.elements[name].append(parameter)
+            listPara.setItemWidget(para, parameter)
             listPara.addItem(para)
             para.setSizeHint(parameter.sizeHint())
         index = self.tabComp.addTab(listPara, name)
         return index
 
-    def new_template(self, item):
-        if item == '': return
-        elif item == "New":
-            self.template.name = ''
-            self.template.ctype = ''
-        elif item == "Load":
-            fname = QFileDialog.getOpenFileName(self, initialFilter = g_text_extension[0], filter='\n'.join(i for i in g_text_extension))[0]
-            self.template.load(fname=fname)
-        else:
-            dirname = os.path.join(base_path, 'data/components', self.comboComp.currentText())
-            self.template.load(fname=dirname)
+    def _new_component(self, item):
+        if item == "Load" or item == "New": 
+            dic = {item:['Basis']}
+            outtext = "CustomComponent"
+        elif item == "": return
+        else: 
+            dic = {item:self.components[item]}
+            outtext = item
         
-        tabs = [i.name for i in self.template.subcomponent]
-        for tab in tabs:
-            self.draw_para_widget(tabname=tab)
+        self.tabComp.clear()
+        self.elements = {}
+        
+        if item == "Load":
+            subcomps = set()
+            dic2 = {"Basis":[]}
+            filename = QFileDialog.getOpenFileName(self, initialFilter = extension[0], filter='\n'.join(i for i in extension))[0]
+            if filename == "": return
+            f = open(filename, 'r')
+            lines = f.readlines()
+            for line in lines:
+                name = line.split('=')[0].split('/')
+                if len(name) <= 2: continue
+                elif len(name) == 3:
+                    if outtext == "CustomComponent":
+                        outtext = name[1]
+                elif len(name) >= 4:
+                    subcomps.add(name[2])
+            subcomps = list(subcomps)
+            subcomps.sort()
+            for subcomp in subcomps:
+                dic[item].append(subcomp)
+                dic2[subcomp] = []
+            for line in lines:
+                name = line.split('=')[0].split('/')
+                if len(name) < 4:
+                    dic2['Basis'].append(line)
+                else:
+                    dic2[name[2]].append(line)
+        
+        for subcomp in dic[item]:
+            if item == "Load":
+                self._load_component(name = subcomp, filename = dic2[subcomp])
+            else:
+                filename = os.path.join(base_path,'data/components',item,subcomp+'.tps')
+                self._load_component(name = subcomp, filename = filename)
+        
+        if item == "Load":
+            self._append_component(add_all=True)
+        self.lineOutput.setText(outtext)
 
-        self.lineOutput.setText(self.template.name)
-        self.update_preview()
-
-    def add_subcomponent(self):
+    def _add_subcomponent(self):
         if not self.comboComp.currentText() == "Load":
             newtab = NewTab(self, self.components[self.comboComp.currentText()])
         else:
@@ -173,112 +361,119 @@ class ComponentWindow(QDialog):
         r = newtab.return_para()
         if r:
             subcomp = newtab.comboSubcomp.currentText()
-            tabname = newtab.lineTabName.text()
-            fname = os.path.join(base_path,'data/components',self.comboComp.currentText(),subcomp+'.tps')
-            self.template.load(fname)
-            self.template.modify_subname(subcomp, tabname)
-            index = self.draw_para_widget(tabname=tabname)
+            name = newtab.lineTabName.text()
+            filename = os.path.join(base_path,'data/components',self.comboComp.currentText(),subcomp+'.tps')
+            index = self._load_component(name=name, filename=filename)
             self.tabComp.setCurrentIndex(index)
-        self.update_preview()
+            self._change_component_name(name=name, only_sub=True)
 
-    def change_subname(self, name):
+    def _change_component_name(self, name, only_sub=False):
         widget = self.tabComp.currentWidget()
         subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
-        self.template.modify_subname(subcomp, name)
+        for item in self.elements[subcomp]:
+            item.set_name(name=name, only_sub=only_sub)
 
-        for idx in round(self.widget.count()):
-            para = self.template.subcomponent[subcomp].parameters[idx]
-            name = f'{para.vtype}:{para.category}/{para.directory}/{para.name}'
-
-            item.set_name(name=name)
-        self.update_preview()
-
-    def add_element(self):
+    def _add_element(self):
         widget = self.tabComp.currentWidget()
         subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
         name = self.lineNewParaName.text()
         value = self.lineNewParaValue.text()
         if name == "": return
-        self.template.modify_parameter(subcomp, {name:value})
-        
-        witem = QListWidgetItem(widget)
-        item = self.Item()
-        item.add_parameter(name, value)
+        for idx in range(len(self.elements[subcomp])):
+            if name == self.elements[subcomp][idx].name:
+                self.elements[subcomp][idx].set_value(value)
+                return
+        para = QListWidgetItem(widget)
+        parameter = self.Item()
+        parameter.add_parameter(name, value)
+        self.elements[subcomp].append(parameter)
         idx = len(self.elements) - 1
         widget.setItemWidget(para, parameter)
         widget.addItem(para)
         para.setSizeHint(parameter.sizeHint())
-        self.update_preview()
   
-    def delete_element(self):
-        widget = self.tabComp.currentWidget()
-        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
-        item = widget.itemWidget(widget.currentItem())
-        name = item.label.text()
-        value = item.lineValue.text()
-        self.template.modify_parameter(subcomp,{name:value},delete=True)
-        widget.takeItem(widget.currentRow())
-        self.update_preview()
-        
-    def modify_element(self):
+    def _delete_element(self):
         widget = self.tabComp.currentWidget()
         idx = widget.currentRow()
         subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
-        name = self.template.subcomponent[subcomp].parameters[idx].fullname()
-        value = self.template.subcomponent[subcomp].parameters[idx].value
+        self.elements[subcomp].pop(idx)
+        widget.takeItem(widget.currentRow())
+        
+    def _modify_element(self):
+        widget = self.tabComp.currentWidget()
+        idx = widget.currentRow()
+        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        name = self.elements[subcomp][idx].get_full_name()
+        value = self.elements[subcomp][idx].value
         modify = ModifyParameter(self,name,value)
         r = modify.return_para()
         if r:
-            name = modify.name
-            value = modify.value
-            self.template.modify_parameter(subcomp, {name:value})
-            
-    def append_component(self):
-        self.template.subcomponent[subcomp].draw = True
-        widget = self.tabComp.currentWidget()
-        for idx in range(len(widget.count())):
-            self.template.subcomponent[subcmop].parameters[idx].draw = True
-        self.update_preview()
+            name = modify.name.split('/')
+            paraname = name[-1]
+            name = '/'.join(i for i in name[:-1])
+            self.elements[subcomp][idx].set_paraname(paraname)
+            self.elements[subcomp][idx].set_name(name)
+            self.elements[subcomp][idx].set_value(modify.value)
 
-    def update_preview(self):
+    def _append_component(self, only_import=False, add_all=False):
+        if len(self.elements) < 1: return
+        self.component['import'] = []
+        for item in self.imported:
+            if item.checkbox.isChecked() == True:
+                text = f"includeFile = {item.value}"
+                self.component['import'].append(text)
+        if only_import: 
+            self._update_preview()
+            return
+        
+        if add_all:
+            subcomps = list(self.elements.keys())
+        else:
+            subcomps = [self.tabComp.tabText(self.tabComp.currentIndex())]
+        for subcomp in subcomps:
+            self.component['parameter'][subcomp] = []
+            for item in self.elements[subcomp]:
+                text = f"{item.get_full_name()} = {item.value}"
+                self.component['parameter'][subcomp].append(text)
+        self._update_preview()
+        
+    def clear_component(self):
+        self.component['import'] = []
+        for subcomp in self.component['parameter'].keys():
+            self.component['parameter'][subcomp] = []
+        self._update_preview()
+
+    def _clear_elements(self):
+        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        if len(self.elements) < 1: return
+        for item in self.elements[subcomp]:
+            item.set_value(None)
+
+    def _update_preview(self):
         text = ""
-        for item in self.template.imported:
-                text = f"includeFile = {item}\n"
-        text += "\n"
-        for subcomp in self.template.subcomponent:
-            if not subcomp.draw: continue
-            for para in subcomp.parameters:
-                if not para.draw: continue
-                text += f'{para.fullname()} = {para.value}\n'
-            text += '\n'
+        text += "\n".join(i for i in self.component['import'])
+        if len(self.component['import']) > 0:
+            text += "\n\n"
+        for key, value in self.component['parameter'].items():
+            text += "\n".join(i for i in value)
+            text += "\n\n"
         self.textPreview.setText(text)
         
-    def clear_template(self):
-        self.template = data.Component()
-        self.tabComp.clear()
-        self.update_preview()
-
-    def clear_elements(self):
-        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
-        widget = self.tabComp.currentWidget()
-        self.template.subcomponent[subcomp].parameters = []
-        self.draw_para_widget(subcomp)
-        self.update_preview()
-        
-    def preload(self, fname):
-        self.template.load(fname)
-        tabs = [i.name for i in self.template.subcomponent]
-        for tab in tabs:
-            self.draw_para_widget(tabname=tab)
-
-        self.lineOutput.setText(self.template.name)
+    def _preload(self, component, modify):
+        outtext = component['name']
+        fname = component.get('file')
+        if fname is not None:
+            self._load_component("Load",fname)
+        else:
+            for key, value in component['parameter'].items():
+                self._load_component(key, value)
+        self.lineOutput.setText(outtext)
         self.lineOutput.setReadOnly(True)
-        self.update_preview()
 
-    def click_make(self):
+    def _click_make(self):
         self.accept()
         
-    def click_cancel(self):
+    def _click_cancel(self):
         self.reject()
         
     def return_para(self):
@@ -293,24 +488,18 @@ class NewTab(QDialog):
         for item in components:
             self.comboSubcomp.addItem(item)
         
-        self.lineTabName.returnPressed.connect(self.click_ok)
+        self.lineTabName.returnPressed.connect(self.return_para)
         self.pushOk.clicked.connect(self._click_ok)
         self.pushCancel.clicked.connect(self._click_cancel)
         self.show()
         
-    def click_ok(self):
-        subcomp = newtab.comboSubcomp.currentText()
-        tabname = newtab.lineTabName.text()
-        if self.lineTabName.text() == "":
-            QMessageBox.warning(self, "qMessageBox", "Please, Write the new tab name")
-            return
+    def _click_ok(self):
         self.accept()
         
-    def click_cancel(self):
+    def _click_cancel(self):
         self.reject()
         
     def return_para(self):
-        if self.lineTabName.returnPressed.connect
         return super().exec_()
     
 class ModifyParameter(QDialog):
@@ -785,56 +974,6 @@ class MainWindow(QMainWindow, form_class):
 
     def run(self):
         run = RunWindow(self)
-
-    def load_convalgo(self):
-        fname = QFileDialog.getOpenFileName(self, filter = g_excel_extension[0])[0]
-        if fname == "": return
-        
-        self.listConv.clear()
-        self.elements = {}
-        
-        lst = fname.split('/')
-        name = lst[-1]
-        path = '/'.join(i for i in lst[:-1])
-        self.labelConv.setText("File: "+name)
-        import getconvalgo as gc
-        convalgo = gc.GetParaFromConvAlgo(path, name)
-
-        dic = {
-          '1st Scatterer':[convalgo.fscatterer, "int"],
-          '2nd Scatterer':[convalgo.sscatterer, "int"],
-          'Modulator':[convalgo.modulator, "int"],
-          'Stop Position':[convalgo.stop, "int"],
-          'Energy':[convalgo.energy, "float"],
-          'BCM':[convalgo.bcm_name, "str"]
-        }
-        nbeam = len(convalgo.fscatterer)
-        def convert(item, typ):
-            if typ == "int":
-                i = int(item)
-            elif typ == "float":
-                i = round(float(item),3)
-            else:
-                i = item
-            return i
-        for key, value in dic.items():
-            if str(type(value[0])) == "<class 'list'>":
-                for idx, val in enumerate(value[0]):
-                    value[0][idx] = convert(val, value[1])
-                if len(value[0]) == 1:
-                    s = str(value[0][0])
-                else:
-                    s = ', '.join(str(i) for i in value[0])
-            else:
-                s = convert(value[0], value[1])
-
-            para = QListWidgetItem(self.listConv)
-            parameter = self.Item()
-            parameter.add_parameter(key, str(s))
-            self.convalgo.append(parameter)
-            self.listConv.setItemWidget(para, parameter)
-            self.listConv.addItem(para)
-            para.setSizeHint(parameter.sizeHint())
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -66,8 +66,6 @@ sv:Ma/Lexan/Components=3 "Hydrogen" "Carbon" "Oxygen"
 uv:Ma/Lexan/Fractions=3	0.0555	0.7558	0.1887
 d:Ma/Lexan/Density=1.2 g/cm3
 
-
-
 sv:Ma/CompensatorLucite/Components=3 "Hydrogen" "Carbon" "Oxygen"
 uv:Ma/CompensatorLucite/Fractions=3 0.080538 0.599848 0.319614
 d:Ma/CompensatorLucite/Density=1.18 g/cm3
@@ -93,8 +91,6 @@ sv:Ma/Lead/Components=1 "Lead"
 uv:Ma/Lead/Fractions=1 1
 d:Ma/Lead/Density=11.35 g/cm3
 s:Ma/Lead/DefaultColor="red"
-
-
 
 sv:Ma/AlZnMgCu/Components=4 "Aluminum" "Zinc" "Magnesium" "Copper"
 uv:Ma/AlZnMgCu/Fractions=4 0.25 0.25 0.25 0.25
