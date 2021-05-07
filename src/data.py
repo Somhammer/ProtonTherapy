@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass, field
 
 
+
 class Component():
     @dataclass(order=True)
     class Parameter:
@@ -18,19 +19,19 @@ class Component():
                     other.vtype, other.category, other.directory, other.name
                 )
             elif str(type(other)) == "<class 'tuple'>" or str(type(other)) == "<class 'list'>":
-                return (self.vtype, self.category, self.directory, self.name) = (other[0], other[1], other[2], other[3])
+                return (self.vtype, self.category, self.directory, self.name) == (other[0], other[1], other[2], other[3])
             return NotImplemented
         
         def fullname(self):
             fullname = ""
-            if vtype is not None and vtype != "": 
-                fullname += f'{vtype}:'
-            if category is not None and category != "": 
-                fullname += f'{category}'
-            if directory is not None and category != "":
-                fullname += f'/{directory}'
-            if name is not None and name != "":
-                fullname += f'/{name}'
+            if self.vtype is not None and self.vtype != "": 
+                fullname += f'{self.vtype}:'
+            if self.category is not None and self.category != "": 
+                fullname += f'{self.category}'
+            if self.directory is not None and self.category != "":
+                fullname += f'/{self.directory}'
+            if self.name is not None and self.name != "":
+                fullname += f'/{self.name}'
             return fullname
         
     @dataclass(order=True)
@@ -42,7 +43,7 @@ class Component():
     def __init__(self):
         self.__name = None
         self.__ctype = None
-        self.__imported = []
+        self.__imported = list()
         self.__subcomponent = {'Basis':self.SubComponent(name='Basis')}
     
     @property     
@@ -65,13 +66,15 @@ class Component():
     def imported(self):
         return self.__imported
     
-    @imported.setter
-    def imported(self, name):
-        if any(name == i for i in self.__imported): return
-        self.__imported.append(name)
-        if len(self.__imported) > 0:
-            tmp = set(self.__imported)
-            self.__imported = list(tmp).sort()
+    def modify_file(self, name, delete=False):
+        if any(name == i for i in self.__imported) and delete:
+            self.__imported.remove(name)
+        else:
+            self.__imported.append(name)
+            if len(self.__imported) > 0:
+                tmp = set(self.__imported)
+                self.__imported = list(tmp)
+                self.__imported.sort()
             
     @property
     def subcomponent(self):
@@ -86,11 +89,25 @@ class Component():
             self.__subcomponent[subname] = self.SubComponent(name=subname)
         self.modify_parameter(subname, paras)
 
+    def modify_name(self, old, new):
+        self.name = new
+        for sub in self.subcomponent.values():
+            for para in sub.parameters:
+                para.directory = para.directory.replace(old, new)
+
     def modify_subname(self, old, new):
         self.__subcomponent[new] = self.__subcomponent.pop(old)
         self.__subcomponent[new].name = new
-        for para in self.__subcomponent[new].parameters:
-            para.directory.replace(old, new)
+        for para in self.subcomponent[new].parameters:
+            if old in para.directory:
+                para.directory = para.directory.replace(old, new)
+            else:
+                tmp = para.directory.split('/')
+                if len(tmp) == 2:
+                    para.directory = f'{tmp[0]}/{new}'
+                elif len(tmp) >= 3:
+                    t = '/'.join(tmp[2:])
+                    para.directory = f'{tmp[0]}/{new}/{t}'
         
     def __split_paraname(self, name):
         tmp = name.split(':')
@@ -146,8 +163,77 @@ class Component():
                 return
             
     def load(self, fname):
-        g_component_list = {
-          'MonitorElement':['Basis', 'CylinderFrame', 'BoxFrame', 'CylinderLayer', 'BoxLayer'],
+        isdir = False
+        if os.path.isdir(fname):
+            isdir = True
+            self.name = fname.split('/')[-1]
+            self.ctype = fname.split('/')[-1]
+        elif os.path.isfile(fname):
+            self.name = fname.split('/')[-1].split('.')[0]
+            self.ctype = 'CustomComponent'
+        else:
+            return
+        paras = {}
+        if isdir:
+            subs = [i for i in self.component_list()[self.name]]
+            for sub in subs:
+                f = open(os.path.join(fname, sub+'.tps'),'r')
+                lines = f.readlines()
+                paras[sub] = [line for line in lines]
+        else:
+            f = open(fname, 'r')
+            lines = f.readlines()
+            paras['Basis'] = []
+            for line in lines:
+                tmp = line.split('=')[0].split('/')
+                if len(tmp) >= 4:
+                    subname = tmp[2]
+                    if not any(i == subname for i in paras.keys()):
+                        paras[subname] = []
+                if len(tmp) >= 4:
+                    subname = tmp[2]
+                else:
+                    subname = 'Basis'
+                paras[subname].append(line)
+
+        for sub, lines in paras.items():
+            self.__subcomponent[sub] = self.SubComponent(name=sub)
+            for line in lines:
+                line = line.replace('\t','').replace('\n', '').replace(' = ', '=')
+                if line == '' or line.startswith('#'): continue
+                line = line.split('=')
+                if line[0].startswith('includeFile'):
+                    self.modify_file(line[-1])
+                    continue
+
+                if ':' in line[0]:
+                    tmp = line[0].split(':')
+                    vtype = tmp[0]
+                    name = tmp[1]
+                else:
+                    vtype = ''
+                    name = line[0]
+
+                tmp = name.split('/')
+                if len(tmp) == 1:
+                    category = ''
+                    directory = ''
+                    name = tmp[0]
+                elif len(tmp) == 2:
+                    category = ''
+                    directory = tmp[0]
+                    name = tmp[1]
+                else:
+                    category = tmp[0]
+                    directory = '/'.join(i for i in tmp[1:-1])
+                    name = tmp[-1]
+                value = line[-1]
+                        
+                self.__subcomponent[sub].parameters.append(self.Parameter(vtype=vtype, category=category, directory=directory, name=name, value=value))
+
+    def component_list(self):
+        return {
+          'MonitorChamber':['Basis', 'CylinderFrame', 'BoxFrame', 'CylinderLayer', 'BoxLayer'],
           'Scatterer':['Basis', 'Scatterer1', 'Lollipop', 'Scatterer2', 'Holder', 'Hole'],
           'RangeModulator':['LargeWheel','SmallWheel'], 
           'SMAG':['Basis','Dipole'],
@@ -157,48 +243,8 @@ class Component():
           'Compensator':['Basis'],
           'PhaseSpaceVolume':['Basis'],
           'Contour':['Basis']
-        }
+}
 
-        # Load flie
-        # Generate sub-components.
-        isdir = False
-        if os.path.isdir(fname):
-            isdir = True
-            self.name = fname.split('/')[-1]
-        elif os.path.isfile(fname):
-            self.name = fname.split('/')[-1].split('.')[0]
-        else:
-            return
-        subs = []
-        if isdir:
-            
-        else:
-        path = base_path
-        if fname is dir
-        else f name is file
-        
-                maxlen = 1
-        for line in lines:
-            if line.startswith('#'): continue
-
-            line = line.replace('\t','').replace('\n', '').replace(' ', '')
-            if line == '': continue
-            line = line.split('=')
-            if line[0].startswith("includeFile"):
-                self._import_component(line[-1])
-                continue
-            if maxlen < len(line[0]): maxlen = len(line[0])
-            if any(line[0] == i.name for i in self.elements[name]): continue
-                
-            para = QListWidgetItem(listPara)
-            parameter = self.Item()
-            parameter.add_parameter(line[0], line[1])
-            self.elements[name].append(parameter)
-            listPara.setItemWidget(para, parameter)
-            listPara.addItem(para)
-            para.setSizeHint(parameter.sizeHint())
-        index = self.tabComp.addTab(listPara, name)
-        return index
         
 class Patient():
     def __init__(self):
@@ -206,7 +252,7 @@ class Patient():
         self.files = []
         
     def patient_setup(self, dirname):
-        if dirname = "": return
+        if dirname == "": return
         self.directory = dirname
         for f in os.listdir(self.directory):
             if not f.endswith('.dcm'): continue
