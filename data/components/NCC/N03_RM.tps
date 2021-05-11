@@ -13,9 +13,6 @@ d:Ge/RMW/TransX = 13.0 cm
 d:Ge/RMW/TransY = 0 cm
 d:Ge/RMW/TransZ = 2551 mm
 
-
-
-
 d:Ge/RMW/Track1 = 0 deg
 d:Ge/RMW/Track2 = 26.7898759 deg
 d:Ge/RMW/Track3 = 41.1377081 deg

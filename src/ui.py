@@ -10,6 +10,7 @@ from PyQt5.QtGui import *
 from PyQt5 import uic
 
 import data
+import painter
 
 base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 form_class = uic.loadUiType(os.path.join(base_path,'ui','main.ui'))[0]
@@ -254,10 +255,10 @@ class ComponentWindow(QDialog):
         witem = QListWidgetItem(widget)
         item = self.Item()
         item.add_parameter(name, value)
-        idx = len(self.elements) - 1
-        widget.setItemWidget(para, parameter)
-        widget.addItem(para)
-        para.setSizeHint(parameter.sizeHint())
+        idx = widget.count() - 1
+        widget.setItemWidget(witem, item)
+        widget.addItem(witem)
+        witem.setSizeHint(item.sizeHint())
         self.update_preview()
   
     def delete_element(self):
@@ -275,6 +276,7 @@ class ComponentWindow(QDialog):
         widget = self.tabComp.currentWidget()
         idx = widget.currentRow()
         item = widget.itemWidget(widget.item(idx))
+        if item is None: return
         subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
         name = self.template.subcomponent[subcomp].parameters[idx].fullname()
         value = self.template.subcomponent[subcomp].parameters[idx].value
@@ -327,8 +329,9 @@ class ComponentWindow(QDialog):
     def clear_elements(self):
         subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
         widget = self.tabComp.currentWidget()
-        self.template.subcomponent[subcomp].parameters = []
-        self.draw_para_widget(subcomp)
+        for idx in range(widget.count()):
+            self.template.subcomponent[subcomp].parameters[idx].value = ''
+            widget.itemWidget(widget.item(idx)).lineValue.setText('')
         self.update_preview()
         
     def clear_preview(self):
@@ -641,9 +644,10 @@ class MainWindow(QMainWindow, form_class):
         super().__init__()
         self.setupUi(self)
 
-        self.template_idx = {}
 
         self.patient = data.Patient()
+        self.painter = painter.Painter()
+
         self.macros = []
         self.set_actions()
         self.tableComp.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -690,7 +694,6 @@ class MainWindow(QMainWindow, form_class):
         label = QLabel(" Template: ")
         self.toolBar.addWidget(label)
         self.toolBar.addAction(self.actionTempNew)
-        self.toolBar.addAction(self.actionTempLoad)
         self.toolBar.addAction(self.actionTempModify)
         self.toolBar.addAction(self.actionTempDelete)
         self.toolBar.addSeparator()
@@ -764,7 +767,6 @@ class MainWindow(QMainWindow, form_class):
             item = self.listTemplates.itemWidget(self.listTemplates.item(idx))
             item.name = name
             item.label.setText(name)
-            self.template_idx[idx] = name
             return
 
         if not replace:
@@ -774,7 +776,6 @@ class MainWindow(QMainWindow, form_class):
             self.listTemplates.setItemWidget(item, f)
             self.listTemplates.addItem(item)
             item.setSizeHint(f.sizeHint())
-            self.template_idx[len(g_template)-1] = name
 
     def new_template(self):
         template = ComponentWindow(self)
@@ -784,6 +785,7 @@ class MainWindow(QMainWindow, form_class):
             self.generate_template(template.name)
 
     def modify_template(self):
+        if len(g_template) < 1: return
         idx = self.listTemplates.currentRow()
 
         template = ComponentWindow(self, idx)
@@ -796,47 +798,62 @@ class MainWindow(QMainWindow, form_class):
             self.generate_template(template.name, idx)
     
     def delete_template(self):
+        if len(g_template) < 1: return
         idx = self.listTemplates.currentRow()
         g_template.pop(idx)      
         self.listTemplates.takeItem(idx)
 
     def add_component(self):
+        if len(g_template) < 1: return
         idx = self.listTemplates.currentRow()
-        template = g_template[idx]
+        g_component.append(g_template[idx])
+
+        replace = False
+        if len(g_component)> 1 and any(g_component[idx].name == i.name for i in g_component[:-1]):
+            reply = QMessageBox.question(self, "Message", f'Are you sure to replace {g_template[idx].name}?',
+              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                replace = True
+                for idx, component in enumerate(g_component[:-1]):
+                    if g_template[idx].name == component.name:
+                        g_component[idx] = component
+                        g_component.pop(len(g_component)-1)
+            else:
+                return
+
         components = []
-        for key, value in template['parameter'].items():
-            info = {'name':'','component':'','parent':'',
+        for subname, subcomp in g_component[-1].subcomponent.items():
+            info = {'Name':'','Component':'','Parent':'',
                     'HLX':"0.0 mm",'HLY':"0.0 mm",'HLZ':"0.0 mm",
-                    'RotX':"0.0 mm",'RotY':"0.0 mm",'RotZ':"0.0 deg",
+                    'RMin':"0.0 mm",'RMax':"0.0 mm",
+                    'HL':"0.0 mm", 'SPhi':"0.0 deg", 'DPhi':"0.0 deg",
+                    'RotX':"0.0 deg",'RotY':"0.0 deg",'RotZ':"0.0 deg",
                     'TransX':"0.0 mm",'TransY':"0.0 mm",'TransZ':"0.0 mm"}
-            for item in value:
-                tmp = item.replace(' ','').split('=')
-                name = tmp[0].split(':')[-1]
-                val = tmp[1]
-                if len(name.split('/')) == 3:
-                    info['name'] = name.split('/')[1]
-                    info['component'] = info['name']
-                    if 'parent' in name.lower():
-                        info['parent'] = val
-                elif len(name.split('/')) >= 4:
-                    tmp = name.split('/')
-                    info['name'] = "└ "+tmp[2]
-                    info['component'] = tmp[1]+'/'+tmp[2]
-                    if 'parent' in name.lower():
-                        info['parent'] = val
-                
-                for k in info.keys():
-                    if k.lower() == name.split('/')[-1].lower():
-                        info[k] = val
+            if subname == 'Basis':
+                info['Name'] = g_component[-1].name
+                info['Component'] = g_component[-1].ctype
+            else:
+                info['Name'] = f'└─{subcomp.name}'
+                info['Component'] = subcomp.name
+            for para in subcomp.parameters:
+                if any(para.name.lower() == i.lower() for i in info.keys()):
+                    info[para.name] = para.value
             components.append(info)
 
-        for component in components:
-            row = self.tableComp.rowCount() + 1
-            self.tableComp.setRowCount(row)
-            for col, val in enumerate(component.values()):
-                #item = QTableWidgetItem(str(val))
-                self.tableComp.setItem(row-1,col,QTableWidgetItem(str(val)))
+        if replace:
+            for irow in range(self.tableComp.rowCount()):
+                for icol in range(self.tableComp.columnCount()):
+                    colname = self.tableComp.horizontalHeaderItem(icol).text()
+                    value = components[irow][colname]
+                    self.tableComp.setItem(irow, icol, QTableWidgetItem(str(value)))
+        else:
+            for component in components:
+                row = self.tableComp.rowCount() + 1
+                self.tableComp.setRowCount(row)
+                for col, val in enumerate(component.values()):
+                    self.tableComp.setItem(row-1,col,QTableWidgetItem(str(val)))
         self.tableComp.resizeColumnsToContents()
+        self.window.draw(g_component)
 
     def modify_component(self):
         idx = self.tableComp.currentRow()

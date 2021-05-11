@@ -80,7 +80,7 @@
       </widget>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="labelNew">
+      <widget class="QLabel" name="labelVariable">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -93,7 +93,7 @@
         </font>
        </property>
        <property name="text">
-        <string>New</string>
+        <string>Variable</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -144,7 +144,7 @@
      <item row="2" column="8">
       <widget class="QPushButton" name="pushClearVals">
        <property name="text">
-        <string>Clear All</string>
+        <string>Clear Values</string>
        </property>
       </widget>
      </item>
@@ -196,7 +196,7 @@
      <item row="3" column="6">
       <widget class="QPushButton" name="pushClearAll">
        <property name="text">
-        <string>Clear All</string>
+        <string>Clear Template</string>
        </property>
       </widget>
      </item>

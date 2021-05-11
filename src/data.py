@@ -1,8 +1,6 @@
 import os
 from dataclasses import dataclass, field
 
-
-
 class Component():
     @dataclass(order=True)
     class Parameter:
@@ -170,7 +168,7 @@ class Component():
             self.ctype = fname.split('/')[-1]
         elif os.path.isfile(fname):
             self.name = fname.split('/')[-1].split('.')[0]
-            self.ctype = 'CustomComponent'
+            self.ctype = self.name
         else:
             return
         paras = {}
@@ -181,12 +179,16 @@ class Component():
                 lines = f.readlines()
                 paras[sub] = [line for line in lines]
         else:
+            change = False
             f = open(fname, 'r')
             lines = f.readlines()
             paras['Basis'] = []
             for line in lines:
                 tmp = line.split('=')[0].split('/')
                 if len(tmp) >= 4:
+                    if not change:
+                        self.ctype = tmp[1]
+                        change = True
                     subname = tmp[2]
                     if not any(i == subname for i in paras.keys()):
                         paras[subname] = []
@@ -218,15 +220,15 @@ class Component():
                 if len(tmp) == 1:
                     category = ''
                     directory = ''
-                    name = tmp[0]
+                    name = tmp[0].replace('\t','').replace(' ','')
                 elif len(tmp) == 2:
                     category = ''
                     directory = tmp[0]
-                    name = tmp[1]
+                    name = tmp[1].replace('\t','').replace(' ','')
                 else:
                     category = tmp[0]
                     directory = '/'.join(i for i in tmp[1:-1])
-                    name = tmp[-1]
+                    name = tmp[-1].replace('\t','').replace(' ','')
                 value = line[-1]
                         
                 self.__subcomponent[sub].parameters.append(self.Parameter(vtype=vtype, category=category, directory=directory, name=name, value=value))
@@ -244,7 +246,6 @@ class Component():
           'PhaseSpaceVolume':['Basis'],
           'Contour':['Basis']
 }
-
         
 class Patient():
     def __init__(self):
