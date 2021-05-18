@@ -10,11 +10,11 @@ from PyQt5.QtGui import *
 from PyQt5 import uic
 
 import data
-import painter
 
 base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-form_class = uic.loadUiType(os.path.join(base_path,'ui','main.ui'))[0]
 sys.path.append(base_path)
+
+form_class = uic.loadUiType(os.path.join(base_path,'ui','main.ui'))[0]
 
 g_text_extension = ["Text files (*.txt *.tps)", "Data files (*.dat)"]
 g_excel_extension = ["Excel files (*.xls *.xlms)"]
@@ -23,6 +23,7 @@ g_save = None
 g_template = []
 g_component = []
 g_patient = data.Patient()
+g_convalgo = []
 
 class ComponentWindow(QDialog):
     class Item(QWidget):
@@ -57,29 +58,25 @@ class ComponentWindow(QDialog):
         def set_name(self, name):
             self.label.setText(name)
                 
-    def __init__(self, parent, fname=None):
+    def __init__(self, parent, fname=None, modify_component=False):
         super(ComponentWindow, self).__init__(parent)
         uic.loadUi(os.path.join(base_path,'ui','component.ui'), self)
 
-        #self.setMouseTracking(True)
-        #self.x = 0
-        #self.y = 0
-
         self.template = data.Component()
-        if fname is not None:
-            self.preload(fname)
+        self.modify_component = modify_component
+        self.fname = fname
+        if self.fname is not None:
+            self.preload()
 
         self.set_action()
         self.show()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
-            self.click_cancel()
-    
-    #def mouseMoveEvent(self, event):
-    #    self.x = event.x()
-    #    self.y = event.y()
-    #    print(event.x(), event.y())
+            self.click_cancel(event)
+
+    def closeEvent(self, event):
+        self.click_cancel(event)
         
     def set_action(self):
         # Import
@@ -272,6 +269,7 @@ class ComponentWindow(QDialog):
         self.update_preview()
         
     def modify_element(self,direct=False):
+        # FIXME
         # widget 클릭 안하고 lineEdit 건드려서 엔터쳐서 이게 돌아가면 아이템 NoneType 되서 터짐.... 
         widget = self.tabComp.currentWidget()
         idx = widget.currentRow()
@@ -341,11 +339,14 @@ class ComponentWindow(QDialog):
                 para.draw = False
         self.update_preview()
 
-    def preload(self, fname):
-        if type(fname) == int:
-            self.template = g_template[fname]
-        elif type(fname) == str:
-            self.template.load(fname)
+    def preload(self):
+        if type(self.fname) == int:
+            if self.modify_component:
+                self.template = g_component[self.fname]
+            else:
+                self.template = g_template[self.fname]
+        elif type(self.fname) == str:
+            self.template.load(self.fname)
         else:
             return
 
@@ -360,16 +361,22 @@ class ComponentWindow(QDialog):
         self.update_preview()
 
     def click_make(self):
-        g_template.append(self.template)
+        if self.modify_component:
+            g_component[self.fname] = self.template
+        else:
+            g_template.append(self.template)
         self.accept()
         
-    def click_cancel(self):
+    def click_cancel(self, event=None):
         reply = QMessageBox.question(self, "Message", "Are you sure to cancel?",
           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             self.reject()
         else:
-            return
+            if event is None or type(event) == bool:
+                return
+            else:
+                event.ignore()
         
     def return_para(self):
         return super().exec_()
@@ -436,26 +443,45 @@ class ModifyParameter(QDialog):
         return super().exec_()
 
 class PatientWindow(QDialog):
-    def __init__(self, parent, dirname="", files="", current=""):
+    def __init__(self, parent, current=None):
         super(PatientWindow, self).__init__(parent)
         uic.loadUi(os.path.join(base_path,'ui','patient.ui'), self)
-        
-        self.dirname = dirname
-        self.files = files
-        self.current = current
+
+        if current is None:
+            self.current = ""
+        else:
+            self.current = current
         
         self.fig = plt.figure()
         self.widgetCanvas = FigureCanvas(self.fig)
         self.gridLayout.addWidget(self.widgetCanvas)
         self.set_action()
-        if os.path.exists(os.path.join(self.dirname,self.current)):
+        if os.path.exists(os.path.join(g_patient.directory, self.current)):
             self.show_image(self.current)
         self.show()
         
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.closeEvent(event)
+
+    def closeEvent(self, event):
+        self.click_close(event)
+
+    def click_close(self, event=None):
+        reply = QMessageBox.question(self, "Message", "Are you sure to close?",
+          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.accept()
+        else:
+            if event is None or type(event) == bool:
+                return
+            else:
+                event.ignore()
+
     def set_action(self):
-        self.labelDir.setText("Directory: "+self.dirname)
+        self.labelDir.setText("Directory: "+g_patient.directory)
         current_idx = 0
-        for idx, item in enumerate(self.files):
+        for idx, item in enumerate(g_patient.files):
             if not item.startswith("CT"): continue
             if item == self.current: current_idx = idx
             self.comboFiles.addItem(item)
@@ -464,10 +490,21 @@ class PatientWindow(QDialog):
         self.pushOpen.clicked.connect(self.open_directory)
         self.pushPrev.clicked.connect(lambda: self.change_image(self.pushPrev))
         self.pushNext.clicked.connect(lambda: self.change_image(self.pushNext))
+        self.pushClose.clicked.connect(self.click_close)
+
+        self.radioReal.toggled.connect(self.patient_kind)
+        self.radioWater.toggled.connect(self.patient_kind)
+    
+    def patient_kind(self):
+        radio = self.sender()
+        if "real" in radio.text().lower():
+            g_patient.is_real = True
+        else:
+            g_patient.is_real = False
         
     def show_image(self, ct):
         self.fig.clear()
-        CT = dicom.dcmread(os.path.join(self.dirname, ct))
+        CT = dicom.dcmread(os.path.join(g_patient.directory, ct))
         ax = self.fig.add_subplot(111)
         ax.imshow(CT.pixel_array, cmap=plt.cm.bone)
         self.widgetCanvas.draw()
@@ -475,14 +512,15 @@ class PatientWindow(QDialog):
     def open_directory(self):
         newdir = ""
         newdir = QFileDialog.getExistingDirectory(self, "Select Patient CT directory")
-        if newdir == self.dirname or newdir == "": return
+        if newdir == g_patient.directory or newdir == "": return
         else:
-            self.dirname = newdir
-            self.files = []
-            for f in os.listdir(self.dirname):
+            g_patient.directory = newdir
+            files = []
+            for f in os.listdir(g_patient.directory):
                 if not f.endswith('.dcm'): continue
-                self.files.append(f)
-            self.files.sort()
+                files.append(f)
+            files.sort()
+            g_patient.files = files
             self.set_action()
     
     def change_image(self, button):
@@ -493,6 +531,8 @@ class PatientWindow(QDialog):
             if self.comboFiles.currentIndex() == 0: return
             self.comboFiles.setCurrentIndex(self.comboFiles.currentIndex()-1)
     
+
+
     def return_para(self):
         return super().exec_()
 
@@ -644,9 +684,11 @@ class MainWindow(QMainWindow, form_class):
         super().__init__()
         self.setupUi(self)
 
+        self.widgetNozzle = Painter()
+        self.gridLayout_3.addWidget(self.widgetNozzle,3,0)
+        #self.painter = painter.Painter(self.widgetNozzle)
 
-        self.patient = data.Patient()
-        self.painter = painter.Painter()
+        self.comp_to_table_map = {}
 
         self.macros = []
         self.set_actions()
@@ -672,6 +714,7 @@ class MainWindow(QMainWindow, form_class):
         ### Patient
         self.actionPatientSetup.triggered.connect(self.patient_setup)
         self.actionPatientView.triggered.connect(self.patient_view)
+        self.actionPatientConv.triggered.connect(self.load_convalgo)
         ### Simulation
         self.actionSimLoad.triggered.connect(self.simulation)
         ### Run
@@ -788,7 +831,7 @@ class MainWindow(QMainWindow, form_class):
         if len(g_template) < 1: return
         idx = self.listTemplates.currentRow()
 
-        template = ComponentWindow(self, idx)
+        template = ComponentWindow(self, fname=idx)
         r = template.return_para()
         if r:
             template = g_template[-1]
@@ -838,6 +881,7 @@ class MainWindow(QMainWindow, form_class):
             for para in subcomp.parameters:
                 if any(para.name.lower() == i.lower() for i in info.keys()):
                     info[para.name] = para.value
+
             components.append(info)
 
         if replace:
@@ -849,39 +893,64 @@ class MainWindow(QMainWindow, form_class):
         else:
             for component in components:
                 row = self.tableComp.rowCount() + 1
+                self.comp_to_table_map[row-1] = len(g_component) - 1
                 self.tableComp.setRowCount(row)
                 for col, val in enumerate(component.values()):
                     self.tableComp.setItem(row-1,col,QTableWidgetItem(str(val)))
         self.tableComp.resizeColumnsToContents()
-        self.window.draw(g_component)
+        self.widgetNozzle.trigger_refresh()
 
     def modify_component(self):
-        idx = self.tableComp.currentRow()
-        dic = self.components[idx]
-        
-        component = ComponentWindow(self, dic)
+        if len(g_component) < 1: return
+        row = self.tableComp.currentRow()
+        idx = self.comp_to_table_map[row]
+
+        component = ComponentWindow(self, fname=idx, modify_component=True)
         r = component.return_para()
         if r:
-            self.components.pop(idx)
-            row = idx
-            maxcol = self.tableComp.columnCount()
-            for col in range(maxcol):
-                self.tableComp.takeItem(row, col)
-            self.add_component()
-    
+            rowmin = 999
+            rowmax = -999
+            for key, value in self.comp_to_table_map.items():
+                if not value == idx: continue
+                if rowmin > key: rowmin = key
+                if rowmax < key: rowmax = key
+            for irow in range(rowmin, rowmax+1):
+                name = self.tableComp.item(irow, 1).text().replace('└─','')
+                if not name in g_component[idx].subcomponent:
+                    subcomp = g_component[idx].subcomponent['Basis']
+                else:
+                    subcomp = g_component[idx].subcomponent[name]
+                for icol in range(self.tableComp.columnCount()):
+                    paraname = self.tableComp.horizontalHeaderItem(icol).text()
+                    for para in subcomp.parameters:
+                        if para.name.lower() == paraname.lower():
+                            self.tableComp.setItem(irow, icol, QTableWidgetItem(str(para.value)))
+                            continue
+            self.tableComp.resizeColumnsToContents()
+            self.widgetNozzle.trigger_refresh()
+
     def delete_component(self):
+        if len(g_component) < 1: return
         row = self.tableComp.currentRow()
-        maxcol = self.tableComp.columnCount()
-        self.components.pop(row)
-        for col in range(maxcol):
-            self.tableComp.takeItem(row, col)
+        idx = self.comp_to_table_map[row]
+        rowmin = 999
+        rowmax = -999
+        for key, value in self.comp_to_table_map.items():
+            if not value == idx: continue
+            if rowmin > key: rowmin = key
+            if rowmax < key: rowmax = key
+        for irow in range(rowmin, rowmax+1):
+            self.tableComp.removeRow(rowmin)
+        g_component.pop(idx)
+        self.tableComp.resizeColumnsToContents()
+        self.widgetNozzle.trigger_refresh()
 
     def patient_setup(self):
         directory = QFileDialog.getExistingDirectory(self, "Select Patient CT directory")
         if directory == "": return
-        self.patient.patient_setup(directory)
-        self.labelPatientDir.setText("Directory: "+self.patient.directory)
-        for f in self.patient.files:
+        g_patient.patient_setup(directory)
+        self.labelPatientDir.setText("Directory: "+g_patient.directory)
+        for f in g_patient.files:
             self.listPatient.addItem(QListWidgetItem(str(f)))
         
     def patient_view(self):
@@ -889,11 +958,24 @@ class MainWindow(QMainWindow, form_class):
             current = self.listPatient.currentItem().text()
         else:
             current = ""
-        pat = PatientWindow(self, self.patient.dirctory, self.patient.files, current)
+        pat = PatientWindow(self, current)
         r = pat.return_para()
         if r:
-            self.patient.directory = pat.dirname
-            self.patient.files = pat.files
+            if g_patient.is_real:
+                self.radioRealPatient.click()
+            else:
+                self.radioWaterPhantom.click()
+            self.labelPatientDir.setText("Directory: "+g_patient.directory)
+            self.listPatient.clear()
+            for f in g_patient.files:
+                self.listPatient.addItem(QListWidgetItem(str(f)))
+    
+    def patient_kind(self):
+        radio = self.sender()
+        if "real" in radio.text().lower():
+            g_patient.is_real = True
+        else:
+            g_patient.is_real = False
 
     def simulation(self):
         sim = SimulationWindow(self)
@@ -910,13 +992,13 @@ class MainWindow(QMainWindow, form_class):
         fname = QFileDialog.getOpenFileName(self, filter = g_excel_extension[0])[0]
         if fname == "": return
         
-        self.listConv.clear()
+        self.listConvalgo.clear()
         self.elements = {}
         
         lst = fname.split('/')
         name = lst[-1]
         path = '/'.join(i for i in lst[:-1])
-        self.labelConv.setText("File: "+name)
+        self.labelConvalgoFile.setText("File: "+name)
         import getconvalgo as gc
         convalgo = gc.GetParaFromConvAlgo(path, name)
 
@@ -948,13 +1030,136 @@ class MainWindow(QMainWindow, form_class):
             else:
                 s = convert(value[0], value[1])
 
-            para = QListWidgetItem(self.listConv)
+            para = QListWidgetItem(self.listConvalgo)
             parameter = self.Item()
-            parameter.add_parameter(key, str(s))
-            self.convalgo.append(parameter)
-            self.listConv.setItemWidget(para, parameter)
-            self.listConv.addItem(para)
+            parameter.save(f'{key} {s}')
+            g_convalgo.append(f'{key} {s}')
+            self.listConvalgo.setItemWidget(para, parameter)
+            self.listConvalgo.addItem(para)
             para.setSizeHint(parameter.sizeHint())
+
+class Painter(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setSizePolicy(
+            QSizePolicy.Preferred,
+            QSizePolicy.Expanding
+        )
+        self.painter = QPainter()
+        self.paintEvent(self)
+                
+        self.zmax = 0.00
+        self.zeros = None
+
+    def trigger_refresh(self):
+        self.update()
+
+    def paintEvent(self,event):
+        self.setAutoFillBackground(True)
+        self.setBackgroundRole(QPalette.Base)
+        self.painter.begin(self)
+        self.draw_axis()
+        self.draw()
+        self.painter.end()
+
+    def draw_axis(self):
+        self.painter.setPen(QPen(Qt.blue,2))
+        self.painter.drawLine(0,int(self.height()/2),self.width(),int(self.height()/2))
+        self.painter.setPen(QPen(Qt.black,2))
+        matrices = QFontMetrics(self.font())
+        width = matrices.width('beam')
+        self.painter.drawText(0,(int(self.height()/2))+10, 'beam')
+        self.painter.drawLine(width+5,0,width+5,self.height())
+        self.painter.setPen(QPen(Qt.black,1))
+        self.zeros = [width+6, int(self.height()/2)]
+
+    def draw(self):
+        if len(g_component) < 1:
+            return
+
+        for component in g_component:
+            self.container(component)
+
+    def container(self, component):
+        for subname, subcomp in component.subcomponent.items():
+            pos = {'HLX':"0.0 mm",'HLY':"0.0 mm",'HLZ':"0.0 mm",
+               'RMin':"0.0 mm",'RMax':"0.0 mm",
+               'HL':"0.0 mm", 'SPhi':"0.0 deg", 'DPhi':"0.0 deg",
+               'RotX':"0.0 deg",'RotY':"0.0 deg",'RotZ':"0.0 deg",
+               'TransX':"0.0 mm",'TransY':"0.0 mm",'TransZ':"0.0 mm"}
+            ftype = ''
+            for para in subcomp.parameters:
+                if 'Type' in para.name: 
+                    ftype = para.value.replace('"','').replace("'",'').replace(' ','')
+                if any(para.name.lower() == i.lower() for i in pos.keys()):
+                    value, unit = component.calculate_value(para)
+                    if unit == 'mm':
+                        value = value / 10
+                    elif unit == 'm':
+                        value *= 100
+
+                    pos[para.name] = value
+
+            for key, val in pos.items():
+                if str(type(val)) == "<class 'str'>":
+                    temp = val.split(' ')
+                    pos[key] = float(temp[0])
+
+            if pos['TransZ'] > self.zmax:
+                self.zmax = pos['TransZ']
+
+            if ftype == '': ftype = 'Other'
+
+            is_interior = False
+            if subname != 'Basis':
+                is_interior = True
+            self.figure(ftype, pos, is_interior)
+
+    def figure(self, ftype, pos, is_interior=False):
+        if is_interior: return
+        hexcodes = { # Name:(Container, Interior)
+            'TsBox':('#07098a','#1be32c'), 'TsCylinder':('#9d1be3','#1be32c'),
+            'TsRangeModulator':('#373d36','#f0e373'),
+            'TsDipoleMagnet':('#23fabd','#23d2fa'),
+            'Group':('#ffff00','#59ff00'),
+            'Other':('#000000','#000000')}
+        color = QColor(0,0,0)
+        if is_interior: idx = 1
+        else: idx = 0
+        color.setNamedColor(hexcodes[ftype][idx])
+        self.painter.setBrush(color)
+        yaxis = pos['TransY']
+        zaxis = pos['TransZ']
+        if ftype == "TsBox":
+            height = pos['HLY']
+            width = pos['HLZ']
+        elif ftype == "TsCylinder":
+            height = pos['RMax']
+            width = pos['HL']
+        elif ftype == "TsRangeModulator":
+            # FIXME
+            height = pos['RMax']*2
+            width = pos['HL']
+        elif ftype == "TsDipoleMagnet":
+            height = pos['HLY']
+            width = pos['HLZ']
+        else:
+            height = pos['HLY']
+            width = pos['HLZ']
+            if height == 0.0: height = 10.0
+            if width == 0.0: width = 10.0
+
+        if pos['TransZ'] == self.zmax:
+            start = (self.zeros[0],self.zeros[1]-5*height/2)
+            end = (self.zeros[0]+5*width,self.zeros[1]+5*height/2)
+        else:
+            relz = self.zmax - pos['TransZ']
+            start = (self.zeros[0]+3*relz,self.zeros[1]-5*height/2)
+            end = (self.zeros[0]+3*relz+5*width, self.zeros[1]+5*height/2)
+        
+        #print(int(start[0]),int(start[1]),int(end[0]-start[0]),int(end[1]-start[1]))
+
+        self.painter.drawRect(int(start[0]),int(start[1]),int(end[0]-start[0]),int(end[1]-start[1]))
 
 if __name__ == '__main__':
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"

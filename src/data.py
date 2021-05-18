@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass, field
+from copy import copy 
 
 class Component():
     @dataclass(order=True)
@@ -31,6 +32,43 @@ class Component():
             if self.name is not None and self.name != "":
                 fullname += f'/{self.name}'
             return fullname
+
+        def unit(self):
+            prefix = { # Name:Prefix
+              'yota':'Y', 'zeta':'Z', 'exa':'E', 'peta':'P', 'tera':'T', 'giga':'G', 'mega':'M', 
+              'kilo':'k', 'hecto':'h', 'deca':'da', 'deci':'d', 'centi':'c', 'milli':'m',
+              'micro':'u', 'nano':'n', 'pico':'p', 'femto':'f', 'atto':'a', 'zepto':'z', 'yocto':'y'
+            }
+            unit = { # Name:Symbol
+              'meter':'m', 'gram':'g', 'second':'s', 'ampere':'A', 'kelvin':'K', 'mole':'mol', 'candela':'cd',
+              'herz':'Hz', 'newton':'N', 'pascal':'Pa', 'joule':'J', 'watt':'W', 'coulomb':'C', 'volt':'V',
+              'farad':'F', 'ohm':'ohm', 'siemens':'S', 'weber':'Wb', 'tesla':'T', 'henry':'H',
+              'lumen':'lm', 'lux':'lx', 'becquerel':'Bq', 'gray':'Gy', 'sievert':'Sv',
+              'radian':'rad', 'degree':'deg'
+            }
+
+            unit_index = -999
+
+            temp = self.value.split(' ')
+            while any('' == i for i in temp):
+                temp.remove('')
+
+            for idx, txt in enumerate(temp):
+                if any(txt[0] == i for i in prefix.values()):
+                    found_prefix = txt[0]
+                    found_unit = txt[1:]
+                    unit_index = idx
+                elif txt[0:1] == prefix['deca']:
+                    found_prefix = txt[0:1]
+                    found_unit = txt[2:]
+                    unit_index = idx
+                else:
+                    found_prefix = ''
+                    found_unit = ''
+            if not unit_index < 0: temp.pop(unit_index)
+            unitless_value = ' '.join(i for i in temp)
+
+            return unitless_value, found_prefix, found_unit
         
     @dataclass(order=True)
     class SubComponent:
@@ -201,9 +239,13 @@ class Component():
         for sub, lines in paras.items():
             self.__subcomponent[sub] = self.SubComponent(name=sub)
             for line in lines:
-                line = line.replace('\t','').replace('\n', '').replace(' = ', '=')
+                line = line.split('#')[0]
+                line = line.replace('\t','').replace('\n', '')
+                line = line.split(' ')
+                while any('' == i for i in line): line.remove('')
+                line = ' '.join(i for i in line)
                 if line == '' or line.startswith('#'): continue
-                line = line.split('=')
+                line = line.split(' = ')
                 if line[0].startswith('includeFile'):
                     self.modify_file(line[-1])
                     continue
@@ -245,17 +287,145 @@ class Component():
           'Compensator':['Basis'],
           'PhaseSpaceVolume':['Basis'],
           'Contour':['Basis']
-}
+        }
+
+    def find_parameter(self, name):
+        for subname, subcomp in self.subcomponent.items():
+            for para in subcomp.parameters:
+                if name in para.fullname():
+                    return para.value
+
+        for fname in self.imported:
+            lines = open(fname, 'r').readlines()
+            for line in lines:
+                line = line.split('#')[0]
+                line = line.replace('\t','').replace('\n', '')
+                line = line.split(' ')
+                while any('' == i for i in line): line.remove('')
+                line = ' '.join(i for i in line)
+                line = line.split(' = ')
+
+                fullname = line[0]
+                value = line[-1]
+                if name in fullname:
+                    return value
+
+        base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+        path = os.path.join(base_path,'data/TopasDefaults.tps')
+        for line in open(path,'r').readlines():
+            line = line.split('=')
+            fullname = line[0]
+            value = line[-1]
+            if name in fullname:
+                return value
+
+        return None
+
+    def calculate_value(self, para):
+        if 'v' in para.vtype: return
         
+        def is_numeric(value):
+            if value.isnumeric():
+                return True
+            elif value[0].isalpha():
+                return False
+            else:
+                is_str = False
+                if '-' == value[0]:
+                    tmp = value[1:]
+                else:
+                    tmp = value
+                if '.' in tmp:
+                    tmp = tmp.split('.')
+                    for val in tmp:
+                        if val == '': continue
+                        if not val.isnumeric(): is_str = True
+                if is_str: return False
+                else: return True
+        
+        def is_operator(value):
+            operators = ['+', '-', '*']
+            if any(value == i for i in operators):
+                return True
+            else:
+                return False
+
+        value, prefix, unit = para.unit()
+
+        final_value = {}
+        operators = {}
+
+        temp = value.split(' ')
+
+        if type(temp[0]) == int and temp[0] == len(temp[1:]): return
+
+        for idx, val in enumerate(temp):
+            if is_operator(val):
+                operators[idx] = val
+                continue
+
+            if is_numeric(val):
+                final_value[idx] = val
+                continue
+            else:
+                tmp = copy(para)
+                tmp.value = self.find_parameter(val)
+                numeric_value = tmp.value.split(' ')[0]
+                if is_numeric(numeric_value):
+                    final_value[idx] = numeric_value
+                    continue
+                elif tmp.value is None:
+                    final_value[idx] = 0.0
+                    continue
+                else:
+                    final_value[idx], uselsess = self.calculate_value(tmp)
+
+        value_sum = 0.0
+
+        if len(operators) < 1:
+            if 'i' in para.vtype or (not '.' in str(final_value[0])):
+                final_value[0] = int(final_value[0])
+            else:
+                final_value[0] = float(final_value[0])
+
+            return final_value[0], f'{prefix}{unit}'
+
+        first = None
+        oper_idx = list(operators.keys())
+        oper_idx.sort()
+        for idx in oper_idx:
+            if first is None:
+                first = final_value[idx-1]
+            else:
+                first = outvalue
+            second = final_value[idx+1]
+
+            if 'i' in para.vtype or (not '.' in first and not '.' in second):
+                first = int(first)
+                second = int(second)
+            else:
+                first = float(first)
+                second = float(second)
+
+            if operators[idx] == '+':
+                outvalue = first + second
+            elif operators[idx] == '-':
+                outvalue = first - second
+            elif operators[idx] == '*':
+                outvalue = first * second
+
+        return outvalue, f'{prefix}{unit}'
+
 class Patient():
     def __init__(self):
-        self.directory = None
+        self.directory = ""
         self.files = []
+        self.is_real = None
         
     def patient_setup(self, dirname):
         if dirname == "": return
         self.directory = dirname
         for f in os.listdir(self.directory):
             if not f.endswith('.dcm'): continue
-            self.files.append(i)
+            self.files.append(f)
         self.files.sort()
