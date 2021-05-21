@@ -20,10 +20,22 @@ g_text_extension = ["Text files (*.txt *.tps)", "Data files (*.dat)"]
 g_excel_extension = ["Excel files (*.xls *.xlms)"]
 
 g_save = None
+g_nozzle_mode = None
 g_template = []
 g_component = []
 g_patient = data.Patient()
-g_convalgo = []
+g_convalgo = {
+  'Number of Beams':[None, "int"],
+  '1st Scatterer':[None, "int"],
+  '2nd Scatterer':[None, "int"],
+  'Modulator':[None, "int"],
+  'Stop Position':[None, "int"],
+  'Energy':[None, "float"],
+  'BCM':[None, "str"]
+}
+g_main = []
+g_aperture = []
+g_compensator = []
 
 class ComponentWindow(QDialog):
     class Item(QWidget):
@@ -101,7 +113,7 @@ class ComponentWindow(QDialog):
         self.comboComp.addItem('Select')
         self.comboComp.addItem('New')
         self.comboComp.addItem("Load")
-        self.comboComp.insertSeparator(2)
+        self.comboComp.insertSeparator(3)
         for key in self.template.component_list().keys():
             self.comboComp.addItem(key)
         self.comboComp.currentTextChanged.connect(lambda: self.new_template(self.comboComp.currentText()))
@@ -481,8 +493,7 @@ class PatientWindow(QDialog):
     def set_action(self):
         self.labelDir.setText("Directory: "+g_patient.directory)
         current_idx = 0
-        for idx, item in enumerate(g_patient.files):
-            if not item.startswith("CT"): continue
+        for idx, item in enumerate(g_patient.CT):
             if item == self.current: current_idx = idx
             self.comboFiles.addItem(item)
         self.comboFiles.setCurrentIndex(current_idx)
@@ -514,13 +525,7 @@ class PatientWindow(QDialog):
         newdir = QFileDialog.getExistingDirectory(self, "Select Patient CT directory")
         if newdir == g_patient.directory or newdir == "": return
         else:
-            g_patient.directory = newdir
-            files = []
-            for f in os.listdir(g_patient.directory):
-                if not f.endswith('.dcm'): continue
-                files.append(f)
-            files.sort()
-            g_patient.files = files
+            g_patient.patient_setup(newdir)
             self.set_action()
     
     def change_image(self, button):
@@ -530,8 +535,6 @@ class PatientWindow(QDialog):
         if button == self.pushPrev:
             if self.comboFiles.currentIndex() == 0: return
             self.comboFiles.setCurrentIndex(self.comboFiles.currentIndex()-1)
-    
-
 
     def return_para(self):
         return super().exec_()
@@ -566,6 +569,8 @@ class SimulationWindow(QDialog):
             fname = QFileDialog.getOpenFileName(self, filter = "Python files (*.py)")[0]
             if fname == "": return
             self.labelMacro.setText(" Custom File: "+fname.split('/')[-1])
+        else:
+            fname = f'{self.comboMacro.currentText().lower()}.py'
         import config as cfg
         proton = cfg.Proton()
         proton.load(fname)
@@ -685,18 +690,77 @@ class MainWindow(QMainWindow, form_class):
         self.setupUi(self)
 
         self.widgetNozzle = Painter()
-        self.gridLayout_3.addWidget(self.widgetNozzle,3,0)
         #self.painter = painter.Painter(self.widgetNozzle)
-
         self.comp_to_table_map = {}
-
         self.macros = []
+
+        self.set_icons()
         self.set_actions()
-        self.tableComp.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.set_layout()
         self.show()
 
+    def set_icons(self):
+        # Remove this function when coding is completed.
+        icon_dir = os.path.join(base_path,'icons')
+        ncc = QIcon(os.path.join(icon_dir, 'ncc.png'))
+        ext = QIcon(os.path.join(icon_dir, 'exit.png'))
+        new = QIcon(os.path.join(icon_dir, 'new.png'))
+        opn = QIcon(os.path.join(icon_dir, 'open.png'))
+        save = QIcon(os.path.join(icon_dir, 'save.png'))
+        write = QIcon(os.path.join(icon_dir, 'write.png'))
+        delete = QIcon(os.path.join(icon_dir, 'delete.png'))
+        view = QIcon(os.path.join(icon_dir, 'view.png'))
+        run = QIcon(os.path.join(icon_dir, 'run.png'))
+        
+        self.setWindowIcon(QIcon(os.path.join(base_path,'icons/ncc.png')))
+        self.actionFileNew.setIcon(new)
+        self.actionFileOpen.setIcon(opn)
+        self.actionFileSave.setIcon(save)
+        self.actionExit.setIcon(ext)
+        self.actionTempNew.setIcon(new)
+        self.actionTempModify.setIcon(write)
+        self.actionTempDelete.setIcon(delete)
+        self.actionCompAdd.setIcon(new)
+        self.actionCompModify.setIcon(write)
+        self.actionCompDelete.setIcon(delete)
+        self.actionPatientSetup.setIcon(opn)
+        self.actionPatientView.setIcon(view)
+        self.actionSimLoad.setIcon(opn)
+
+    def set_layout(self):
+        self.tableComp.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        self.gridLayout_2.addWidget(self.widgetNozzle,1,0)
+
+        self.radioScatter = QRadioButton("Scatter")
+        self.radioScanning = QRadioButton("Scanning")
+        layoutNozzleMode = QHBoxLayout()
+        layoutNozzleMode.addWidget(self.radioScatter)
+        layoutNozzleMode.addWidget(self.radioScanning)
+        self.groupNozzleMode.setLayout(layoutNozzleMode)
+
+        self.radioRealPatient = QRadioButton("Real Patient")
+        self.radioWaterPhantom = QRadioButton("Water Phantom")
+        layoutPatientMode = QHBoxLayout()
+        layoutPatientMode.addWidget(self.radioRealPatient)
+        layoutPatientMode.addWidget(self.radioWaterPhantom)
+        self.groupPatientType.setLayout(layoutPatientMode)
+
+        layoutConvalgo = QGridLayout()
+        self.conv_values = []
+        for irow, text in enumerate(g_convalgo.keys()):
+            label = QLabel(text)
+            edit = QLineEdit()
+            self.conv_values.append(edit)
+            layoutConvalgo.addWidget(label, irow, 0)
+            layoutConvalgo.addWidget(edit, irow, 1)
+        self.groupConvalgo.setLayout(layoutConvalgo)
+
+        self.lineRTP.setReadOnly(True)
+        self.lineRTS.setReadOnly(True)
+        self.lineRD.setReadOnly(True)
+
     def set_actions(self):
-        # Menubar
         ### File
         self.actionFileNew.triggered.connect(self.new_simulation)
         self.actionFileOpen.triggered.connect(self.open_cfg)
@@ -718,7 +782,7 @@ class MainWindow(QMainWindow, form_class):
         ### Simulation
         self.actionSimLoad.triggered.connect(self.simulation)
         ### Run
-        self.actionRun = QAction(QIcon('../icons/run.png'), 'Run', self)
+        self.actionRun = QAction(QIcon(os.path.join(base_path,'icons/run.png')), 'Run', self)
         self.actionRun.setShortcut('Ctrl+R')
         self.actionRun.setStatusTip('Run Topas simulation')
         self.actionRun.triggered.connect(self.run)
@@ -752,6 +816,8 @@ class MainWindow(QMainWindow, form_class):
         self.toolBar.addWidget(label)
         self.toolBar.addAction(self.actionPatientSetup)
         self.toolBar.addAction(self.actionPatientView)
+        self.toolBar.addSeparator()
+
         self.toolBar.addAction(self.actionPatientConv)
         self.toolBar.addSeparator()
 
@@ -778,9 +844,9 @@ class MainWindow(QMainWindow, form_class):
         self.tableComp.itemDoubleClicked.connect(self.modify_component)
         
         # Patient
-        self.listPatient.setContextMenuPolicy(Qt.ActionsContextMenu)
-        self.listPatient.addAction(self.actionPatientView)
-        self.listPatient.itemDoubleClicked.connect(self.patient_view)
+        self.listPatientCT.setContextMenuPolicy(Qt.ActionsContextMenu)
+        self.listPatientCT.addAction(self.actionPatientView)
+        self.listPatientCT.itemDoubleClicked.connect(self.patient_view)
         
     # Functions
     def new_simulation(self):
@@ -950,12 +1016,15 @@ class MainWindow(QMainWindow, form_class):
         if directory == "": return
         g_patient.patient_setup(directory)
         self.labelPatientDir.setText("Directory: "+g_patient.directory)
-        for f in g_patient.files:
-            self.listPatient.addItem(QListWidgetItem(str(f)))
+        for f in g_patient.CT:
+            self.listPatientCT.addItem(QListWidgetItem(str(f)))
+        self.lineRTS.setText(g_patient.RTS)
+        self.lineRTP.setText(g_patient.RTP)
+        self.lineRD.setText(g_patient.RD)
         
     def patient_view(self):
-        if self.listPatient.count() != 0:
-            current = self.listPatient.currentItem().text()
+        if self.listPatientCT.count() != 0:
+            current = self.listPatientCT.currentItem().text()
         else:
             current = ""
         pat = PatientWindow(self, current)
@@ -966,9 +1035,12 @@ class MainWindow(QMainWindow, form_class):
             else:
                 self.radioWaterPhantom.click()
             self.labelPatientDir.setText("Directory: "+g_patient.directory)
-            self.listPatient.clear()
-            for f in g_patient.files:
-                self.listPatient.addItem(QListWidgetItem(str(f)))
+            self.listPatientCT.clear()
+            for f in g_patient.CT:
+                self.listPatientCT.addItem(QListWidgetItem(str(f)))
+            self.lineRTS.setText(g_patient.RTS)
+            self.lineRTP.setText(g_patient.RTP)
+            self.lineRD.setText(g_patient.RD)
     
     def patient_kind(self):
         radio = self.sender()
@@ -991,26 +1063,20 @@ class MainWindow(QMainWindow, form_class):
     def load_convalgo(self):
         fname = QFileDialog.getOpenFileName(self, filter = g_excel_extension[0])[0]
         if fname == "": return
-        
-        self.listConvalgo.clear()
-        self.elements = {}
-        
+                
         lst = fname.split('/')
         name = lst[-1]
         path = '/'.join(i for i in lst[:-1])
-        self.labelConvalgoFile.setText("File: "+name)
         import getconvalgo as gc
         convalgo = gc.GetParaFromConvAlgo(path, name)
+        g_convalgo['Number of Beams'][0] = len(convalgo.fscatterer)
+        g_convalgo['1st Scatterer'][0] = convalgo.fscatterer
+        g_convalgo['2nd Scatterer'][0] = convalgo.sscatterer
+        g_convalgo['Modulator'][0] = convalgo.modulator
+        g_convalgo['Stop Position'][0] = convalgo.stop
+        g_convalgo['Energy'][0] = convalgo.energy
+        g_convalgo['BCM'][0] = convalgo.bcm_name
 
-        dic = {
-          '1st Scatterer':[convalgo.fscatterer, "int"],
-          '2nd Scatterer':[convalgo.sscatterer, "int"],
-          'Modulator':[convalgo.modulator, "int"],
-          'Stop Position':[convalgo.stop, "int"],
-          'Energy':[convalgo.energy, "float"],
-          'BCM':[convalgo.bcm_name, "str"]
-        }
-        nbeam = len(convalgo.fscatterer)
         def convert(item, typ):
             if typ == "int":
                 i = int(item)
@@ -1019,24 +1085,18 @@ class MainWindow(QMainWindow, form_class):
             else:
                 i = item
             return i
-        for key, value in dic.items():
+        for idx, name in enumerate(g_convalgo.keys()):
+            value = g_convalgo[name]
             if str(type(value[0])) == "<class 'list'>":
-                for idx, val in enumerate(value[0]):
-                    value[0][idx] = convert(val, value[1])
+                for i, val in enumerate(value[0]):
+                    value[0][i] = convert(val, value[1])
                 if len(value[0]) == 1:
                     s = str(value[0][0])
                 else:
-                    s = ', '.join(str(i) for i in value[0])
+                    s = ', '.join(str(j) for j in value[0])
             else:
                 s = convert(value[0], value[1])
-
-            para = QListWidgetItem(self.listConvalgo)
-            parameter = self.Item()
-            parameter.save(f'{key} {s}')
-            g_convalgo.append(f'{key} {s}')
-            self.listConvalgo.setItemWidget(para, parameter)
-            self.listConvalgo.addItem(para)
-            para.setSizeHint(parameter.sizeHint())
+            self.conv_values[idx].setText(f'{s}')
 
 class Painter(QWidget):
     def __init__(self):

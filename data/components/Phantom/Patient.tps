@@ -1,0 +1,10 @@
+s:Ge/Patient/Parent = "PhantomBox"
+s:Ge/Patient/Type = "TsDicomPatient"
+s:Ge/Patient/Material = "G4_WATER"
+d:Ge/Patient/TransX = 0 mm
+d:Ge/Patient/TransY = 0 mm
+d:Ge/Patient/TransZ = 0 mm
+d:Ge/Patient/RotX = 0 deg
+d:Ge/Patient/RotY = 0 deg
+d:Ge/Patient/RotZ = 0 deg
+s:Ge/Patient/DicomDirectory = ""

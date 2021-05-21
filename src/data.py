@@ -277,16 +277,16 @@ class Component():
 
     def component_list(self):
         return {
+          'Beam':['Basis'],
           'MonitorChamber':['Basis', 'CylinderFrame', 'BoxFrame', 'CylinderLayer', 'BoxLayer'],
           'Scatterer':['Basis', 'Scatterer1', 'Lollipop', 'Scatterer2', 'Holder', 'Hole'],
           'RangeModulator':['LargeWheel','SmallWheel'], 
           'SMAG':['Basis','Dipole'],
           'VC':['Basis','XJaws', 'YJaws'],
           'Snout':['Basis','BrassBlock', 'BrassCone'],
-          'Apperture':['Basis'],
-          'Compensator':['Basis'],
+          'Phantom':['PhantomBox','WaterPhantom','Patient','PDD','DoseAtPhantom'],
           'PhaseSpaceVolume':['Basis'],
-          'Contour':['Basis']
+          'Contour':['Material','Parallel','Contour']
         }
 
     def find_parameter(self, name):
@@ -419,7 +419,10 @@ class Component():
 class Patient():
     def __init__(self):
         self.directory = ""
-        self.files = []
+        self.CT = []
+        self.RTP = None
+        self.RTS = None
+        self.RD = None
         self.is_real = None
         
     def patient_setup(self, dirname):
@@ -427,5 +430,15 @@ class Patient():
         self.directory = dirname
         for f in os.listdir(self.directory):
             if not f.endswith('.dcm'): continue
-            self.files.append(f)
-        self.files.sort()
+            if f.startswith('RN'):
+                self.RTP = f
+            elif f.startswith('RS'):
+                self.RTS = f
+            elif f.startswith('RD'):
+                self.RD = f
+            else:
+                self.CT.append(f)
+        self.CT.sort()
+
+    def determine_patient_type(self):
+        return

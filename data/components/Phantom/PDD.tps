@@ -1,0 +1,22 @@
+s:Ge/PDD/Parent = "WaterPhantom"
+s:Ge/PDD/Type = "TsBox"
+s:Ge/PDD/Material = "G4_WATER"
+d:Ge/PDD/HLX = 0.0 cm
+d:Ge/PDD/HLY = 0.0 cm
+d:Ge/PDD/HLZ = Ge/WaterPhantom/HLZ cm
+d:Ge/PDD/TransX = 0.0 cm
+d:Ge/PDD/TransY = 0.0 cm
+d:Ge/PDD/TransZ = 0.0 cm
+d:Ge/PDD/RotX = 0.0 deg
+d:Ge/PDD/RotY = 0.0 deg
+d:Ge/PDD/RotZ = 0.0 deg
+i:Ge/PDD/XBins = 0
+i:Ge/PDD/YBins = 0
+i:Ge/PDD/ZBins = 0
+
+s:Sc/PDD/Quantity = "DoseToWater"
+s:Sc/PDD/Component = "PDD"
+b:Sc/PDD/OutputToConsole = "False"
+s:Sc/PDD/OutputType = "csv"
+s:Sc/PDD/OutputFile = ""
+s:Sc/PDD/IfOutputFileAlreadyExists = "Overwrite"

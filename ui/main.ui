@@ -7,28 +7,43 @@
     <x>0</x>
     <y>0</y>
     <width>1298</width>
-    <height>586</height>
+    <height>784</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Proton Therapy Monte Carlo Simulation</string>
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../icons/ncc.png</normaloff>../icons/ncc.png</iconset>
+    <normaloff>../../../.designer/icons/ncc.png</normaloff>../../../.designer/icons/ncc.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_4">
-    <item row="0" column="0">
+   <layout class="QGridLayout" name="gridLayout_3">
+    <item row="0" column="0" rowspan="2">
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="labelCompTemp">
-        <property name="text">
-         <string>Template</string>
+      <property name="spacing">
+       <number>6</number>
+      </property>
+      <item row="0" column="0" colspan="2">
+       <widget class="QGroupBox" name="groupNozzleMode">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Mode</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="2" column="0" colspan="2">
        <widget class="QListWidget" name="listTemplates">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
@@ -38,27 +53,79 @@
         </property>
        </widget>
       </item>
+      <item row="4" column="0" colspan="2">
+       <widget class="QListView" name="listView">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="QLabel" name="label_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Nozzle</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="2">
+       <widget class="QLabel" name="label_3">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Filter</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0" rowspan="2" colspan="2">
+       <widget class="QGroupBox" name="groupConvalgo">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Parameters</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
-    <item row="0" column="2">
-     <layout class="QGridLayout" name="gridLayout_3">
-      <item row="2" column="0">
-       <widget class="QLabel" name="labelGeometry">
+    <item row="0" column="3" rowspan="2">
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="8" column="0" colspan="4">
+       <widget class="QListWidget" name="listMacro">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="text">
-         <string>Geometry Preview</string>
-        </property>
        </widget>
       </item>
-      <item row="0" column="0">
+      <item row="7" column="0" colspan="4">
        <widget class="QLabel" name="labelMacro">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -68,10 +135,106 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QListWidget" name="listMacro">
+      <item row="0" column="0" colspan="4">
+       <widget class="QLabel" name="labelPatientDir">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Directory:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="labelRD">
+        <property name="text">
+         <string>RD</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="4">
+       <widget class="QListWidget" name="listPatientCT">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="4">
+       <widget class="QLabel" name="labelCT">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>CT</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="4">
+       <widget class="QGroupBox" name="groupPatientType">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Patient Type</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="labelRTS">
+        <property name="text">
+         <string>RTS</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="labelRTP">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>RTP</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1" colspan="3">
+       <widget class="QLineEdit" name="lineRTS">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1" colspan="3">
+       <widget class="QLineEdit" name="lineRD">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1" colspan="3">
+       <widget class="QLineEdit" name="lineRTP">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -80,10 +243,16 @@
       </item>
      </layout>
     </item>
-    <item row="0" column="1">
+    <item row="0" column="1" rowspan="2" colspan="2">
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="2" column="0" colspan="3">
+      <item row="2" column="0">
        <widget class="QTableWidget" name="tableComp">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -237,65 +406,29 @@
         </column>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="labelConvalgo">
-        <property name="text">
-         <string>Convalgo</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0" rowspan="2">
-       <widget class="QListWidget" name="listConvalgo">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" colspan="3">
+      <item row="1" column="0">
        <widget class="QLabel" name="labelComp">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
-         <string>Components</string>
+         <string>Applied Components</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="labelConvalgoFile">
-        <property name="text">
-         <string>File:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="2">
-       <widget class="QRadioButton" name="radioWaterPhantom">
-        <property name="text">
-         <string>Water Phantom</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QRadioButton" name="radioRealPatient">
-        <property name="text">
-         <string>Real Patient</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1" colspan="2">
-       <widget class="QLabel" name="labelPatientDir">
-        <property name="text">
-         <string>Directory:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1" rowspan="2" colspan="2">
-       <widget class="QListWidget" name="listPatient">
+      <item row="0" column="0">
+       <widget class="QLabel" name="labelGeometry">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Geometry Preview</string>
         </property>
        </widget>
       </item>
@@ -374,7 +507,7 @@
   <action name="actionFileNew">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/new.png</normaloff>../icons/new.png</iconset>
+     <normaloff>../../../.designer/icons/new.png</normaloff>../../../.designer/icons/new.png</iconset>
    </property>
    <property name="text">
     <string>New</string>
@@ -389,7 +522,7 @@
   <action name="actionFileOpen">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/open.png</normaloff>../icons/open.png</iconset>
+     <normaloff>../../../.designer/icons/open.png</normaloff>../../../.designer/icons/open.png</iconset>
    </property>
    <property name="text">
     <string>Open</string>
@@ -401,7 +534,7 @@
   <action name="actionFileSave">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/save.png</normaloff>../icons/save.png</iconset>
+     <normaloff>../../../.designer/icons/save.png</normaloff>../../../.designer/icons/save.png</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -413,7 +546,7 @@
   <action name="actionExit">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/exit.png</normaloff>../icons/exit.png</iconset>
+     <normaloff>../../../.designer/icons/exit.png</normaloff>../../../.designer/icons/exit.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -428,7 +561,7 @@
   <action name="actionSimLoad">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/open.png</normaloff>../icons/open.png</iconset>
+     <normaloff>../../../.designer/icons/open.png</normaloff>../../../.designer/icons/open.png</iconset>
    </property>
    <property name="text">
     <string>Simulation</string>
@@ -437,7 +570,7 @@
   <action name="actionPatientSetup">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/open.png</normaloff>../icons/open.png</iconset>
+     <normaloff>../../../.designer/icons/open.png</normaloff>../../../.designer/icons/open.png</iconset>
    </property>
    <property name="text">
     <string>Setup</string>
@@ -446,7 +579,7 @@
   <action name="actionPatientView">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/view.png</normaloff>../icons/view.png</iconset>
+     <normaloff>../../../.designer/icons/view.png</normaloff>../../../.designer/icons/view.png</iconset>
    </property>
    <property name="text">
     <string>View</string>
@@ -458,7 +591,7 @@
   <action name="actionTempNew">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/new.png</normaloff>../icons/new.png</iconset>
+     <normaloff>../../../.designer/icons/new.png</normaloff>../../../.designer/icons/new.png</iconset>
    </property>
    <property name="text">
     <string>New</string>
@@ -467,7 +600,7 @@
   <action name="actionTempLoad">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/open.png</normaloff>../icons/open.png</iconset>
+     <normaloff>../../../.designer/icons/open.png</normaloff>../../../.designer/icons/open.png</iconset>
    </property>
    <property name="text">
     <string>Load</string>
@@ -476,7 +609,7 @@
   <action name="actionCompSave">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../.designer/icons/save.png</normaloff>../../../../../.designer/icons/save.png</iconset>
+     <normaloff>../../../../../../.designer/icons/save.png</normaloff>../../../../../../.designer/icons/save.png</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -485,7 +618,7 @@
   <action name="actionTempModify">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/write.png</normaloff>../icons/write.png</iconset>
+     <normaloff>../../../.designer/icons/write.png</normaloff>../../../.designer/icons/write.png</iconset>
    </property>
    <property name="text">
     <string>Modify</string>
@@ -499,7 +632,7 @@
   <action name="actionTempDelete">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/delete.png</normaloff>../icons/delete.png</iconset>
+     <normaloff>../../../.designer/icons/delete.png</normaloff>../../../.designer/icons/delete.png</iconset>
    </property>
    <property name="text">
     <string>Delete</string>
@@ -508,7 +641,7 @@
   <action name="actionCompAdd">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/new.png</normaloff>../icons/new.png</iconset>
+     <normaloff>../../../.designer/icons/new.png</normaloff>../../../.designer/icons/new.png</iconset>
    </property>
    <property name="text">
     <string>Add</string>
@@ -527,7 +660,7 @@
   <action name="actionCompModify">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/write.png</normaloff>../icons/write.png</iconset>
+     <normaloff>../../../.designer/icons/write.png</normaloff>../../../.designer/icons/write.png</iconset>
    </property>
    <property name="text">
     <string>Modify</string>
@@ -536,7 +669,7 @@
   <action name="actionCompDelete">
    <property name="icon">
     <iconset>
-     <normaloff>../icons/delete.png</normaloff>../icons/delete.png</iconset>
+     <normaloff>../../../.designer/icons/delete.png</normaloff>../../../.designer/icons/delete.png</iconset>
    </property>
    <property name="text">
     <string>Delete</string>
