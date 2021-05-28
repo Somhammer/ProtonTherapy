@@ -19,10 +19,13 @@ form_class = uic.loadUiType(os.path.join(base_path,'ui','main.ui'))[0]
 g_text_extension = ["Text files (*.txt *.tps)", "Data files (*.dat)"]
 g_excel_extension = ["Excel files (*.xls *.xlms)"]
 
+
+g_outdir = os.path.join(base_path, 'prod', datetime.today().strftime('%y%m%d'))
 g_save = None
 g_nozzle_mode = None
+# Solid component: Below components are not changed for each beam sequences.
 g_template = []
-g_component = []
+g_component = [] # nozzle
 g_patient = data.Patient()
 g_convalgo = {
   'Number of Beams':[None, "int"],
@@ -31,11 +34,14 @@ g_convalgo = {
   'Modulator':[None, "int"],
   'Stop Position':[None, "int"],
   'Energy':[None, "float"],
-  'BCM':[None, "str"]
+  'BCM':[None, "str"],
+  'BWT':[None, "str"]
 }
+# Liquid component: Below components are changed for each beam sequences.
 g_main = []
 g_aperture = []
 g_compensator = []
+g_phantom = []
 
 class ComponentWindow(QDialog):
     class Item(QWidget):

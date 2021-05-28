@@ -1,0 +1,9 @@
+s:Ge/Phantom/Type = "Group"
+s:Ge/Phantom/Material = "G4_WATER"
+d:Ge/Phantom/TransX = 0 mm
+d:Ge/Phantom/TransY = 0 mm
+d:Ge/Phantom/TransZ = 0 mm
+d:Ge/Phantom/RotX = 0 deg
+d:Ge/Phantom/RotY = 0 deg
+d:Ge/Phantom/RotZ = 0 deg
+s:Ge/Phantom/DicomDirectory = ""

@@ -77,11 +77,21 @@ class Component():
         draw: bool = False
         
     def __init__(self):
+        self.base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+        self.__outname = None
         self.__name = None
         self.__ctype = None
         self.__imported = list()
         self.__subcomponent = {'Basis':self.SubComponent(name='Basis')}
     
+    @property
+    def outname(self):
+        return self.__outname
+
+    @outname.setter
+    def outname(self, outname):
+        self.__outname = outname
+
     @property     
     def name(self):
         return self.__name
@@ -208,7 +218,20 @@ class Component():
             self.name = fname.split('/')[-1].split('.')[0]
             self.ctype = self.name
         else:
-            return
+            finditem = False
+            component_path = os.path.join(self.base_path, 'data/component')
+            for directory in os.listdir(component_path):
+                if fname == directory: 
+                    fname = os.path.join(component_path, directory)
+                    finditem = True
+                    continue
+                for f in os.listdir(os.path.join(component_path, directory)):
+                    if fname == f or fname == os.path.join(directory, f):
+                        fname = os.path.join(component_path, directory, f)
+                        finditem = True
+                        continue
+            if not finditem:
+                return
         paras = {}
         if isdir:
             subs = [i for i in self.component_list()[self.name]]
@@ -284,7 +307,7 @@ class Component():
           'SMAG':['Basis','Dipole'],
           'VC':['Basis','XJaws', 'YJaws'],
           'Snout':['Basis','BrassBlock', 'BrassCone'],
-          'Phantom':['PhantomBox','WaterPhantom','Patient','PDD','DoseAtPhantom'],
+          'Phantom':['Basis','WaterPhantom','Patient','PDD','DoseAtPhantom'],
           'PhaseSpaceVolume':['Basis'],
           'Contour':['Material','Parallel','Contour']
         }
@@ -310,8 +333,8 @@ class Component():
                 if name in fullname:
                     return value
 
-        base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-        path = os.path.join(base_path,'data/TopasDefaults.tps')
+
+        path = os.path.join(self.base_path,'data/TopasDefaults.tps')
         for line in open(path,'r').readlines():
             line = line.split('=')
             fullname = line[0]

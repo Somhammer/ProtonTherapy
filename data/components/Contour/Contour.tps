@@ -1,0 +1,13 @@
+s:Ge/Contour/Parent = "Patient"
+s:Ge/Contour/Type = "G4ExtrudedSolid"
+s:Ge/Contour/Material = ""
+d:Ge/Contour/HLZ = 0.0 mm
+d:Ge/Contour/TransX = 0.0 mm
+d:Ge/Contour/TransZ = 0.0 mm
+dv:Ge/Contour/Off1 = 2 0 0 mm
+dv:Ge/Contour/Off2 = 2 0 0 mm
+u:Ge/Contour/Scale1 = 1.000000
+u:Ge/Contour/Scale2 = 1.000000
+s:Ge/Contour/ParallelWorldName = ""
+b:Ge/Contour/IsParallel = "True"
+dv:Ge/Contour/Polygons = 1 0 

@@ -7,7 +7,7 @@ class GetParaFromConvAlgo():
     stop = None # stop position
     energy = None # beam energy
     bcm_name = None
-    time = None # BCM time
+    bwt = None # beam weigth time
     bcm = None
 
     def __init__(self, path, conv):
@@ -37,9 +37,9 @@ class GetParaFromConvAlgo():
  
         bcm_sheet = wb['BCM']
        
-        GetParaFromConvAlgo.time = []
+        GetParaFromConvAlgo.bwt = []
         for row in range(1, bcm_sheet.nrows):
-            GetParaFromConvAlgo.time.append(bcm_sheet.col_values(0)[row])
+            GetParaFromConvAlgo.bwt.append(bcm_sheet.col_values(0)[row])
 
         idx = 999
         for col in range(0, bcm_sheet.ncols):
@@ -71,11 +71,11 @@ class GetParaFromConvAlgo():
 
         bcm_sheet = wb['BCM']
        
-        GetParaFromConvAlgo.time = []
+        GetParaFromConvAlgo.bwt = []
         for cell in bcm_sheet['A']:
             if cell.row == 1: continue
             if cell.value == None: break
-            GetParaFromConvAlgo.time.append(cell.value)
+            GetParaFromConvAlgo.bwt.append(cell.value)
 
         for cell in bcm_sheet[1]:
             if cell.value == bcm:
