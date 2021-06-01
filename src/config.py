@@ -1,5 +1,6 @@
 import os, sys
 import inspect
+import ast
 
 class Proton():
     def __init__(self):
@@ -14,13 +15,18 @@ class Proton():
             del sys.modules[module]
         except BaseException as err:
             pass
-
         try:
             import importlib
             self.module = importlib.import_module('src.'+module)
         except BaseException as err:
             serr = str(err)
             print("Error to load the module src/" + module + ": " + serr)
+    
+    def name(self, fname):
+        f = open(fname,'r')
+        line = '\n'.join(i for i in f.readlines())
+        p = ast.parse(line)
+        return [node.name for node in ast.walk(p) if isinstance(node, ast.ClassDef)][0]
 
     def process(self, name = None):
         if name is not None:
@@ -46,7 +52,8 @@ class Topas():
         import subprocess
         def call_subprocess(cmd):
             cmd = cmd.split(' ')
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print(cmd)
+            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = p.communicate()
             print(out.decode('utf-8'))
             print(err.decode('utf-8'))
@@ -74,8 +81,6 @@ class Topas():
                 for item in cmds:
                     proc.join()
         elif str(type(script)) == "<class 'list'>" and len(script) == 1:
-            print(script[0])
             call_subprocess(script[0])
         else:
-            print(script)
             call_subprocess(script)

@@ -10,7 +10,7 @@ class Component():
         directory: str = None
         name: str = None
         value: str = None
-        darw: bool = False
+        draw: bool = False
         
         def compare(self, other):
             if other.__class__ is self.__class__:
@@ -198,8 +198,8 @@ class Component():
                 self.__subcomponent[subname].parameters.append(new)
                     
     def modify_paraname(self, subname, old, new):
-        old = self.__split_paraname()
-        new = self.__split_paraname()
+        old = self.__split_paraname(old)
+        new = self.__split_paraname(new)
         for para in self.__subcomponent[subname].parameters:
             if para.compare(old):
                 para.vtype = new[0]
@@ -219,19 +219,20 @@ class Component():
             self.ctype = self.name
         else:
             finditem = False
-            component_path = os.path.join(self.base_path, 'data/component')
+            component_path = os.path.join(self.base_path, 'data/components')
             for directory in os.listdir(component_path):
                 if fname == directory: 
                     fname = os.path.join(component_path, directory)
                     finditem = True
                     continue
                 for f in os.listdir(os.path.join(component_path, directory)):
-                    if fname == f or fname == os.path.join(directory, f):
+                    if fname+'.tps' == f or fname+'.tps' == os.path.join(directory, f):
                         fname = os.path.join(component_path, directory, f)
                         finditem = True
                         continue
             if not finditem:
                 return
+
         paras = {}
         if isdir:
             subs = [i for i in self.component_list()[self.name]]
@@ -260,7 +261,8 @@ class Component():
                 paras[subname].append(line)
 
         for sub, lines in paras.items():
-            self.__subcomponent[sub] = self.SubComponent(name=sub)
+            if not sub in self.__subcomponent:
+                self.__subcomponent[sub] = self.SubComponent(name=sub)
             for line in lines:
                 line = line.split('#')[0]
                 line = line.replace('\t','').replace('\n', '')
@@ -332,7 +334,6 @@ class Component():
                 value = line[-1]
                 if name in fullname:
                     return value
-
 
         path = os.path.join(self.base_path,'data/TopasDefaults.tps')
         for line in open(path,'r').readlines():
@@ -438,6 +439,19 @@ class Component():
                 outvalue = first * second
 
         return outvalue, f'{prefix}{unit}'
+
+    def fulltext(self):
+        text = ""
+        for item in self.imported:
+                text += f"includeFile = {item}\n"
+        text += "\n"
+        for subcomp in self.subcomponent.values():
+            if not subcomp.draw: continue
+            for para in subcomp.parameters:
+                if not para.draw: continue
+                text += f'{para.fullname()} = {para.value}\n'
+            text += '\n'
+        return text
 
 class Patient():
     def __init__(self):

@@ -1,5 +1,7 @@
 import os, sys
 import time
+import datetime
+import subprocess
 import pydicom as dicom
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -20,7 +22,7 @@ g_text_extension = ["Text files (*.txt *.tps)", "Data files (*.dat)"]
 g_excel_extension = ["Excel files (*.xls *.xlms)"]
 
 
-g_outdir = os.path.join(base_path, 'prod', datetime.today().strftime('%y%m%d'))
+g_outdir = os.path.join(base_path, 'prod', datetime.date.today().strftime('%y%m%d'))
 g_save = None
 g_nozzle_mode = None
 # Solid component: Below components are not changed for each beam sequences.
@@ -28,6 +30,7 @@ g_template = []
 g_component = [] # nozzle
 g_patient = data.Patient()
 g_convalgo = {
+  'File':[None,"str"],
   'Number of Beams':[None, "int"],
   '1st Scatterer':[None, "int"],
   '2nd Scatterer':[None, "int"],
@@ -323,17 +326,7 @@ class ComponentWindow(QDialog):
         self.update_preview()
 
     def update_preview(self):
-        text = ""
-        for item in self.template.imported:
-                text += f"includeFile = {item}\n"
-        text += "\n"
-        for subcomp in self.template.subcomponent.values():
-            if not subcomp.draw: continue
-            for para in subcomp.parameters:
-                if not para.draw: continue
-                text += f'{para.fullname()} = {para.value}\n'
-            text += '\n'
-        self.textPreview.setText(text)
+        self.textPreview.setText(self.template.fulltext())
         
     def clear_all(self):
         self.template = data.Component()
@@ -546,29 +539,56 @@ class PatientWindow(QDialog):
         return super().exec_()
 
 class SimulationWindow(QDialog):
+    class Item(QWidget):
+        # Write items in listWidget
+        def __init__(self):
+            QWidget.__init__(self, flags=Qt.Widget)
+            self.layout = QBoxLayout(QBoxLayout.LeftToRight)
+            self.label = QLabel()
+            self.checkbox = QCheckBox()
+            self.lineValue = QLineEdit()
+            self.buttonOpen = QPushButton("Open")
+            self.buttonOpen.clicked.connect(lambda: self.click_open)
+            self.lineValue.setMouseTracking(True)
+
+        def click_open(self):
+            if self.checkbox.name().lower() == 'convalgo': fextension = g_text_extension
+            if self.checkbox.name().lower() == 'patient': fextension = g_excel_extension
+            fname = QFileDialog.getOpenFileName(self, initialFilter = fextension[0], filter='\n'.join(i for i in fextension))[0]
+            self.lineValue.setText(fname)
+
+        def make_checkbox(self, name, value):
+            self.checkbox.setText(name)
+            self.lineValue.setText(str(value))
+            self.checkbox.setChecked(True)
+            self.layout.addWidget(self.checkbox)
+            self.layout.addWidget(self.lineValue)
+            self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
+            if any(i in name for i in ['ConvAlgo','Patient']):
+                self.layout.addWidget(self.buttonOpen)
+            self.setLayout(self.layout)
+
     def __init__(self, parent):
         super(SimulationWindow, self).__init__(parent)
         uic.loadUi(os.path.join(base_path,'ui','simulation.ui'), self)
 
-        self.functions = []
+        self.instance = None
         self.set_action()
         self.show()
 
     def set_action(self):
-        self.pushAdd.clicked.connect(self.add_function)
-        self.pushDelete.clicked.connect(self.delete_function)
+        self.pushAccept.clicked.connect(self.write_output)
         self.pushOk.clicked.connect(self.click_ok)
         self.pushCancel.clicked.connect(self.click_cancel)
+        self.pushAdd.clicked.connect(self.add_import)
         
         macros = ['DoseSimulation']
-        self.comboMacro.addItem('')
+        self.comboMacro.addItem('Select')
         self.comboMacro.addItem('Open')
         self.comboMacro.insertSeparator(2)
         for macro in macros:
             self.comboMacro.addItem(macro)
-        self.comboMacro.currentTextChanged.connect(self.open_macro)       
-        #self.listAvailable.itemDoubleClicked.connect(self.add_function)
-        #self.listAdded.itemDoubleClicked.connect(self.delete_function)
+        self.comboMacro.currentTextChanged.connect(self.open_macro)
 
     def open_macro(self):
         if self.comboMacro.currentText() == 'Open':
@@ -577,31 +597,84 @@ class SimulationWindow(QDialog):
             self.labelMacro.setText(" Custom File: "+fname.split('/')[-1])
         else:
             fname = f'{self.comboMacro.currentText().lower()}.py'
+
         import config as cfg
         proton = cfg.Proton()
         proton.load(fname)
-        processes = []
-        for i in proton.module.__dir__():
-            if i[0].isupper():  
-                processes.append(i)
-                self.listAvailable.addItem(QListWidgetItem(i))
-        
-    def add_function(self):
-        item = self.listAvailable.currentItem()
-        if any(item.text() == i for i in self.functions): return
-        self.functions.append(item.text())
-        self.listAdded.addItem(QListWidgetItem(item.text()))
+        self.instance = proton.process(proton.name(fname))(convalgo=g_convalgo, patient=g_patient, outdir=g_outdir)
+        requirement = self.instance.requirement()
+        for key, value in requirement.items():
+            witem = QListWidgetItem(self.listRequirement)
+            item = self.Item()
+            item.make_checkbox(key, value)
+            self.listRequirement.setItemWidget(witem, item)
+            self.listRequirement.addItem(witem)
+            witem.setSizeHint(item.sizeHint())
+            item.lineValue.textChanged.connect(lambda: self.set_requirement(item.checkbox, item.lineValue, requirement))
+            item.lineValue.returnPressed.connect(lambda: self.set_requirement(item.checkbox, item.lineValue, requirement))
 
-    def delete_function(self):
-        idx = self.listAdded.currentRow()
-        self.listAdded.takeItem(idx)
+        output = self.instance.output
+        for output in self.instance.output.keys():
+            listImport = QListWidget()
+            listImport.setContextMenuPolicy(Qt.ActionsContextMenu)
+            if self.instance.import_component[output]:
+                for component in g_component:
+                    self.add_widget(listImport, component.name)
+            self.tabImport.addTab(listImport, output)
+
+    def set_requirement(self, checkbox, lineValue, requirement):
+        requirement[checkbox.text()] = lineValue.text()
         
+    def add_import(self):
+        fname = QFileDialog.getOpenFileName(self, initialFilter = g_text_extension[0], filter='\n'.join(i for i in g_text_extension))[0]
+        widget = self.tabImport.currentWidget()
+        self.add_widget(widget, fname)
+
+    def add_widget(self, listWidget, name):
+        witem = QListWidgetItem(listWidget)
+        check = QCheckBox(name)
+        check.setChecked(True)
+        listWidget.setItemWidget(witem, check)
+        listWidget.addItem(witem)
+        witem.setSizeHint(check.sizeHint())
+
+    def write_output(self):
+        if not self.instance.is_workable():        
+            QMessageBox.warning(self, "Message", "Please, Fill requirements", QMessageBox.Ok)
+            return
+        else:
+            global g_phantom, g_main, g_aperture, g_compensator
+            self.instance.set_parameters(g_component)
+            for key, value in self.instance.output.items():
+                if any(i in key.lower() for i in ['parallel','patient','phantom']):
+                    g_phantom = value
+                else:
+                    g_main.append(value)
+            g_aperture = self.instance.save_aperture()
+            g_compensator = self.instance.save_compensator()
+        self.click_ok()
+
     def click_ok(self):
         self.accept()
         
-    def click_cancel(self):
-        self.reject()
-        
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.click_cancel(event)
+
+    def closeEvent(self, event):
+        self.click_cancel(event)
+
+    def click_cancel(self, event=None):
+        reply = QMessageBox.question(self, "Message", "Are you sure to cancel?",
+          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.reject()
+        else:
+            if event is None or type(event) == bool:
+                return
+            else:
+                event.ignore()
+
     def return_para(self):
         return super().exec_()
 
@@ -610,6 +683,8 @@ class RunWindow(QDialog):
         super(RunWindow, self).__init__(parent)
         uic.loadUi(os.path.join(base_path,'ui','run.ui'), self)
         
+        self.commands = []
+
         self.set_action()
         self.show()
         self.run()
@@ -645,6 +720,38 @@ class RunWindow(QDialog):
     def generate_input(self):
         self.textLog.append("...Generate topas input files")
         try:
+            for i in ['nozzle','aperture','compensator','contour']:
+                if not os.path.exists(os.path.join(g_outdir,i)):
+                    os.makedirs(os.path.join(g_outdir,i))
+
+            self.textLog.append("......Generate main files")
+            for ibeam in range(len(g_main[0])):
+                for order in range(len(g_main)):
+                    main = g_main[order][ibeam]
+                    self.commands.append(f'topas {g_outdir}/{main.name}.tps')
+                    f = open(os.path.join(g_outdir, main.name+'.tps'), 'w')
+                    f.write(main.fulltext())
+
+            self.textLog.append("......Generate nozzle files")
+            for component in g_component:
+                f = open(os.path.join(g_outdir, 'nozzle',component.name+'.tps'),'w')
+                f.write(component.fulltext())
+
+            self.textLog.append("......Generate aperture files")
+            for aperture in g_aperture:
+                f = open(os.path.join(g_outdir, aperture[0]),'w')
+                f.write(aperture[1])
+
+            self.textLog.append("......Generate compensator files")
+            for compensator in g_compensator:
+                f = open(os.path.join(g_outdir, compensator[0]), 'w')
+                f.write(compensator[1])        
+                        
+            self.textLog.append("......Generate contour files")
+            for contour in g_phantom:
+                f = open(os.path.join(g_outdir, 'contour', contour[0]), 'w')
+                f.write(contour[1])
+
             self.checkInput.setCheckable(True)
             self.checkInput.setChecked(True)
             self.textLog.append("Topas input files are generated.")
@@ -654,6 +761,9 @@ class RunWindow(QDialog):
     def execute_topas(self):
         self.textLog.append("...Execute Topas")
         try:
+            import config as cfg
+            topas = cfg.Topas()
+            for cmd in self.commands: topas.run(cmd)
             self.checkTopasRun.setCheckable(True)
             self.checkTopasRun.setChecked(True)
             self.textLog.append("Simulation is success.")
@@ -1059,9 +1169,7 @@ class MainWindow(QMainWindow, form_class):
         sim = SimulationWindow(self)
         r = sim.return_para()
         if r:
-            self.macros = sim.functions
-            for macro in self.macros:
-                self.listMacro.addItem(QListWidgetItem(macro))
+            self.listMacro.addItem(QListWidgetItem(sim.instance.name))
 
     def run(self):
         run = RunWindow(self)
@@ -1075,6 +1183,7 @@ class MainWindow(QMainWindow, form_class):
         path = '/'.join(i for i in lst[:-1])
         import getconvalgo as gc
         convalgo = gc.GetParaFromConvAlgo(path, name)
+        g_convalgo['File'][0] = fname
         g_convalgo['Number of Beams'][0] = len(convalgo.fscatterer)
         g_convalgo['1st Scatterer'][0] = convalgo.fscatterer
         g_convalgo['2nd Scatterer'][0] = convalgo.sscatterer
@@ -1082,6 +1191,7 @@ class MainWindow(QMainWindow, form_class):
         g_convalgo['Stop Position'][0] = convalgo.stop
         g_convalgo['Energy'][0] = convalgo.energy
         g_convalgo['BCM'][0] = convalgo.bcm_name
+        g_convalgo['BWT'][0] = convalgo.bwt
 
         def convert(item, typ):
             if typ == "int":
