@@ -43,44 +43,45 @@ class Proton():
 class Topas():
     def __init__(self):
         self.base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+        self.topas_path = ''
+        self.output_path = ''
+        self.input = {} # order:file
         sys.path.append(self.base_path)
 
-    def run(self, script):
-        if str(type(script)) == "<class '_io.TextIOWrapper'>":
-            script = script.readlines()
+    def set_path(self, outpath):
+        ptext = open(os.path.join(self.base_path,'path.dat'),'r').readlines()[0].replace('\n','')
+        self.topas_path = ptext.split('=')[-1]
+        self.output_path = outpath
 
+    def set_input(self, idict):
+        self.input = idict
+
+    def run(self):
         import subprocess
-        def call_subprocess(cmd):
-            cmd = cmd.split(' ')
-            print(cmd)
+        def call_subprocess(iname):
+            cmd = [self.topas_path, iname]
             p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = p.communicate()
-            print(out.decode('utf-8'))
-            print(err.decode('utf-8'))
+            return out.decode('utf-8'), err.decode('utf-8')
         
-        if str(type(script)) == "<class 'list'>" and len(script) > 1:
-            split_idx = [0]
-            for i in range(len(script)):
-                tmp = script[i].replace('\n','')
-                tmp = tmp.replace(' ', '')
-                tmp = tmp.replace('\t', '')
-                if tmp == '': split_idx.append(i)
-            split_idx.append(len(script))
+        for order in self.input.keys():
+            iname = self.input[order]
+            out, err = call_subprocess(iname)
+            outname = iname.split('/')[-1]
+            ofile = open(os.path.join(self.output_path, outname+'.log'), 'w')
+            efile = open(os.path.join(self.output_path, outname+'.err'), 'w')
+            ofile.write(out)
+            efile.write(err)
+            ofile.close()
+            efile.close()
 
-            commands = []
-            for i in range(len(split_idx)):
-                if i + 1 == len(split_idx): break
-                commands.append(script[split_idx[i]:split_idx[i+1]])
-
-            import multiprocessing as mp
-            for cmds in commands:
-                for item in cmds:
-                    print(item)
-                    proc = mp.Process(target=call_subprocess, args=(item,))
-                    proc.start()
-                for item in cmds:
-                    proc.join()
-        elif str(type(script)) == "<class 'list'>" and len(script) == 1:
-            call_subprocess(script[0])
-        else:
-            call_subprocess(script)
+        """
+        # Update please...
+        import multiprocessing as mp
+        for cmds in commands:
+            for item in cmds:
+                proc = mp.Process(target=call_subprocess, args=(item,))
+                proc.start()
+            for item in cmds:
+                proc.join()
+        """

@@ -208,7 +208,7 @@ class Component():
                 para.name = new[3]
                 return
             
-    def load(self, fname):
+    def load(self, fname, load=False):
         isdir = False
         if os.path.isdir(fname):
             isdir = True
@@ -217,7 +217,7 @@ class Component():
         elif os.path.isfile(fname):
             self.name = fname.split('/')[-1].split('.')[0]
             self.ctype = self.name
-        else:
+        elif not load:
             finditem = False
             component_path = os.path.join(self.base_path, 'data/components')
             for directory in os.listdir(component_path):
@@ -242,8 +242,12 @@ class Component():
                 paras[sub] = [line for line in lines]
         else:
             change = False
-            f = open(fname, 'r')
-            lines = f.readlines()
+            if not load:
+                f = open(fname, 'r')
+                lines = f.readlines()
+            else:
+                lines = fname.split('\n')
+
             paras['Basis'] = []
             for line in lines:
                 tmp = line.split('=')[0].split('/')

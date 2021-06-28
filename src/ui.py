@@ -2,6 +2,7 @@ import os, sys
 import time
 import datetime
 import subprocess
+import yaml
 import pydicom as dicom
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -12,6 +13,7 @@ from PyQt5.QtGui import *
 from PyQt5 import uic
 
 import data
+import config as cfg
 
 base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 sys.path.append(base_path)
@@ -21,9 +23,7 @@ form_class = uic.loadUiType(os.path.join(base_path,'ui','main.ui'))[0]
 g_text_extension = ["Text files (*.txt *.tps)", "Data files (*.dat)"]
 g_excel_extension = ["Excel files (*.xls *.xlms)"]
 
-
 g_outdir = os.path.join(base_path, 'prod', datetime.date.today().strftime('%y%m%d'))
-g_save = None
 g_nozzle_mode = None
 # Solid component: Below components are not changed for each beam sequences.
 g_template = []
@@ -157,7 +157,8 @@ class ComponentWindow(QDialog):
         self.update_preview()
 
     def import_component(self):
-        fname = QFileDialog.getOpenFileName(self, initialFilter = g_text_extension[0], filter='\n'.join(i for i in g_text_extension))[0]
+        fname = QFileDialog.getOpenFileName(self, 'Import file', os.path.join(base_path, 'data/components'), 
+            initialFilter = g_text_extension[0], filter='\n'.join(i for i in g_text_extension))[0]
         if fname == "": return
         self.draw_import_widget(fname)
 
@@ -203,7 +204,8 @@ class ComponentWindow(QDialog):
             self.template.name = ''
             self.template.ctype = ''
         elif item == "Load":
-            fname = QFileDialog.getOpenFileName(self, initialFilter = g_text_extension[0], filter='\n'.join(i for i in g_text_extension))[0]
+            fname = QFileDialog.getOpenFileName(self, 'Load', os.path.join(base_path, 'data/components'),
+                initialFilter = g_text_extension[0], filter='\n'.join(i for i in g_text_extension))[0]
             if fname == '': 
                 self.comboComp.setCurrentIndex(0)
                 return
@@ -682,8 +684,9 @@ class RunWindow(QDialog):
     def __init__(self, parent):
         super(RunWindow, self).__init__(parent)
         uic.loadUi(os.path.join(base_path,'ui','run.ui'), self)
-        
-        self.commands = []
+
+        self.topas = cfg.Topas()
+        self.idict = {} # ibeam:{order:input}
 
         self.set_action()
         self.show()
@@ -709,8 +712,9 @@ class RunWindow(QDialog):
             checkbox.setChecked(True)
 
     def initialize(self):
-        self.textLog.append("...Initialize topas parameters")
+        self.textLog.append("...Initialize topas")
         try:
+            self.topas.set_path(g_outdir)
             self.checkInit.setCheckable(True)
             self.checkInit.setChecked(True)
             self.textLog.append("Parameter setting is success.")
@@ -726,11 +730,14 @@ class RunWindow(QDialog):
 
             self.textLog.append("......Generate main files")
             for ibeam in range(len(g_main[0])):
+                temp = {}
                 for order in range(len(g_main)):
                     main = g_main[order][ibeam]
-                    self.commands.append(f'topas {g_outdir}/{main.name}.tps')
-                    f = open(os.path.join(g_outdir, main.name+'.tps'), 'w')
+                    name = os.path.join(g_outdir, main.name+'.tps')
+                    f = open(name, 'w')
                     f.write(main.fulltext())
+                    temp[order] = name
+                self.idict[ibeam] = temp
 
             self.textLog.append("......Generate nozzle files")
             for component in g_component:
@@ -761,9 +768,8 @@ class RunWindow(QDialog):
     def execute_topas(self):
         self.textLog.append("...Execute Topas")
         try:
-            import config as cfg
-            topas = cfg.Topas()
-            for cmd in self.commands: topas.run(cmd)
+            for ibeam in range(len(g_main[0])):
+                self.topas.set_input(self.idict[ibeam])
             self.checkTopasRun.setCheckable(True)
             self.checkTopasRun.setChecked(True)
             self.textLog.append("Simulation is success.")
@@ -965,14 +971,75 @@ class MainWindow(QMainWindow, form_class):
         self.listPatientCT.itemDoubleClicked.connect(self.patient_view)
         
     # Functions
-    def new_simulation(self):
-        return 0
+    def clear_all(self):
+        global g_template, g_component, g_patient, g_convalgo, g_main, g_aperture, g_compensator, g_phantom
 
-    def open_cfg(self):
-        return 0
+        g_template = []
+        self.listTemplates.clear()
+
+        g_component = []
+        self.tableComp.clearContents()
+        self.widgetNozzle.trigger_refresh()
+
+        g_patient = data.Patient()
+        self.labelPatientDir.clear()
+        self.listPatientCT.clear()
+        self.lineRTS.clear()
+        self.lineRTP.clear()
+        self.lineRD.clear()
+
+        g_convalgo = {
+            'File':[None,"str"], 'Number of Beams':[None, "int"], '1st Scatterer':[None, "int"], '2nd Scatterer':[None, "int"],
+            'Modulator':[None, "int"], 'Stop Position':[None, "int"], 'Energy':[None, "float"], 'BCM':[None, "str"], 'BWT':[None, "str"]
+        }
+        for val in self.conv_values:
+            val.clear()
+
+        g_main = []
+        g_aperture = []
+        g_compensator = []
+        g_phantom = []
+        self.listMacro.clear()
+
+    def new_simulation(self):
+        reply = QMessageBox.question(self, "Message", "Are you sure to remove all?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.clear_all()
+        else:
+            return
 
     def save_cfg(self):
-        return 0
+        fname = QFileDialog.getSaveFileName(self, 'Save', os.path.join(base_path,'prod'), filter="Nozzle files (*.nzl)")[0]
+        if not fname.endswith('.nzl'):
+            fname = fname + '.nzl'
+        fout = open(fname, 'w')
+        for component in g_component:
+            fulltext = component.fulltext().split('\n')
+            for idx, text in enumerate(fulltext):
+                fulltext[idx] = '  ' + text
+            fulltext = '\n\n'.join(t for t in fulltext)
+            fout.write(f"{component.name}: >\n{fulltext}\n\n")
+        fout.close()
+
+    def open_cfg(self):
+        fname = QFileDialog.getOpenFileName(self, 'Open', os.path.join(base_path,'prod'), filter = "Nozzle files (*.nzl)")[0]
+        if fname == '' or fname is None: return
+        if not fname.endswith('.nzl'): return
+        with open(fname, 'r') as f:
+            self.clear_all()
+            cfg = yaml.load(f, Loader=yaml.FullLoader)
+        for name, text in cfg.items():
+            component = data.Component()
+            component.load(text, load=True)
+            component.name = name
+            g_template.append(component)
+            item = QListWidgetItem(self.listTemplates)
+            f = self.Item()
+            f.save(component.name)
+            self.listTemplates.setItemWidget(item, f)
+            self.listTemplates.addItem(item)
+            item.setSizeHint(f.sizeHint())
+            self.add_component()
 
     def generate_template(self, name, idx=-999):
         replace = False
@@ -1007,7 +1074,7 @@ class MainWindow(QMainWindow, form_class):
         r = template.return_para()
         if r:
             template = g_template[-1]
-            self.generate_template(template.name)
+            self.generate_template(template.name)        
 
     def modify_template(self):
         if len(g_template) < 1: return
@@ -1250,9 +1317,8 @@ class Painter(QWidget):
         self.zeros = [width+6, int(self.height()/2)]
 
     def draw(self):
-        if len(g_component) < 1:
-            return
-
+        #if len(g_component) < 1:
+        #    return
         for component in g_component:
             self.container(component)
 
