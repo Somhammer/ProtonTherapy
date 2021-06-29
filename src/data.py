@@ -309,7 +309,7 @@ class Component():
           'Beam':['Basis'],
           'MonitorChamber':['Basis', 'CylinderFrame', 'BoxFrame', 'CylinderLayer', 'BoxLayer'],
           'Scatterer':['Basis', 'Scatterer1', 'Lollipop', 'Scatterer2', 'Holder', 'Hole'],
-          'RangeModulator':['LargeWheel','SmallWheel'], 
+          'RangeModulator':['Basis','SmallWheel'], 
           'SMAG':['Basis','Dipole'],
           'VC':['Basis','XJaws', 'YJaws'],
           'Snout':['Basis','BrassBlock', 'BrassCone'],
@@ -398,6 +398,7 @@ class Component():
             else:
                 tmp = copy(para)
                 tmp.value = self.find_parameter(val)
+                if tmp.value is None: print(tmp)
                 numeric_value = tmp.value.split(' ')[0]
                 if is_numeric(numeric_value):
                     final_value[idx] = numeric_value

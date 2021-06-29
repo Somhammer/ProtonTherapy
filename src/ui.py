@@ -1323,24 +1323,24 @@ class Painter(QWidget):
             self.container(component)
 
     def container(self, component):
-        for subname, subcomp in component.subcomponent.items():
-            pos = {'HLX':"0.0 mm",'HLY':"0.0 mm",'HLZ':"0.0 mm",
+        # Only Draw container...
+        # Should update subcomponent figure
+        pos = {'HLX':"0.0 mm",'HLY':"0.0 mm",'HLZ':"0.0 mm",
                'RMin':"0.0 mm",'RMax':"0.0 mm",
                'HL':"0.0 mm", 'SPhi':"0.0 deg", 'DPhi':"0.0 deg",
                'RotX':"0.0 deg",'RotY':"0.0 deg",'RotZ':"0.0 deg",
                'TransX':"0.0 mm",'TransY':"0.0 mm",'TransZ':"0.0 mm"}
-            ftype = ''
-            for para in subcomp.parameters:
-                if 'Type' in para.name: 
-                    ftype = para.value.replace('"','').replace("'",'').replace(' ','')
-                if any(para.name.lower() == i.lower() for i in pos.keys()):
-                    value, unit = component.calculate_value(para)
-                    if unit == 'mm':
-                        value = value / 10
-                    elif unit == 'm':
-                        value *= 100
-
-                    pos[para.name] = value
+        ftype = ''
+        for para in component.subcomponent['Basis'].parameters:
+            if 'Type' in para.name:
+                ftype = para.value.replace('"','').replace("'",'').replace(' ','')
+            if any(para.name.lower() == i.lower() for i in pos.keys()):
+                value, unit = component.calculate_value(para)
+                if unit == 'mm': 
+                    value = value / 10
+                elif unit == 'm': 
+                    value *= 100
+                pos[para.name] = value
 
             for key, val in pos.items():
                 if str(type(val)) == "<class 'str'>":
@@ -1349,25 +1349,68 @@ class Painter(QWidget):
 
             if pos['TransZ'] > self.zmax:
                 self.zmax = pos['TransZ']
+        if ftype == '': ftype = 'Other'
 
-            if ftype == '': ftype = 'Other'
+        if any(ftype == i for i in ['TsBox', 'TsDipoleMagnet', 'Other']) and any(i == 0.0 for i in [pos['HLY'], pos['HLZ']]):
+            if pos['HLY'] == 0.0:
+                HLY = 0.0
+                for subname, subcomp in component.subcomponent.items():
+                    if subname == 'Basis': continue
+                    for para in subcomp.parameters:
+                        if not para.name.lower() == 'hly': continue
+                        value, unit = component.calculate_value(para)
+                        if unit == 'mm': value = value / 10
+                        elif unit == 'm': value *= 100
+                        if value > HLY: HLY = value
+                pos['HLY'] = HLY
+            if pos['HLZ'] == 0.0:
+                HLZ = 0.0
+                for subname, subcomp in component.subcomponent.items():
+                    if subname == 'Basis': continue
+                    for para in subcomp.parameters:
+                        if not para.name.lower() == 'hlz': continue
+                        value, unit = component.calculate_value(para)
+                        if unit == 'mm': value = value / 10
+                        elif unit == 'm': value *= 100
+                        HLZ += value
+                pos['HLZ'] = HLZ
 
-            is_interior = False
-            if subname != 'Basis':
-                is_interior = True
-            self.figure(ftype, pos, is_interior)
+        elif any(ftype == i for i in ['TsCylinder', 'TsRangeModulator']) and any(i == 0.0 for i in [pos['RMax'], pos['HL']]):
+            if pos['RMax'] == 0.0:
+                RMax = 0.0
+                for subname, subcomp in component.subcomponent.items():
+                    if subname == 'Basis': continue
+                    for para in subcomp.parameters:
+                        if not para.name.lower() == 'rmax': continue
+                        value, unit = component.calculate_value(para)
+                        if unit == 'mm': value = value / 10
+                        elif unit == 'm': value *= 100
+                        if value > RMax: RMax = value
+                pos['RMax'] = RMax
+            if pos['HL'] == 0.0:
+                HL = 0.0
+                for subname, subcomp in component.subcomponent.items():
+                    if subname == 'Basis': continue
+                    for para in subcomp.parameters:
+                        if not para.name.lower() == 'hl': continue
+                        value, unit = component.calculate_value(para)
+                        if unit == 'mm': value = value / 10
+                        elif unit == 'm': value *= 100
+                        HL += value
+                pos['HLZ'] = HL
 
-    def figure(self, ftype, pos, is_interior=False):
-        if is_interior: return
+        self.figure(ftype, pos)
+
+    def figure(self, ftype, pos):
         hexcodes = { # Name:(Container, Interior)
-            'TsBox':('#07098a','#1be32c'), 'TsCylinder':('#9d1be3','#1be32c'),
+            'TsBox':('#07098a','#1be32c'), 
+            'TsCylinder':('#9d1be3','#1be32c'),
             'TsRangeModulator':('#373d36','#f0e373'),
             'TsDipoleMagnet':('#23fabd','#23d2fa'),
             'Group':('#ffff00','#59ff00'),
             'Other':('#000000','#000000')}
         color = QColor(0,0,0)
-        if is_interior: idx = 1
-        else: idx = 0
+        idx = 0 # Removing interior part, if you have enough time update interior
         color.setNamedColor(hexcodes[ftype][idx])
         self.painter.setBrush(color)
         yaxis = pos['TransY']
