@@ -429,7 +429,7 @@ class Component():
                 first = outvalue
             second = final_value[idx+1]
 
-            if 'i' in para.vtype or (not '.' in first and not '.' in second):
+            if 'i' in para.vtype or (not '.' in str(first) and not '.' in str(second)):
                 first = int(first)
                 second = int(second)
             else:

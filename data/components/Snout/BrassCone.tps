@@ -1,6 +1,6 @@
-s:Ge/Snout/BrassCone/Parent	= "Snout"
+s:Ge/Snout/BrassCone/Parent = "Snout"
 s:Ge/Snout/BrassCone/Type = "TsCylinder"
-s:Ge/Snout/BrassCone/Material	= "Brass"
+s:Ge/Snout/BrassCone/Material = "Brass"
 d:Ge/Snout/BrassCone/RMin = Ge/Snout/SNTTypeR1 mm
 d:Ge/Snout/BrassCone/RMax = Ge/Snout/SNTTypeR2 mm
 d:Ge/Snout/BrassCone/HL = 12.0 cm

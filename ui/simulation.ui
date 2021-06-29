@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>462</width>
-    <height>567</height>
+    <height>529</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -33,26 +33,26 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../icons/ncc.png</normaloff>../icons/ncc.png</iconset>
+    <normaloff>../../../../../.designer/icons/ncc.png</normaloff>../../../../../.designer/icons/ncc.png</iconset>
   </property>
   <widget class="QWidget" name="gridLayoutWidget">
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>400</y>
+     <y>490</y>
      <width>401</width>
-     <height>61</height>
+     <height>31</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="1">
+    <item row="0" column="1">
      <widget class="QPushButton" name="pushOk">
       <property name="text">
        <string>Ok</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="2">
+    <item row="0" column="2">
      <widget class="QPushButton" name="pushCancel">
       <property name="text">
        <string>Cancel</string>
@@ -60,16 +60,9 @@
      </widget>
     </item>
     <item row="0" column="0">
-     <widget class="QPushButton" name="pushAdd">
+     <widget class="QPushButton" name="pushAccept">
       <property name="text">
-       <string>Add</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="2">
-     <widget class="QPushButton" name="pushDelete">
-      <property name="text">
-       <string>Delete</string>
+       <string>Accept</string>
       </property>
      </widget>
     </item>
@@ -81,11 +74,46 @@
      <x>10</x>
      <y>10</y>
      <width>441</width>
-     <height>51</height>
+     <height>471</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout_2">
-    <item row="0" column="0">
+    <item row="4" column="1">
+     <widget class="QPushButton" name="pushAdd">
+      <property name="text">
+       <string>Add</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0" colspan="2">
+     <widget class="QLabel" name="label">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Requirements</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0" colspan="2">
+     <widget class="QListWidget" name="listRequirement">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
      <widget class="QComboBox" name="comboMacro">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -95,83 +123,27 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="1">
-     <widget class="QComboBox" name="comboCustom"/>
-    </item>
-    <item row="1" column="0" colspan="2">
-     <widget class="QLabel" name="labelMacro">
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-       </font>
+    <item row="4" column="0">
+     <widget class="QLabel" name="label_3">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
       </property>
       <property name="text">
-       <string> Custom File:</string>
+       <string>Import Files</string>
       </property>
-      <property name="alignment">
-       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </widget>
+    </item>
+    <item row="5" column="0" colspan="2">
+     <widget class="QTabWidget" name="tabImport">
+      <property name="currentIndex">
+       <number>-1</number>
       </property>
      </widget>
     </item>
    </layout>
-  </widget>
-  <widget class="QTabWidget" name="tabComp">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>130</y>
-     <width>441</width>
-     <height>271</height>
-    </rect>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::TabFocus</enum>
-   </property>
-   <property name="currentIndex">
-    <number>-1</number>
-   </property>
-  </widget>
-  <widget class="QWidget" name="gridLayoutWidget_3">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>60</y>
-     <width>441</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <layout class="QGridLayout" name="gridLayout_3"/>
-  </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>470</y>
-     <width>91</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
-   </property>
-   <property name="text">
-    <string>Requirements</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>500</y>
-     <width>59</width>
-     <height>15</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>TextLabel</string>
-   </property>
   </widget>
  </widget>
  <resources/>

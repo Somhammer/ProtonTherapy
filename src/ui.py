@@ -978,7 +978,7 @@ class MainWindow(QMainWindow, form_class):
         self.listTemplates.clear()
 
         g_component = []
-        self.tableComp.clearContents()
+        self.tableComp.setRowCount(0)
         self.widgetNozzle.trigger_refresh()
 
         g_patient = data.Patient()
@@ -1342,13 +1342,14 @@ class Painter(QWidget):
                     value *= 100
                 pos[para.name] = value
 
-            for key, val in pos.items():
-                if str(type(val)) == "<class 'str'>":
-                    temp = val.split(' ')
-                    pos[key] = float(temp[0])
+        for key, val in pos.items():
+            if str(type(val)) == "<class 'str'>":
+                temp = val.split(' ')
+                pos[key] = float(temp[0])
 
-            if pos['TransZ'] > self.zmax:
-                self.zmax = pos['TransZ']
+        if pos['TransZ'] > self.zmax:
+            self.zmax = pos['TransZ']
+
         if ftype == '': ftype = 'Other'
 
         if any(ftype == i for i in ['TsBox', 'TsDipoleMagnet', 'Other']) and any(i == 0.0 for i in [pos['HLY'], pos['HLZ']]):
