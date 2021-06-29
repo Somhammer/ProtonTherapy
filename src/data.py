@@ -80,6 +80,7 @@ class Component():
         self.base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
         self.__outname = None
         self.__name = None
+        self.__btype = None
         self.__ctype = None
         self.__imported = list()
         self.__subcomponent = {'Basis':self.SubComponent(name='Basis')}
@@ -107,6 +108,14 @@ class Component():
     @ctype.setter
     def ctype(self, ctype):
         self.__ctype = ctype
+
+    @property
+    def btype(self):
+        return self.__btype
+
+    @btype.setter
+    def btype(self, btype):
+        self.__btype = btype
         
     @property
     def imported(self):
@@ -305,18 +314,31 @@ class Component():
                 self.__subcomponent[sub].parameters.append(self.Parameter(vtype=vtype, category=category, directory=directory, name=name, value=value))
 
     def component_list(self):
-        return {
+        outdict = {}
+        common = {
           'Beam':['Basis'],
           'MonitorChamber':['Basis', 'CylinderFrame', 'BoxFrame', 'CylinderLayer', 'BoxLayer'],
+          'VC':['Basis','XJaws', 'YJaws']
+        }
+        scanning = {
+          'Magnet':['Basis']
+        }
+        scattering = {
           'Scatterer':['Basis', 'Scatterer1', 'Lollipop', 'Scatterer2', 'Holder', 'Hole'],
           'RangeModulator':['Basis','SmallWheel'], 
           'SMAG':['Basis','Dipole'],
-          'VC':['Basis','XJaws', 'YJaws'],
           'Snout':['Basis','BrassBlock', 'BrassCone'],
           'Phantom':['Basis','WaterPhantom','Patient','PDD','DoseAtPhantom'],
           'PhaseSpaceVolume':['Basis'],
           'Contour':['Material','Parallel','Contour']
         }
+        outdict.update(common)
+        if self.btype is None: return
+        if self.btype.lower() == 'scanning':
+            outdict.update(scanning)
+        elif self.btype.lower() == 'scattering':
+            outdict.update(scattering)
+        return outdict
 
     def find_parameter(self, name):
         for subname, subcomp in self.subcomponent.items():

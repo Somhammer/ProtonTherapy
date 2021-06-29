@@ -24,7 +24,7 @@ g_text_extension = ["Text files (*.txt *.tps)", "Data files (*.dat)"]
 g_excel_extension = ["Excel files (*.xls *.xlms)"]
 
 g_outdir = os.path.join(base_path, 'prod', datetime.date.today().strftime('%y%m%d'))
-g_nozzle_mode = None
+g_nozzle_type = None
 # Solid component: Below components are not changed for each beam sequences.
 g_template = []
 g_component = [] # nozzle
@@ -84,6 +84,7 @@ class ComponentWindow(QDialog):
         uic.loadUi(os.path.join(base_path,'ui','component.ui'), self)
 
         self.template = data.Component()
+        self.template.btype = g_nozzle_type
         self.modify_component = modify_component
         self.fname = fname
         if self.fname is not None:
@@ -817,8 +818,9 @@ class MainWindow(QMainWindow, form_class):
         self.macros = []
 
         self.set_icons()
-        self.set_actions()
         self.set_layout()
+        self.set_actions()
+
         self.show()
 
     def set_icons(self):
@@ -854,10 +856,10 @@ class MainWindow(QMainWindow, form_class):
 
         self.gridLayout_2.addWidget(self.widgetNozzle,1,0)
 
-        self.radioScatter = QRadioButton("Scatter")
+        self.radioScattering = QRadioButton("Scattering")
         self.radioScanning = QRadioButton("Scanning")
         layoutNozzleMode = QHBoxLayout()
-        layoutNozzleMode.addWidget(self.radioScatter)
+        layoutNozzleMode.addWidget(self.radioScattering)
         layoutNozzleMode.addWidget(self.radioScanning)
         self.groupNozzleMode.setLayout(layoutNozzleMode)
 
@@ -951,6 +953,10 @@ class MainWindow(QMainWindow, form_class):
         self.toolBar.addAction(self.actionRun)
         self.toolBar.setIconSize(QSize(32,32))
         
+        # Nozzle Mode
+        self.radioScattering.clicked.connect(self.set_beam_mode)
+        self.radioScanning.clicked.connect(self.set_beam_mode)
+
         # Template
         self.listTemplates.setContextMenuPolicy(Qt.ActionsContextMenu)
         self.listTemplates.addAction(self.actionTempNew)
@@ -971,6 +977,19 @@ class MainWindow(QMainWindow, form_class):
         self.listPatientCT.itemDoubleClicked.connect(self.patient_view)
         
     # Functions
+    def set_beam_mode(self):
+        global g_nozzle_type
+        if self.radioScattering.isChecked(): g_nozzle_type = "scattering"
+        if self.radioScanning.isChecked(): g_nozzle_type = "scanning"
+
+    def check_beam_mode(self):
+        global g_nozzle_type
+        if g_nozzle_type is None:
+            QMessageBox.warning(self, "Warning", "Please, select nozzle type")
+            return False
+        else:
+            return True
+
     def clear_all(self):
         global g_template, g_component, g_patient, g_convalgo, g_main, g_aperture, g_compensator, g_phantom
 
@@ -1070,6 +1089,8 @@ class MainWindow(QMainWindow, form_class):
             item.setSizeHint(f.sizeHint())
 
     def new_template(self):
+        if not self.check_beam_mode(): return
+
         template = ComponentWindow(self)
         r = template.return_para()
         if r:
@@ -1077,6 +1098,8 @@ class MainWindow(QMainWindow, form_class):
             self.generate_template(template.name)        
 
     def modify_template(self):
+        if not self.check_beam_mode(): return
+
         if len(g_template) < 1: return
         idx = self.listTemplates.currentRow()
 
@@ -1090,12 +1113,16 @@ class MainWindow(QMainWindow, form_class):
             self.generate_template(template.name, idx)
     
     def delete_template(self):
+        if not self.check_beam_mode(): return
+
         if len(g_template) < 1: return
         idx = self.listTemplates.currentRow()
         g_template.pop(idx)      
         self.listTemplates.takeItem(idx)
 
     def add_component(self):
+        if not self.check_beam_mode(): return
+
         if len(g_template) < 1: return
         idx = self.listTemplates.currentRow()
         g_component.append(g_template[idx])
@@ -1150,6 +1177,8 @@ class MainWindow(QMainWindow, form_class):
         self.widgetNozzle.trigger_refresh()
 
     def modify_component(self):
+        if not self.check_beam_mode(): return
+
         if len(g_component) < 1: return
         row = self.tableComp.currentRow()
         idx = self.comp_to_table_map[row]
@@ -1179,6 +1208,8 @@ class MainWindow(QMainWindow, form_class):
             self.widgetNozzle.trigger_refresh()
 
     def delete_component(self):
+        if not self.check_beam_mode(): return
+
         if len(g_component) < 1: return
         row = self.tableComp.currentRow()
         idx = self.comp_to_table_map[row]
@@ -1233,12 +1264,16 @@ class MainWindow(QMainWindow, form_class):
             g_patient.is_real = False
 
     def simulation(self):
+        if not self.check_beam_mode(): return
+
         sim = SimulationWindow(self)
         r = sim.return_para()
         if r:
             self.listMacro.addItem(QListWidgetItem(sim.instance.name))
 
     def run(self):
+        if not self.check_beam_mode(): return
+
         run = RunWindow(self)
 
     def load_convalgo(self):
