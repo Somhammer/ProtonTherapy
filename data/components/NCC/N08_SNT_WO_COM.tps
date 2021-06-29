@@ -1,4 +1,4 @@
-includeFile = /home/seohyeon/work/ProtonTherapy/data/components/ConstantsForNozzles.tps
+includeFile = /home/seohyeon/work/ProtonTherapy/data/components/NCC/ConstantsForNozzles.tps
 # Snout: 
 ##################################################
 s:Ge/Snout/Type		="Group"

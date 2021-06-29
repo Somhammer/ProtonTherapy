@@ -1,97 +1,183 @@
-includeFile = /home/seohyeon/work/ProtonTherapy/data/components/ConstantsForNozzles.tps
+includeFile = /home/seohyeon/work/ProtonTherapy/data/components/NCC/ConstantsForNozzles.tps
 #Range modulator
 #from Proteus235
 ################################################
-s:Ge/RMW/Type = "TsCylinder"
-s:Ge/RMW/Material = "Parent"
-s:Ge/RMW/Parent = "Gantry"
-d:Ge/RMW/RMin = 0.0 cm
-d:Ge/RMW/RMax = 40.2 cm
-#d:Ge/RMW/HL = 156.4 mm
-d:Ge/RMW/HL = 120 mm
-d:Ge/RMW/TransX = 13.0 cm
-d:Ge/RMW/TransY = 0 cm
-d:Ge/RMW/TransZ = 2551 mm
+s:Ge/RangeModulator/Type = "TsCylinder"
+s:Ge/RangeModulator/Material = "Parent"
+s:Ge/RangeModulator/Parent = "Gantry"
+d:Ge/RangeModulator/RMin = 0.0 cm
+d:Ge/RangeModulator/RMax = 40.2 cm
+#d:Ge/RangeModulator/HL = 156.4 mm
+d:Ge/RangeModulator/HL = 120 mm
+d:Ge/RangeModulator/TransX = 13.0 cm
+d:Ge/RangeModulator/TransY = 0 cm
+d:Ge/RangeModulator/TransZ = 2551 mm
 
-d:Ge/RMW/Track1 = 0 deg
-d:Ge/RMW/Track2 = 26.7898759 deg
-d:Ge/RMW/Track3 = 41.1377081 deg
-d:Ge/RMW/Track4 = 120 deg
-d:Ge/RMW/Track5 = 146.7898759 deg
-d:Ge/RMW/Track6 = 161.1377081 deg
-d:Ge/RMW/Track7 = 240 deg
-d:Ge/RMW/Track8 = 266.7898759 deg
-d:Ge/RMW/Track9 = 281.1377081 deg
+d:Ge/RangeModulator/Track1 = 0 deg
+d:Ge/RangeModulator/Track2 = 26.7898759 deg
+d:Ge/RangeModulator/Track3 = 41.1377081 deg
+d:Ge/RangeModulator/Track4 = 120 deg
+d:Ge/RangeModulator/Track5 = 146.7898759 deg
+d:Ge/RangeModulator/Track6 = 161.1377081 deg
+d:Ge/RangeModulator/Track7 = 240 deg
+d:Ge/RangeModulator/Track8 = 266.7898759 deg
+d:Ge/RangeModulator/Track9 = 281.1377081 deg
 
-d:Ge/RMW/Small/Track0 = 0 deg
-d:Ge/RMW/Small/Track1 = 57.421029637 deg
-d:Ge/RMW/Small/Track2 = 77.282161915 deg
+d:Ge/RangeModulator/Small/Track0 = 0 deg
+d:Ge/RangeModulator/Small/Track1 = 57.421029637 deg
+d:Ge/RangeModulator/Small/Track2 = 77.282161915 deg
 
-d:Ge/RMW/Track = 240 deg
+d:Ge/RangeModulator/Track = 240 deg
 
-d:Ge/RMW/RotX = 0 deg
-d:Ge/RMW/RotY = 0 deg
-d:Ge/RMW/RotZ = Ge/RMW/Track deg
-d:Ge/RMW/SPhi = 0 deg
-d:Ge/RMW/DPhi = 360 deg
-
-
+d:Ge/RangeModulator/RotX = 0 deg
+d:Ge/RangeModulator/RotY = 0 deg
+d:Ge/RangeModulator/RotZ = Ge/RangeModulator/Track deg
+d:Ge/RangeModulator/SPhi = 0 deg
+d:Ge/RangeModulator/DPhi = 360 deg
 ###############################################
 #Small wheel 1 (8b)
 #track 1 2 3
 ###############################################
-s:Ge/RMW_1/Type = "TsRangeModulator"
-s:Ge/RMW_1/Material = "Parent"
-s:Ge/RMW_1/Parent = "RMW"
-d:Ge/RMW_1/TransX = -21.5 cm
-d:Ge/RMW_1/TransY = 0.0 cm
-d:Ge/RMW_1/TransZ = 0.0 mm
-d:Ge/RMW_1/RotX = 0.0 deg
-d:Ge/RMW_1/RotY = 0.0 deg
-d:Ge/RMW_1/RotZ = 0.0 deg
-b:Ge/RMW_1/Invisible = "TRUE"
-b:Ge/RMW_1/PrintInformation = "false"
+s:Ge/RangeModulator/SmallWheel1/Type = "TsRangeModulator"
+s:Ge/RangeModulator/SmallWheel1/Material = "Parent"
+s:Ge/RangeModulator/SmallWheel1/Parent = "RangeModulator"
+d:Ge/RangeModulator/SmallWheel1/TransX = -21.5 cm
+d:Ge/RangeModulator/SmallWheel1/TransY = 0.0 cm
+d:Ge/RangeModulator/SmallWheel1/TransZ = 0.0 mm
+d:Ge/RangeModulator/SmallWheel1/RotX = 0.0 deg
+d:Ge/RangeModulator/SmallWheel1/RotY = 0.0 deg
+d:Ge/RangeModulator/SmallWheel1/RotZ = 0.0 deg
+b:Ge/RangeModulator/SmallWheel1/Invisible = "TRUE"
+b:Ge/RangeModulator/SmallWheel1/PrintInformation = "false"
 
-d:Ge/RMW_1/HeightOfUpper = 147 mm
-d:Ge/RMW_1/HeightOfMiddle = 1.0 mm
-d:Ge/RMW_1/HeightOfLower = 8.4 mm
+d:Ge/RangeModulator/SmallWheel1/HeightOfUpper = 147 mm
+d:Ge/RangeModulator/SmallWheel1/HeightOfMiddle = 1.0 mm
+d:Ge/RangeModulator/SmallWheel1/HeightOfLower = 8.4 mm
 
-d:Ge/RMW_1/Shell/Rin = 16.0 cm
-d:Ge/RMW_1/Shell/Rout = 16.3 cm
-s:Ge/RMW_1/Shell/Material = "Aluminum"
-s:Ge/RMW_1/Shell/Color = "grey"
-s:Ge/RMW_1/Shell/DrawingStyle = "Solid"
-i:Ge/RMW_1/Shell/VisSegsPerCircle = 360
+d:Ge/RangeModulator/SmallWheel1/Shell/Rin = 16.0 cm
+d:Ge/RangeModulator/SmallWheel1/Shell/Rout = 16.3 cm
+s:Ge/RangeModulator/SmallWheel1/Shell/Material = "Aluminum"
+s:Ge/RangeModulator/SmallWheel1/Shell/Color = "grey"
+s:Ge/RangeModulator/SmallWheel1/Shell/DrawingStyle = "Solid"
+i:Ge/RangeModulator/SmallWheel1/Shell/VisSegsPerCircle = 360
 
-d:Ge/RMW_1/Hub/Rin = 0.0 cm
-d:Ge/RMW_1/Hub/Rout = 7.0 cm
-s:Ge/RMW_1/Hub/Material = "Aluminum"
-s:Ge/RMW_1/Hub/Color = "grey"
-s:Ge/RMW_1/Hub/DrawingStyle = "Solid"
-i:Ge/RMW_1/Hub/VisSegsPerCircle = 360
+d:Ge/RangeModulator/SmallWheel1/Hub/Rin = 0.0 cm
+d:Ge/RangeModulator/SmallWheel1/Hub/Rout = 7.0 cm
+s:Ge/RangeModulator/SmallWheel1/Hub/Material = "Aluminum"
+s:Ge/RangeModulator/SmallWheel1/Hub/Color = "grey"
+s:Ge/RangeModulator/SmallWheel1/Hub/DrawingStyle = "Solid"
+i:Ge/RangeModulator/SmallWheel1/Hub/VisSegsPerCircle = 360
 
-dv:Ge/RMW_1/Upper/RadialDivisions=2 10 13 cm
-s:Ge/RMW_1/Upper/Track1/Pattern = "LexanBlockT1"
-s:Ge/RMW_1/Upper/Track2/Pattern = "LexanBlockT2"
-s:Ge/RMW_1/Upper/Track3/Pattern = "LexanBlockT3"
-dv:Ge/RMW_1/Middle/RadialDivisions=1 15 cm
-#s:Ge/RMW_1/Middle/Track1/Pattern = "HoleTrackDisk"
-s:Ge/RMW_1/Middle/Track1/Pattern = "InterfaceDisk"
-s:Ge/RMW_1/Middle/Track2/Pattern = "InterfaceDisk"
-dv:Ge/RMW_1/Lower/RadialDivisions=2 10 13 cm
-s:Ge/RMW_1/Lower/Track1/Pattern = "LeadBlockT1"
-s:Ge/RMW_1/Lower/Track2/Pattern = "LeadBlockT2"
-s:Ge/RMW_1/Lower/Track3/Pattern = "LeadBlockT3"
+dv:Ge/RangeModulator/SmallWheel1/Upper/RadialDivisions=2 10 13 cm
+s:Ge/RangeModulator/SmallWheel1/Upper/Track1/Pattern = "LexanBlockT1"
+s:Ge/RangeModulator/SmallWheel1/Upper/Track2/Pattern = "LexanBlockT2"
+s:Ge/RangeModulator/SmallWheel1/Upper/Track3/Pattern = "LexanBlockT3"
+dv:Ge/RangeModulator/SmallWheel1/Middle/RadialDivisions=1 15 cm
+#s:Ge/RangeModulator/SmallWheel1/Middle/Track1/Pattern = "HoleTrackDisk"
+s:Ge/RangeModulator/SmallWheel1/Middle/Track1/Pattern = "InterfaceDisk"
+s:Ge/RangeModulator/SmallWheel1/Middle/Track2/Pattern = "InterfaceDisk"
+dv:Ge/RangeModulator/SmallWheel1/Lower/RadialDivisions=2 10 13 cm
+s:Ge/RangeModulator/SmallWheel1/Lower/Track1/Pattern = "LeadBlockT1"
+s:Ge/RangeModulator/SmallWheel1/Lower/Track2/Pattern = "LeadBlockT2"
+s:Ge/RangeModulator/SmallWheel1/Lower/Track3/Pattern = "LeadBlockT3"
+
+###############################################
+#Small wheel 2 (6)
+#track 4 5 6
+###############################################
+s:Ge/RangeModulator/SmallWheel2/Type = "TsRangeModulator"
+s:Ge/RangeModulator/SmallWheel2/Material = "Parent"
+s:Ge/RangeModulator/SmallWheel2/Parent = "RangeModulator"
+d:Ge/RangeModulator/SmallWheel2/TransX = 10.75 cm
+d:Ge/RangeModulator/SmallWheel2/TransY = 18.6195462 cm
+d:Ge/RangeModulator/SmallWheel2/TransZ = 0.0 mm
+d:Ge/RangeModulator/SmallWheel2/RotX = 0.0 deg
+d:Ge/RangeModulator/SmallWheel2/RotY = 0.0 deg
+d:Ge/RangeModulator/SmallWheel2/RotZ = 0.0 deg
+b:Ge/RangeModulator/SmallWheel2/Invisible = "TRUE"
+b:Ge/RangeModulator/SmallWheel2/PrintInformation = "false"
+
+d:Ge/RangeModulator/SmallWheel2/HeightOfUpper = 147 mm
+d:Ge/RangeModulator/SmallWheel2/HeightOfMiddle = 1.0 mm
+d:Ge/RangeModulator/SmallWheel2/HeightOfLower = 8.4 mm
+
+d:Ge/RangeModulator/SmallWheel2/Shell/Rin = 16.0 cm
+d:Ge/RangeModulator/SmallWheel2/Shell/Rout = 16.3 cm
+s:Ge/RangeModulator/SmallWheel2/Shell/Material = "Aluminum"
+s:Ge/RangeModulator/SmallWheel2/Shell/Color = "grey"
+s:Ge/RangeModulator/SmallWheel2/Shell/DrawingStyle = "Solid"
+i:Ge/RangeModulator/SmallWheel2/Shell/VisSegsPerCircle = 360
+
+d:Ge/RangeModulator/SmallWheel2/Hub/Rin = 0.0 cm
+d:Ge/RangeModulator/SmallWheel2/Hub/Rout = 7.0 cm
+s:Ge/RangeModulator/SmallWheel2/Hub/Material = "Aluminum"
+s:Ge/RangeModulator/SmallWheel2/Hub/Color = "grey"
+s:Ge/RangeModulator/SmallWheel2/Hub/DrawingStyle = "Solid"
+i:Ge/RangeModulator/SmallWheel2/Hub/VisSegsPerCircle = 360
+
+dv:Ge/RangeModulator/SmallWheel2/Upper/RadialDivisions=2 10 13 cm
+s:Ge/RangeModulator/SmallWheel2/Upper/Track1/Pattern = "LexanBlockT4"
+s:Ge/RangeModulator/SmallWheel2/Upper/Track2/Pattern = "LexanBlockT5"
+s:Ge/RangeModulator/SmallWheel2/Upper/Track3/Pattern = "LexanBlockT6"
+dv:Ge/RangeModulator/SmallWheel2/Middle/RadialDivisions=1 15 cm
+#s:Ge/RangeModulator/SmallWheel2/Middle/Track2/Pattern = "HoleTrackDisk"
+s:Ge/RangeModulator/SmallWheel2/Middle/Track1/Pattern = "InterfaceDisk"
+s:Ge/RangeModulator/SmallWheel2/Middle/Track2/Pattern = "InterfaceDisk"
+dv:Ge/RangeModulator/SmallWheel2/Lower/RadialDivisions=2 10 13 cm
+s:Ge/RangeModulator/SmallWheel2/Lower/Track1/Pattern = "LeadBlockT4"
+s:Ge/RangeModulator/SmallWheel2/Lower/Track2/Pattern = "LeadBlockT5"
+s:Ge/RangeModulator/SmallWheel2/Lower/Track3/Pattern = "LeadBlockT6"
+
+###############################################
+#Small wheel 3 (5c)
+#track 7 8 9
+###############################################
+s:Ge/RangeModulator/SmallWheel3/Type = "TsRangeModulator"
+s:Ge/RangeModulator/SmallWheel3/Material = "Parent"
+s:Ge/RangeModulator/SmallWheel3/Parent = "RangeModulator"
+d:Ge/RangeModulator/SmallWheel3/TransX = 10.75 cm
+d:Ge/RangeModulator/SmallWheel3/TransY = -18.6195462 cm
+d:Ge/RangeModulator/SmallWheel3/TransZ = 0.0 mm
+d:Ge/RangeModulator/SmallWheel3/RotX = 0.0 deg
+d:Ge/RangeModulator/SmallWheel3/RotY = 0.0 deg
+d:Ge/RangeModulator/SmallWheel3/RotZ = 0.0 deg
+b:Ge/RangeModulator/SmallWheel3/Invisible = "TRUE"
+b:Ge/RangeModulator/SmallWheel3/PrintInformation = "false"
+
+d:Ge/RangeModulator/SmallWheel3/HeightOfUpper = 147 mm
+d:Ge/RangeModulator/SmallWheel3/HeightOfMiddle = 1.0 mm
+d:Ge/RangeModulator/SmallWheel3/HeightOfLower = 8.4 mm
+
+d:Ge/RangeModulator/SmallWheel3/Shell/Rin = 16.0 cm
+d:Ge/RangeModulator/SmallWheel3/Shell/Rout = 16.3 cm
+s:Ge/RangeModulator/SmallWheel3/Shell/Material = "Aluminum"
+s:Ge/RangeModulator/SmallWheel3/Shell/Color = "grey"
+s:Ge/RangeModulator/SmallWheel3/Shell/DrawingStyle = "Solid"
+i:Ge/RangeModulator/SmallWheel3/Shell/VisSegsPerCircle = 360
+
+d:Ge/RangeModulator/SmallWheel3/Hub/Rin = 0.0 cm
+d:Ge/RangeModulator/SmallWheel3/Hub/Rout = 7.0 cm
+s:Ge/RangeModulator/SmallWheel3/Hub/Material = "Aluminum"
+s:Ge/RangeModulator/SmallWheel3/Hub/Color = "grey"
+s:Ge/RangeModulator/SmallWheel3/Hub/DrawingStyle = "Solid"
+i:Ge/RangeModulator/SmallWheel3/Hub/VisSegsPerCircle = 360
+
+dv:Ge/RangeModulator/SmallWheel3/Upper/RadialDivisions=2 10 13 cm
+s:Ge/RangeModulator/SmallWheel3/Upper/Track1/Pattern = "LexanBlockT7"
+s:Ge/RangeModulator/SmallWheel3/Upper/Track2/Pattern = "LexanBlockT8"
+s:Ge/RangeModulator/SmallWheel3/Upper/Track3/Pattern = "LexanBlockT9"
+dv:Ge/RangeModulator/SmallWheel3/Middle/RadialDivisions=1 15 cm
+s:Ge/RangeModulator/SmallWheel3/Middle/Track1/Pattern = "InterfaceDisk"
+s:Ge/RangeModulator/SmallWheel3/Middle/Track2/Pattern = "InterfaceDisk"
+dv:Ge/RangeModulator/SmallWheel3/Lower/RadialDivisions=2 10 13 cm
+s:Ge/RangeModulator/SmallWheel3/Lower/Track1/Pattern = "LeadBlockT7"
+s:Ge/RangeModulator/SmallWheel3/Lower/Track2/Pattern = "LeadBlockT8"
+s:Ge/RangeModulator/SmallWheel3/Lower/Track3/Pattern = "LeadBlockT9"
 
 
-d:Ge/LexanBlockT1/Offset = 0 deg
-dv:Ge/LexanBlockT1/Angles = 14
-5.000000 114.130000 146.540000 175.660000 197.170000 216.150000 231.940000 246.000000 258.640000 270.600000 282.240000 294.560000 306.170000 324.000000 deg
-dv:Ge/LexanBlockT1/Heights = 14
-77.717000 82.501000 87.268000 92.017000 96.747000 101.455000 106.142000 110.811000 115.326000 119.494000 123.663000 127.832000 132.003000 65.000000 mm
-sv:Ge/LexanBlockT1/Materials=14
-"Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Brass" 
-
+###############################################
+# Blocks - Lexan and Lead
+###############################################
 dv:Ge/InterfaceDisk/Angles = 1 0.0 deg
 dv:Ge/InterfaceDisk/Heights  =1 1.0 mm
 sv:Ge/InterfaceDisk/Materials=1 "AlZnMgCu"
@@ -100,6 +186,13 @@ dv:Ge/HoleTrackDisk/Angles = 2 90 110 deg
 dv:Ge/HoleTrackDisk/Heights  =2 0 1 mm
 sv:Ge/HoleTrackDisk/Materials=2 "NULL" "Aluminum"
 
+d:Ge/LexanBlockT1/Offset = 0 deg
+dv:Ge/LexanBlockT1/Angles = 14
+5.000000 114.130000 146.540000 175.660000 197.170000 216.150000 231.940000 246.000000 258.640000 270.600000 282.240000 294.560000 306.170000 324.000000 deg
+dv:Ge/LexanBlockT1/Heights = 14
+77.717000 82.501000 87.268000 92.017000 96.747000 101.455000 106.142000 110.811000 115.326000 119.494000 123.663000 127.832000 132.003000 65.000000 mm
+sv:Ge/LexanBlockT1/Materials=14
+"Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Brass" 
 d:Ge/LeadBlockT1/Offset = 0 deg
 dv:Ge/LeadBlockT1/Angles = 9
 3.000000 114.130000 146.540000 175.660000 197.170000 216.150000 231.940000 246.000000 257.64 deg
@@ -139,55 +232,6 @@ dv:Ge/LeadBlockT3/Heights = 18
 2.379000 2.218000 2.059000 1.901000 1.745000 1.589000 1.436000 1.285000 1.137000 0.991000 0.848000 0.709000 0.574000 0.443000 0.317000 0.196000 0.079000 0 mm
 sv:Ge/LeadBlockT3/Materials=18
 "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead"
-
-
-###############################################
-#Small wheel 2 (6)
-#track 4 5 6
-###############################################
-s:Ge/RMW_2/Type = "TsRangeModulator"
-s:Ge/RMW_2/Material = "Parent"
-s:Ge/RMW_2/Parent = "RMW"
-d:Ge/RMW_2/TransX = 10.75 cm
-d:Ge/RMW_2/TransY = 18.6195462 cm
-d:Ge/RMW_2/TransZ = 0.0 mm
-d:Ge/RMW_2/RotX = 0.0 deg
-d:Ge/RMW_2/RotY = 0.0 deg
-d:Ge/RMW_2/RotZ = 0.0 deg
-b:Ge/RMW_2/Invisible = "TRUE"
-b:Ge/RMW_2/PrintInformation = "false"
-
-d:Ge/RMW_2/HeightOfUpper = 147 mm
-d:Ge/RMW_2/HeightOfMiddle = 1.0 mm
-d:Ge/RMW_2/HeightOfLower = 8.4 mm
-
-d:Ge/RMW_2/Shell/Rin = 16.0 cm
-d:Ge/RMW_2/Shell/Rout = 16.3 cm
-s:Ge/RMW_2/Shell/Material = "Aluminum"
-s:Ge/RMW_2/Shell/Color = "grey"
-s:Ge/RMW_2/Shell/DrawingStyle = "Solid"
-i:Ge/RMW_2/Shell/VisSegsPerCircle = 360
-
-d:Ge/RMW_2/Hub/Rin = 0.0 cm
-d:Ge/RMW_2/Hub/Rout = 7.0 cm
-s:Ge/RMW_2/Hub/Material = "Aluminum"
-s:Ge/RMW_2/Hub/Color = "grey"
-s:Ge/RMW_2/Hub/DrawingStyle = "Solid"
-i:Ge/RMW_2/Hub/VisSegsPerCircle = 360
-
-dv:Ge/RMW_2/Upper/RadialDivisions=2 10 13 cm
-s:Ge/RMW_2/Upper/Track1/Pattern = "LexanBlockT4"
-s:Ge/RMW_2/Upper/Track2/Pattern = "LexanBlockT5"
-s:Ge/RMW_2/Upper/Track3/Pattern = "LexanBlockT6"
-dv:Ge/RMW_2/Middle/RadialDivisions=1 15 cm
-#s:Ge/RMW_2/Middle/Track2/Pattern = "HoleTrackDisk"
-s:Ge/RMW_2/Middle/Track1/Pattern = "InterfaceDisk"
-s:Ge/RMW_2/Middle/Track2/Pattern = "InterfaceDisk"
-dv:Ge/RMW_2/Lower/RadialDivisions=2 10 13 cm
-s:Ge/RMW_2/Lower/Track1/Pattern = "LeadBlockT4"
-s:Ge/RMW_2/Lower/Track2/Pattern = "LeadBlockT5"
-s:Ge/RMW_2/Lower/Track3/Pattern = "LeadBlockT6"
-
 
 d:Ge/LexanBlockT4/Offset = 8 deg
 dv:Ge/LexanBlockT4/Angles = 31
@@ -236,54 +280,6 @@ dv:Ge/LeadBlockT6/Heights = 20
 4.25 3.99 3.74 3.47 3.22 2.97 2.64 2.49 2.26 1.95 1.80 1.52 1.32 1.07 0.93 0.70 0.52 0.35 0.19 0 mm
 sv:Ge/LeadBlockT6/Materials=20
 "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead"
-
-
-###############################################
-#Small wheel 3 (5c)
-#track 7 8 9
-###############################################
-s:Ge/RMW_3/Type = "TsRangeModulator"
-s:Ge/RMW_3/Material = "Parent"
-s:Ge/RMW_3/Parent = "RMW"
-d:Ge/RMW_3/TransX = 10.75 cm
-d:Ge/RMW_3/TransY = -18.6195462 cm
-d:Ge/RMW_3/TransZ = 0.0 mm
-d:Ge/RMW_3/RotX = 0.0 deg
-d:Ge/RMW_3/RotY = 0.0 deg
-d:Ge/RMW_3/RotZ = 0.0 deg
-b:Ge/RMW_3/Invisible = "TRUE"
-b:Ge/RMW_3/PrintInformation = "false"
-
-d:Ge/RMW_3/HeightOfUpper = 147 mm
-d:Ge/RMW_3/HeightOfMiddle = 1.0 mm
-d:Ge/RMW_3/HeightOfLower = 8.4 mm
-
-d:Ge/RMW_3/Shell/Rin = 16.0 cm
-d:Ge/RMW_3/Shell/Rout = 16.3 cm
-s:Ge/RMW_3/Shell/Material = "Aluminum"
-s:Ge/RMW_3/Shell/Color = "grey"
-s:Ge/RMW_3/Shell/DrawingStyle = "Solid"
-i:Ge/RMW_3/Shell/VisSegsPerCircle = 360
-
-d:Ge/RMW_3/Hub/Rin = 0.0 cm
-d:Ge/RMW_3/Hub/Rout = 7.0 cm
-s:Ge/RMW_3/Hub/Material = "Aluminum"
-s:Ge/RMW_3/Hub/Color = "grey"
-s:Ge/RMW_3/Hub/DrawingStyle = "Solid"
-i:Ge/RMW_3/Hub/VisSegsPerCircle = 360
-
-dv:Ge/RMW_3/Upper/RadialDivisions=2 10 13 cm
-s:Ge/RMW_3/Upper/Track1/Pattern = "LexanBlockT7"
-s:Ge/RMW_3/Upper/Track2/Pattern = "LexanBlockT8"
-s:Ge/RMW_3/Upper/Track3/Pattern = "LexanBlockT9"
-dv:Ge/RMW_3/Middle/RadialDivisions=1 15 cm
-s:Ge/RMW_3/Middle/Track1/Pattern = "InterfaceDisk"
-s:Ge/RMW_3/Middle/Track2/Pattern = "InterfaceDisk"
-dv:Ge/RMW_3/Lower/RadialDivisions=2 10 13 cm
-s:Ge/RMW_3/Lower/Track1/Pattern = "LeadBlockT7"
-s:Ge/RMW_3/Lower/Track2/Pattern = "LeadBlockT8"
-s:Ge/RMW_3/Lower/Track3/Pattern = "LeadBlockT9"
-
 
 d:Ge/LexanBlockT7/Offset = 0 deg
 dv:Ge/LexanBlockT7/Angles = 14

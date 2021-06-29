@@ -1,4 +1,4 @@
-includeFile = /home/seohyeon/work/ProtonTherapy/data/components/ConstantsForNozzles.tps
+includeFile = /home/seohyeon/work/ProtonTherapy/data/components/NCC/ConstantsForNozzles.tps
 
 ########################################
 #2. Monitor chamber 1.

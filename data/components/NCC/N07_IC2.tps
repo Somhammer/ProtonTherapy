@@ -1,4 +1,5 @@
-includeFile = /home/seohyeon/work/ProtonTherapy/data/components/ConstantsForNozzles.tps
+includeFile = /home/seohyeon/work/ProtonTherapy/data/components/NCC/ConstantsForNozzles.tps
+#################################################
 # Monitor Chamber2:
 #################################################
 s:Ge/MonitorChamber2/Parent   = "Gantry"

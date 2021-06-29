@@ -1,4 +1,4 @@
-includeFile = /home/seohyeon/work/ProtonTherapy/data/components/ConstantsForNozzles.tps
+includeFile = /home/seohyeon/work/ProtonTherapy/data/components/NCC/ConstantsForNozzles.tps
 s:Ge/VC/Parent = "Gantry"
 d:Ge/VC/TransX = 0 mm
 d:Ge/VC/TransY = 0 mm
