@@ -74,13 +74,12 @@ class Component():
     class SubComponent:
         name: str = None
         parameters: list = field(default_factory=list)
-        draw: bool = False
         
-    def __init__(self):
+    def __init__(self, btype):
         self.base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
         self.__outname = None
         self.__name = None
-        self.__btype = None
+        self.__btype = btype
         self.__ctype = None
         self.__imported = list()
         self.__subcomponent = {'Basis':self.SubComponent(name='Basis')}
@@ -217,7 +216,9 @@ class Component():
                 para.name = new[3]
                 return
             
-    def load(self, fname, load=False):
+    def load(self, fname, load=False, draw_all=False):
+        if draw_all: draw=True
+        else: draw=False
         isdir = False
         if os.path.isdir(fname):
             isdir = True
@@ -250,7 +251,7 @@ class Component():
                 lines = f.readlines()
                 paras[sub] = [line for line in lines]
         else:
-            change = False
+            changed = False
             if not load:
                 f = open(fname, 'r')
                 lines = f.readlines()
@@ -260,15 +261,13 @@ class Component():
             paras['Basis'] = []
             for line in lines:
                 tmp = line.split('=')[0].split('/')
+                if not changed and len(tmp) >= 3:
+                    self.ctype = tmp[1]
+                    changed = True
                 if len(tmp) >= 4:
-                    if not change:
-                        self.ctype = tmp[1]
-                        change = True
                     subname = tmp[2]
                     if not any(i == subname for i in paras.keys()):
                         paras[subname] = []
-                if len(tmp) >= 4:
-                    subname = tmp[2]
                 else:
                     subname = 'Basis'
                 paras[subname].append(line)
@@ -311,25 +310,24 @@ class Component():
                     name = tmp[-1].replace('\t','').replace(' ','')
                 value = line[-1]
                         
-                self.__subcomponent[sub].parameters.append(self.Parameter(vtype=vtype, category=category, directory=directory, name=name, value=value))
+                self.__subcomponent[sub].parameters.append(self.Parameter(vtype=vtype, category=category, directory=directory, name=name, value=value, draw=draw))
 
     def component_list(self):
         outdict = {}
         common = {
-          'Beam':['Basis'],
+          'Beam':['Basis','Distribution'],
           'MonitorChamber':['Basis', 'CylinderFrame', 'BoxFrame', 'CylinderLayer', 'BoxLayer'],
-          'VC':['Basis','XJaws', 'YJaws']
         }
         scanning = {
-          'Magnet':['Basis']
+          'Magnet':['ScanningMagnet', 'Quadrupole']
         }
         scattering = {
           'Scatterer':['Basis', 'Scatterer1', 'Lollipop', 'Scatterer2', 'Holder', 'Hole'],
           'RangeModulator':['Basis','SmallWheel'], 
-          'SMAG':['Basis','Dipole'],
+          'VC':['Basis','XJaws', 'YJaws'],
           'Snout':['Basis','BrassBlock', 'BrassCone'],
           'Phantom':['Basis','WaterPhantom','Patient','PDD','DoseAtPhantom'],
-          'PhaseSpaceVolume':['Basis'],
+          'PhaseSpaceVolume':['PhaseSpaceVolume', 'PhaseSpaceOutput'],
           'Contour':['Material','Parallel','Contour']
         }
         outdict.update(common)
@@ -338,6 +336,7 @@ class Component():
             outdict.update(scanning)
         elif self.btype.lower() == 'scattering':
             outdict.update(scattering)
+
         return outdict
 
     def find_parameter(self, name):
@@ -473,7 +472,6 @@ class Component():
                 text += f"includeFile = {item}\n"
         text += "\n"
         for subcomp in self.subcomponent.values():
-            if not subcomp.draw: continue
             for para in subcomp.parameters:
                 if not para.draw: continue
                 text += f'{para.fullname()} = {para.value}\n'

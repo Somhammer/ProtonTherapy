@@ -104,9 +104,9 @@ class DoseSimulation(sim.Simulation):
           'Parallels':[]
         }
 
-        self.import_component = {i:True for i in list(self.output.keys())}
-        self.import_component['Read'] = False
-        self.import_component['Parallels'] = False
+        self.imported = {i:[True,[]] for i in list(self.output.keys())}
+        self.imported['Read'][0] = False
+        self.imported['Parallels'][0] = False
 
         self.firstCT = None
         self.lastCT = None
@@ -128,7 +128,7 @@ class DoseSimulation(sim.Simulation):
         return requirement
 
     def set_import_files(self, cname, files):
-        self.output[cname].modify_file(files)
+        self.imported[cname][1] = files
 
     def is_workable(self):
         if self.convalgo['File'][0] is not None:
@@ -358,86 +358,66 @@ class DoseSimulation(sim.Simulation):
     def nozzle_template(self, **kwargs):
         name = kwargs['Name']
         if name.lower() == "control":
-            return [
-              f"""Ts/PauseBeforeSequence = "False" """,
-              f"""i:Ts/ShowHistoryCountAtInterval = 0""",
-              f"""i:Ts/NumberOfThreads = {kwargs['nNodes']}""",
-              f"""i:Ts/MaxInteruptedHistories = 10000000""",
-            ]
+            return {
+              "Ts/PauseBeforeSequence":"False",
+              "i:Ts/ShowHistoryCountAtInterval":"0",
+              "i:Ts/NumberOfThreads":f"{kwargs['nNodes']}",
+              "i:Ts/MaxInteruptedHistories":"10000000",
+            }
         elif name.lower() == "time":
-            return [
-              f"""d:Tf/TimelineEnd = {kwargs['Stop']} ms""",
-              f"""i:Tf/NumberOfSequentialTimes = {kwargs['nSequentialTimes']}""",
-              f"""dv:Tf/BeamWeight/Times = {kwargs['nSize']} {kwargs['BWT']} ms""",
-              f"""iv:Tf/BeamWeight/Values = {kwargs['nSize']} {kwargs['BCM']}""",
-              f"""s:Tf/BeamCurrent/Function = "Step" """,
-              f"""dv:Tf/BeamCurrent/Times = 1 100 ms""",
-              f"""iv:Tf/BeamCurrent/Values = 1 2000""",
-            ]
-        # Changing name: Demo -> Beam
-        elif name.lower() == "beam":
-            return [
-              f"""s:So/Beam/Type = "Beam" """,
-              f"""s:So/Beam/Component = "BeamPosition" """,
-              f"""d:So/Beam/BeamEnergy = {kwargs['Energy']} MeV""",
-              f"""u:So/Beam/BeamEnergySpread = {kwargs['EnergySpread']}""",
-              f"""s:So/Beam/BeamPositionDistribution = "Gaussian" """,
-              f"""s:So/Beam/BeamPositionCutoffShape = "Ellipse" """,
-              f"""d:So/Beam/BeamPositionCutoffX = 0.1 cm""",
-              f"""d:So/Beam/BeamPositionCutoffY = 0.1 cm""",
-              f"""d:So/Beam/BeamPositionSpreadX = 0.1 cm""",
-              f"""d:So/Beam/BeamPositionSpreadY = 0.1 cm""",
-              f"""s:So/Beam/BeamAngularDistribution = "Gaussian" """,
-              f"""d:So/Beam/BeamAngularCutoffX = 0.01 deg """,
-              f"""d:So/Beam/BeamAngularCutoffY = 0.01 deg """,
-              f"""d:So/Beam/BeamAngularSpreadX = 0.01 deg """,
-              f"""d:So/Beam/BeamAngularSpreadY = 0.01 deg """,
-              f"""i:So/Beam/NumberOfHistoriesInRun = Tf/BeamCurrent/Value * Tf/BeamWeight/Value"""
-            ]
+            return {
+              "d:Tf/TimelineEnd":f"{kwargs['Stop']} ms",
+              "i:Tf/NumberOfSequentialTimes":f"{kwargs['nSequentialTimes']}",
+              "dv:Tf/BeamWeight/Times":f"{kwargs['nSize']} {kwargs['BWT']} ms",
+              "iv:Tf/BeamWeight/Values":f"{kwargs['nSize']} {kwargs['BCM']}",
+              "s:Tf/BeamCurrent/Function":'"Step"',
+              "dv:Tf/BeamCurrent/Times":"1 100 ms",
+              "iv:Tf/BeamCurrent/Values":"1 2000",
+            }
         elif name.lower() == "phase":
-            return [
-              f"""s:So/PhaseSpace/Type = "PhaseSpace" """,
-              f"""s:So/PhaseSpace/Component = "World" """,
-              f"""s:So/PhaseSpace/PhaseSpaceFileName = "{kwargs['PSFile']}" """,
-              f"""i:So/PhaseSpace/PhaseSpaceMultipleUse = 5 """
-            ]
+            return {
+              "s:So/PhaseSpace/Type":'"PhaseSpace"',
+              's:So/PhaseSpace/Component':'"World"',
+              's:So/PhaseSpace/PhaseSpaceFileName':"{kwargs['PSFile']}",
+              'i:So/PhaseSpace/PhaseSpaceMultipleUse':'5'
+            }
         elif name.lower() == "rmw" or name.lower() == 'rangemodulator':
-            return [
-              f"""s:Tf/{kwargs['Name']}_Rotation/Function = "Linear deg" """,
-              f"""d:Tf/{kwargs['Name']}_Rotation/Rate = 3.6 deg/ms""",
-              f"""d:Tf/{kwargs['Name']}_Rotation/StartValue = Ge/{kwargs['Name']}/Track/zero_angle deg""",
-              f"""d:Tf/{kwargs['Name']}_Rotation/RepetitionInterval = 100.0 ms""",
-              f"""d:Ge/{kwargs['Name']}/Track/zero_angle = Ge/{kwargs['Name']}/Track{kwargs['RMTrack']} - Ge/{kwargs['Name']}/Small/Track{kwargs['RMSmallTrack']} deg""",
-              f"""Ge/{kwargs['Name']}_{kwargs['RMSmallWheel']}/RotZ = Tf/{kwargs['Name']}_Rotation/Value deg""",
-              f"""Ge/{kwargs['Name']}/Track = -1 * Ge/RMW/Track{kwargs['RMtrack']} deg"""
-            ]
+            return {
+              f"s:Tf/{kwargs['Name']}_Rotation/Function":'"Linear deg"',
+              f"d:Tf/{kwargs['Name']}_Rotation/Rate":"3.6 deg/ms",
+              f"d:Tf/{kwargs['Name']}_Rotation/StartValue":f"Ge/{kwargs['Name']}/Track/zero_angle deg",
+              f"d:Tf/{kwargs['Name']}_Rotation/RepetitionInterval":"100.0 ms",
+              f"d:Ge/{kwargs['Name']}/Track/zero_angle":f"Ge/{kwargs['Name']}/Track{kwargs['RMTrack']} - Ge/{kwargs['Name']}/Small/Track{kwargs['RMSmallTrack']} deg",
+              f"Ge/{kwargs['Name']}_{kwargs['RMSmallWheel']}/RotZ":f"Tf/{kwargs['Name']}_Rotation/Value deg",
+              f"Ge/{kwargs['Name']}/Track":f"-1 * Ge/RMW/Track{kwargs['RMtrack']} deg"
+            }
         elif name.lower() == "scatterer1":
-            return [
-              f"""Ge/{kwargs['Name']}/Lollipop{kwargs['S1Number']} = Ge/{kwargs['Name']}/RotZ_InBeam deg"""
-            ]
+            return {
+              f"Ge/{kwargs['Name']}/Lollipop{kwargs['S1Number']}":f"Ge/{kwargs['Name']}/RotZ_InBeam deg"
+            }
         elif name.lower() == "scatterer2":
-            return [
-              f"""Ge/{kwargs['Name']}/Holder/Rotz = Ge/{kwargs['Name']}/RotZForS{kwargs['S2Angle']} deg"""
-            ]
+            return {
+              f"Ge/{kwargs['Name']}/Holder/Rotz":f"Ge/{kwargs['Name']}/RotZForS{kwargs['S2Angle']} deg"
+            }
         elif name.lower() == "snout":
-            return [
-              f"""Ge/{kwargs['Name']}/TransZ = {kwargs['SnoutTransZ']} mm""",
-              f"""Ge/{kwargs['Name']}/SNTTypeR1 = Ge/{kwargs['Name']}/SNT{kwargs['SnoutID']}R1 mm""",
-              f"""Ge/{kwargs['Name']}/SNTTypeR2 = Ge/{kwargs['Name']}/SNT{kwargs['SnoutID']}R2 mm"""
-            ]
+            return {
+              f"Ge/{kwargs['Name']}/TransZ":f"{kwargs['SnoutTransZ']} mm",
+              f"Ge/{kwargs['Name']}/SNTTypeR1":f"Ge/{kwargs['Name']}/SNT{kwargs['SnoutID']}R1 mm",
+              f"Ge/{kwargs['Name']}/SNTTypeR2":f"Ge/{kwargs['Name']}/SNT{kwargs['SnoutID']}R2 mm"
+            }
         elif name.lower() == 'aperture':
-            return [
-              f"""Ge/Aperture/InputFile = {kwargs['ApertureFile']}"""
-            ]
+            return {
+              'Ge/Aperture/InputFile':f"{kwargs['ApertureFile']}"
+            }
         elif name.lower() == 'compensator':
-            return [
-              f"""Ge/Compensator/InputFile = {kwargs['CompensatorFile']}"""
-            ]
+            return {
+              'Ge/Compensator/InputFile':f"{kwargs['CompensatorFile']}"
+            }
         elif name.lower() == 'other':
-            return [
-              f"""Ge/CheckForOverlaps = "True" """,
-              f"""b:Ge/QuitIfOverlapDetected = "False" """
-            ]
+            return {
+              'Ge/CheckForOverlaps':'"True"',
+              'b:Ge/QuitIfOverlapDetected':'"False"'
+            }
         else:
             return False
 
@@ -482,13 +462,20 @@ class DoseSimulation(sim.Simulation):
         kwargs['RMSmallTrack'] = int((kwargs['RMTrack'] + 2) % 3)
         kwargs['RMSmallWheel'] = int((kwargs['RMTrack'] + 2) / 3)
 
-        dsf = data.Component()
-        record = data.Component()
-        read = data.Component()
+        dsf = data.Component(btype='scattering')
+        record = data.Component(btype='scattering')
+        read = data.Component(btype='scattering')
 
-        dsf_keys = ['control','time','beam','rmw','scatterer1','scatterer2','snout','aperture','other']
-        record_keys = ['control','time','rmw','scatterer1','scatterer2','beam','compensator','phaseatfilm']
+        dsf_keys = ['control','time','rmw','scatterer1','scatterer2','snout','aperture','other']
+        record_keys = ['control','time','rmw','scatterer1','scatterer2','beam','compensator','phase']
         read_keys = ['control','nigas','world','ps']
+
+        for f in self.imported['DSF'][1]:
+            dsf.modify_file(f)
+        for f in self.imported['Record'][1]:
+            record.modify_file(f)
+        for f in self.imported['Read'][1]:
+            read.modify_file(f)
 
         for key in dsf_keys:
             for component in g_component:
@@ -498,6 +485,15 @@ class DoseSimulation(sim.Simulation):
             re = self.nozzle_template(**kwargs)
             if re:
                 dsf.modify_parameter(subname='Basis', paras=re)
+        dsf.load("Beam/Distribution")
+        paras = {
+          'd:So/Beam/BeamEnergy':f'{kwargs["Energy"]} MeV',
+          'u:So/Beam/BeamEnergySpread':f'{kwargs["EnergySpread"]}',
+          's:So/Beam/BeamPositionDistribution':'"Gaussian"',
+          's:So/Beam/BeamPositionCutoffShape':'"Ellipse"',
+          'i:So/Beam/NumberOfHistoriesInRun':'Tf/BeamCurrent/Value * Tf/BeamWeight/Value'
+        }
+        dsf.modify_parameter(subname='Basis', paras=paras)
         dsf.load("Phantom/WaterPhantom")
         paras = {
           'd:Ge/WaterPhantom/HLX':'10.0 cm',
@@ -530,9 +526,9 @@ class DoseSimulation(sim.Simulation):
             re = self.nozzle_template(**kwargs)
             if re:
                 record.modify_parameter(subname='Basis', paras=re)
-        record.load('PhaseSpace/PhaseSpaceAtVacFilms')
+        record.load('PhaseSpace/PhaseSpaceOutput')
         paras = {
-          's:Sc/PhaseSpaceAtVacFilm/OutputFile':kwargs['PSFile']
+          's:Sc/PhaseSpaceOutput/OutputFile':kwargs['PSFile']
         }
         record.modify_parameter(subname='Basis',paras=paras)
         record.subcomponent['Basis'].draw = True
@@ -552,6 +548,7 @@ class DoseSimulation(sim.Simulation):
           'sv:Ma/NiGas/Components':'1 "Nitrogen"',
           'uv:Ma/NiGas/Fractions':'1 1.0',
           'd:Ma/NiGas/Density':'0.001251 g/cm3',
+
           's:Ge/World/Material':'"NiGas"',
           'd:Ge/World/HLX':'1.0 m',
           'd:Ge/World/HLY':'1.0 m',
@@ -585,7 +582,7 @@ class DoseSimulation(sim.Simulation):
 
     def save_parallel(self, iparallel):
         out = ""
-        parallel = data.Component()
+        parallel = data.Component(btype='scattering')
         parallel.load('Contour/Material')
         material = parallel.subcomponent['Basis'].parameters[0].directory
         parallel.load('Contour/Parallel')

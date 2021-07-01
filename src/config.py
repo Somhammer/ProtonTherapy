@@ -60,7 +60,7 @@ class Topas():
         import subprocess
         def call_subprocess(iname):
             cmd = [self.topas_path, iname]
-            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = p.communicate()
             return out.decode('utf-8'), err.decode('utf-8')
         

@@ -83,8 +83,7 @@ class ComponentWindow(QDialog):
         super(ComponentWindow, self).__init__(parent)
         uic.loadUi(os.path.join(base_path,'ui','component.ui'), self)
 
-        self.template = data.Component()
-        self.template.btype = g_nozzle_type
+        self.template = data.Component(g_nozzle_type)
         self.modify_component = modify_component
         self.fname = fname
         if self.fname is not None:
@@ -199,7 +198,7 @@ class ComponentWindow(QDialog):
         if item == '' or item == 'Select':
             return
         self.tabComp.clear()
-        self.template = data.Component()
+        self.template = data.Component(g_nozzle_type)
         if item == "New":
             self.clear_all()
             self.template.name = ''
@@ -332,7 +331,7 @@ class ComponentWindow(QDialog):
         self.textPreview.setText(self.template.fulltext())
         
     def clear_all(self):
-        self.template = data.Component()
+        self.template = data.Component(g_nozzle_type)
         self.lineOutput.clear()
         self.listImport.clear()
         self.tabComp.clear()
@@ -620,7 +619,7 @@ class SimulationWindow(QDialog):
         for output in self.instance.output.keys():
             listImport = QListWidget()
             listImport.setContextMenuPolicy(Qt.ActionsContextMenu)
-            if self.instance.import_component[output]:
+            if self.instance.imported[output][0]:
                 for component in g_component:
                     self.add_widget(listImport, component.name)
             self.tabImport.addTab(listImport, output)
@@ -646,15 +645,24 @@ class SimulationWindow(QDialog):
             QMessageBox.warning(self, "Message", "Please, Fill requirements", QMessageBox.Ok)
             return
         else:
-            global g_phantom, g_main, g_aperture, g_compensator
+            global g_phantom, g_main
+            for idx in range(self.tabImport.count()):
+                widget = self.tabImport.widget(idx)
+                files = []
+                for idx2 in range(widget.count()):
+                    cname = widget.itemWidget(widget.item(idx2)).text()
+                    files.append(os.path.join(g_outdir,'nozzle',cname+'.tps'))
+                self.instance.set_import_files(self.tabImport.tabText(idx), files)
             self.instance.set_parameters(g_component)
             for key, value in self.instance.output.items():
                 if any(i in key.lower() for i in ['parallel','patient','phantom']):
                     g_phantom = value
                 else:
                     g_main.append(value)
-            g_aperture = self.instance.save_aperture()
-            g_compensator = self.instance.save_compensator()
+            if g_nozzle_type == "scattering":
+                global g_aperture, g_compensator
+                g_aperture = self.instance.save_aperture()
+                g_compensator = self.instance.save_compensator()
         self.click_ok()
 
     def click_ok(self):
@@ -771,6 +779,7 @@ class RunWindow(QDialog):
         try:
             for ibeam in range(len(g_main[0])):
                 self.topas.set_input(self.idict[ibeam])
+                self.topas.run()
             self.checkTopasRun.setCheckable(True)
             self.checkTopasRun.setChecked(True)
             self.textLog.append("Simulation is success.")
@@ -1028,10 +1037,12 @@ class MainWindow(QMainWindow, form_class):
             return
 
     def save_cfg(self):
+        global g_nozzle_type
         fname = QFileDialog.getSaveFileName(self, 'Save', os.path.join(base_path,'prod'), filter="Nozzle files (*.nzl)")[0]
         if not fname.endswith('.nzl'):
             fname = fname + '.nzl'
         fout = open(fname, 'w')
+        fout.write(f"Nozzle: {g_nozzle_type}\n")
         for component in g_component:
             fulltext = component.fulltext().split('\n')
             for idx, text in enumerate(fulltext):
@@ -1041,15 +1052,20 @@ class MainWindow(QMainWindow, form_class):
         fout.close()
 
     def open_cfg(self):
+        global g_nozzle_type
         fname = QFileDialog.getOpenFileName(self, 'Open', os.path.join(base_path,'prod'), filter = "Nozzle files (*.nzl)")[0]
         if fname == '' or fname is None: return
         if not fname.endswith('.nzl'): return
         with open(fname, 'r') as f:
             self.clear_all()
             cfg = yaml.load(f, Loader=yaml.FullLoader)
+        g_nozzle_type = cfg['Nozzle'].lower()
+        if g_nozzle_type == 'scattering': self.radioScattering.setChecked(True)
+        elif g_nozzle_type == 'scanning': self.radioScanning.setChecked(True)
         for name, text in cfg.items():
-            component = data.Component()
-            component.load(text, load=True)
+            if name == 'Nozzle': continue
+            component = data.Component(g_nozzle_type)
+            component.load(text, load=True, draw_all=True)
             component.name = name
             g_template.append(component)
             item = QListWidgetItem(self.listTemplates)
@@ -1355,6 +1371,7 @@ class Painter(QWidget):
         #if len(g_component) < 1:
         #    return
         for component in g_component:
+            if component.ctype == "Beam": continue
             self.container(component)
 
     def container(self, component):
@@ -1367,7 +1384,7 @@ class Painter(QWidget):
                'TransX':"0.0 mm",'TransY':"0.0 mm",'TransZ':"0.0 mm"}
         ftype = ''
         for para in component.subcomponent['Basis'].parameters:
-            if 'Type' in para.name:
+            if 'Type' == para.name:
                 ftype = para.value.replace('"','').replace("'",'').replace(' ','')
             if any(para.name.lower() == i.lower() for i in pos.keys()):
                 value, unit = component.calculate_value(para)
@@ -1443,6 +1460,8 @@ class Painter(QWidget):
             'TsCylinder':('#9d1be3','#1be32c'),
             'TsRangeModulator':('#373d36','#f0e373'),
             'TsDipoleMagnet':('#23fabd','#23d2fa'),
+            'TsAperture':('#30d14e','#a69b94'),
+            'TsCompensator':('#e88133','#a69b94'),
             'Group':('#ffff00','#59ff00'),
             'Other':('#000000','#000000')}
         color = QColor(0,0,0)
