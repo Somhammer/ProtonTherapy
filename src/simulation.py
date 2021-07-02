@@ -1,7 +1,7 @@
 import os, sys
 from abc import *
 class Simulation(metaclass=ABCMeta):
-    def __init__(self, convalgo, patient):
+    def __init__(self):
         """
         self.name: simulation name. It is displayed in simulation window
         self.convalgo: nozzle parameter. It containes
@@ -9,8 +9,8 @@ class Simulation(metaclass=ABCMeta):
         self.patient: get Patient class
         """
         self.name = 'Simulation' # Simulation name
-        self.convalgo = convalgo
-        self.patient = patient
+        #self.convalgo = convalgo
+        #self.patient = patient
 
     def make_component(parameters, variables):
         component = ""

@@ -67,7 +67,7 @@ class Topas():
         for order in self.input.keys():
             iname = self.input[order]
             out, err = call_subprocess(iname)
-            outname = iname.split('/')[-1]
+            outname = iname.split('/')[-1].replace('.tps','')
             ofile = open(os.path.join(self.output_path, outname+'.log'), 'w')
             efile = open(os.path.join(self.output_path, outname+'.err'), 'w')
             ofile.write(out)

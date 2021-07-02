@@ -27,7 +27,7 @@ class Component():
                 fullname += f'{self.vtype}:'
             if self.category is not None and self.category != "": 
                 fullname += f'{self.category}'
-            if self.directory is not None and self.category != "":
+            if self.directory is not None and self.directory != "":
                 fullname += f'/{self.directory}'
             if self.name is not None and self.name != "":
                 fullname += f'/{self.name}'
@@ -170,9 +170,13 @@ class Component():
         else:
             vtype = tmp[0]
         tmp = tmp[-1].split('/')
-        if len(tmp) < 3:
-            category = ''
-            directory = '/'.join(i for i in tmp[0:2])
+        if len(tmp) == 2:
+            category = tmp[0]
+            directory = ''
+            name = tmp[1]
+        if len(tmp) == 3:
+            category = tmp[0]
+            directory = tmp[1]
             name = tmp[2]
         else:
             category = tmp[0]
@@ -301,8 +305,8 @@ class Component():
                     directory = ''
                     name = tmp[0].replace('\t','').replace(' ','')
                 elif len(tmp) == 2:
-                    category = ''
-                    directory = tmp[0]
+                    category = tmp[0]
+                    directory = ''
                     name = tmp[1].replace('\t','').replace(' ','')
                 else:
                     category = tmp[0]
