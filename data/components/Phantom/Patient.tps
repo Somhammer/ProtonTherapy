@@ -1,4 +1,4 @@
-s:Ge/Patient/Parent = "PhantomBox"
+s:Ge/Patient/Parent = "Phantom"
 s:Ge/Patient/Type = "TsDicomPatient"
 s:Ge/Patient/Material = "G4_WATER"
 d:Ge/Patient/TransX = 0 mm

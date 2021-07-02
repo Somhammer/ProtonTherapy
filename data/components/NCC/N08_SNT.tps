@@ -3,7 +3,6 @@ includeFile = /home/seohyeon/work/ProtonTherapy/data/components/NCC/ConstantsFor
 ##################################################
 #Snout
 ##################################################
-
 s:Ge/Snout/Type = "Group"
 s:Ge/Snout/Parent = "World"
 d:Ge/Snout/TransX = 0. m
@@ -63,7 +62,6 @@ s:Ge/Snout/Hole/DrawingStyle = "Solid"
 ##################################################
 #Snout:BrassCone
 ##################################################
-
 s:Ge/Snout/BrassCone/Parent = "Snout"
 s:Ge/Snout/BrassCone/Type = "TsCylinder"
 s:Ge/Snout/BrassCone/Material = "Brass"
@@ -81,3 +79,51 @@ d:Ge/Snout/BrassCone/SPhi = 0.0 deg
 d:Ge/Snout/BrassCone/DPhi = 360.0 deg
 s:Ge/Snout/BrassCone/DrawingStyle = "Solid"
 d:Ge/Snout/BrassCone/LowerEdge = Ge/Snout/BrassCone/TransZ + Ge/Snout/BrassCone/HL cm
+
+##################################################
+#Aperture
+##################################################
+s:Ge/Aperture/Type = "TsAperture"
+s:Ge/Aperture/Parent = "Snout"
+s:Ge/Aperture/InputFile = "ApertureFileIn.ap"
+s:Ge/Aperture/FileFormat = "XYCoordinates"
+b:Ge/Aperture/PrintPoints = "True"
+s:Ge/Aperture/Material = "Brass"
+d:Ge/Aperture/RMax = 20.0 cm
+d:Ge/Aperture/HL = 2.0 cm
+d:Ge/Aperture/TransX = 0.0 cm
+d:Ge/Aperture/TransY = 0.0 cm
+d:Ge/Aperture/TransZ = Ge/Snout/BrassCone/LowerEdge + Ge/Aperture/HL cm
+d:Ge/Aperture/RotX = 0.0 deg
+d:Ge/Aperture/RotY = 0.0 deg
+d:Ge/Aperture/RotZ = 90.0 deg
+d:Ge/Aperture/LowerEdge = Ge/Aperture/TransZ + Ge/Aperture/HL cm
+s:Ge/Aperture/Message = "ConstructingAperture"
+b:Ge/Aperture/Invisible = "True"
+#b:Ge/Aperture/IsParallel = "True"
+
+##################################################
+#Compensator
+##################################################
+s:Ge/Compensator/Type = "TsCompensator"
+s:Ge/Compensator/Parent = "Snout"
+s:Ge/Compensator/Material = "CompensatorLucite"
+d:Ge/Compensator/RMax = 20 cm
+d:Ge/Compensator/TransX = 0. cm
+d:Ge/Compensator/TransY = 0. mm
+dc:Ge/Compensator/Thickness = 0. cm #will be reset to actual thickness when compensator is read in
+d:Ge/Compensator/HL = 0.5 * Ge/Compensator/Thickness cm
+d:Ge/Compensator/TransZ = Ge/Aperture/LowerEdge + Ge/Compensator/HL cm
+d:Ge/Compensator/LowerEdge = Ge/Compensator/TransZ + Ge/Compensator/HL cm
+d:Ge/Compensator/RotX = 0. deg
+d:Ge/Compensator/RotY = 0. deg
+d:Ge/Compensator/RotZ = 90. deg
+s:Ge/Compensator/InputFile = "CompensatorFileInRowsDepths.rc"
+s:Ge/Compensator/FileFormat = "RowsAndDepths"
+s:Ge/Compensator/Method = "ExtrudedSolid" #Polyhedra, ExtrudedSolid, SubtractionCylindersorUnionCylinders
+#d:Ge/Compensator/XTolerance = 10.mm
+#d:Ge/Compensator/YTolerance = 10.mm
+b:Ge/Compensator/PrintPoints = "F"
+#s:Ge/Compensator/Message = "ConstructingCompensator"
+#b:Ge/Compensator/IsParallel = "True"
+#s:Ge/Compensator/DrawingStyle = "Solid"

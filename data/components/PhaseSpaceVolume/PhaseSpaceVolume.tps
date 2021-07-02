@@ -1,0 +1,12 @@
+s:Ge/PhaseSpaceVol/Type = "TsBox"
+s:Ge/PhaseSpaceVol/Parent = "Snout"
+s:Ge/PhaseSpaceVol/Material = "Parent"
+d:Ge/PhaseSpaceVol/HLX = 0. cm
+d:Ge/PhaseSpaceVol/HLY = 0. cm
+d:Ge/PhaseSpaceVol/HLZ = 0. mm
+d:Ge/PhaseSpaceVol/TransX = 0. m
+d:Ge/PhaseSpaceVol/TransY = 0. m
+d:Ge/PhaseSpaceVol/TransZ = 0. cm
+d:Ge/PhaseSpaceVol/RotX = 0. deg
+d:Ge/PhaseSpaceVol/RotY = 0. deg
+d:Ge/PhaseSpaceVol/RotZ = 0. deg

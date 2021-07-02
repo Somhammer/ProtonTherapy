@@ -1,0 +1,12 @@
+s:Ge/Quadrupole/Type     = "TsBox"
+s:Ge/Quadrupole/Parent   = "Nozzle"
+s:Ge/Quadrupole/Material = "G4_AIR"
+d:Ge/Quadrupole/HLX      = 10 cm
+d:Ge/Quadrupole/HLY      = 10 cm
+d:Ge/Quadrupole/HLZ      = 20 cm
+d:Ge/Quadrupole/RotY     = 0 deg
+d:Ge/Quadrupole/RotX     = 0 deg
+s:Ge/Quadrupole/Field = "QuadrupoleMagnet"
+d:Ge/Quadrupole/MagneticFieldGradientX     = .1 tesla/cm
+d:Ge/Quadrupole/MagneticFieldGradientY     = .1 tesla/cm
+d:Ge/Quadrupole/TransX        = 0 cm

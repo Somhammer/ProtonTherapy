@@ -1,9 +1,0 @@
-s:Ge/SMAG/Type = "Group"
-s:Ge/SMAG/Parent = "Gantry"
-d:Ge/SMAG/TransX = 0.0 cm
-d:Ge/SMAG/TransY = 0.0 cm
-d:Ge/SMAG/TransZ = 0.0 mm
-d:Ge/SMAG/RotX = 0 deg
-d:Ge/SMAG/RotY = 0 deg
-d:Ge/SMAG/RotZ = 0 deg
-s:Ge/SMAG/DrawingStyle = "Solid"

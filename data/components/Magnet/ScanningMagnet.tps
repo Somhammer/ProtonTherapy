@@ -1,0 +1,12 @@
+s:Ge/ScanningMagnet/Type = "TsBox"
+s:Ge/ScanningMagnet/Parent = "World"
+s:Ge/ScanningMagnet/Material = "World"
+d:Ge/ScanningMagnet/HLX = 0 cm
+d:Ge/ScanningMagnet/HLY = 0 cm
+d:Ge/ScanningMagnet/HLZ = 0 cm
+d:Ge/ScanningMagnet/TransZ = 0 cm
+s:Ge/ScanningMagnet/Field = "DipoleMagnet"
+u:Ge/ScanningMagnet/MagneticFieldDirectionX  = 0.0
+u:Ge/ScanningMagnet/MagneticFieldDirectionY  = 0.0
+u:Ge/ScanningMagnet/MagneticFieldDirectionZ  = 0.0
+d:Ge/ScanningMagnet/MagneticFieldStrength = 0.0

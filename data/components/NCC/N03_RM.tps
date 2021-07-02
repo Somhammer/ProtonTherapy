@@ -226,7 +226,7 @@ sv:Ge/LexanBlockT4/Materials = 31 "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan
 d:Ge/LeadBlockT4/Offset = 8 deg
 dv:Ge/LeadBlockT4/Angles = 21 3.00 75.51 101.42 120.91 135.92 149.12 160.53 170.61 179.71 188.42 196.69 204.63 212.15 219.50 226.64 233.34 239.54 245.30 250.99 256.77 262.92 deg
 dv:Ge/LeadBlockT4/Heights = 21 2.44 2.27 2.11 1.89 1.79 1.59 1.48 1.29 1.19 1.01 0.91 0.75 0.65 0.51 0.40 0.30 0.21 0.15 0.10 0.14 0 mm
-sv:Ge/LeadBlockT4/Materials=21 "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead"
+sv:Ge/LeadBlockT4/Materials = 21 "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead"
 
 d:Ge/LexanBlockT5/Offset = 4 deg
 dv:Ge/LexanBlockT5/Angles = 23 7.09 101.42 132.91 156.78 176.07 191.94 205.98 218.46 229.57 239.87 249.28 258.26 266.74 274.96 282.47 289.87 296.99 303.23 309.22 315.06 320.47 325.66 331.09 deg
@@ -278,4 +278,4 @@ sv:Ge/LexanBlockT9/Materials = 22 "Lexan" "Lexan" "Lexan" "Lexan" "Lexan" "Lexan
 d:Ge/LeadBlockT9/Offset = 0 deg
 dv:Ge/LeadBlockT9/Angles = 17 37.120000 136.760000 168.870000 194.800000 214.480000 231.460000 246.300000 259.150000 270.430000 280.700000 290.220000 298.980000 307.060000 314.510000 321.450000 327.990000 334.070000 deg
 dv:Ge/LeadBlockT9/Heights = 17 2.379000 2.218000 2.059000 1.901000 1.745000 1.589000 1.436000 1.285000 1.137000 0.991000 0.848000 0.709000 0.574000 0.443000 0.317000 0.196000 0.079000 mm
-sv:Ge/LeadBlockT9/Materials=17 "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead"
+sv:Ge/LeadBlockT9/Materials = 17 "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead" "Lead"

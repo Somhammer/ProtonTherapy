@@ -16,7 +16,7 @@ includeFile = /home/seohyeon/work/ProtonTherapy/data/components/NCC/ConstantsFor
 ###############################################################
 s:Ge/Scatterer1/Type = "Group"
 s:Ge/Scatterer1/Parent = "Gantry"
-d:Ge/Scatterer1/TransX =-9 cm
+d:Ge/Scatterer1/TransX = -9 cm
 #d:Ge/Scatterer1/TransX = 0 cm
 d:Ge/Scatterer1/TransY = -5.0 cm
 #d:Ge/Scatterer1/TransY = -2.5 cm
