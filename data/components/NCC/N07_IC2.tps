@@ -1,21 +1,22 @@
 includeFile = /home/seohyeon/work/ProtonTherapy/data/components/NCC/ConstantsForNozzles.tps
+
 #################################################
 # Monitor Chamber2:
 #################################################
-s:Ge/MonitorChamber2/Parent   = "Gantry"
-s:Ge/MonitorChamber2/Type     = "TsBox"
+s:Ge/MonitorChamber2/Parent = "Gantry"
+s:Ge/MonitorChamber2/Type = "TsBox"
 s:Ge/MonitorChamber2/Material = "NiGas"
-d:Ge/MonitorChamber2/HLX      = 105.0  mm
-d:Ge/MonitorChamber2/HLY      = 105.0  mm
-d:Ge/MonitorChamber2/HLZ      = 50.2  mm
-d:Ge/MonitorChamber2/RotX     = 0.0 deg
-d:Ge/MonitorChamber2/RotY     = 0.0 deg
-d:Ge/MonitorChamber2/RotZ     = 0.0 deg
-d:Ge/MonitorChamber2/TransX   = 0.0 mm
-d:Ge/MonitorChamber2/TransY   = 0.0 mm
-d:Ge/MonitorChamber2/TransZ   = 1030.8 mm
-b:Ge/MonitorChamber2/Include  = "TRUE"
-s:Ge/MonitorChamber2/Message  = "Constructing IBA Monitor Chamber 2"
+d:Ge/MonitorChamber2/HLX = 105.0mm
+d:Ge/MonitorChamber2/HLY = 105.0mm
+d:Ge/MonitorChamber2/HLZ = 50.2mm
+d:Ge/MonitorChamber2/RotX = 0.0 deg
+d:Ge/MonitorChamber2/RotY = 0.0 deg
+d:Ge/MonitorChamber2/RotZ = 0.0 deg
+d:Ge/MonitorChamber2/TransX = 0.0 mm
+d:Ge/MonitorChamber2/TransY = 0.0 mm
+d:Ge/MonitorChamber2/TransZ = 1030.8 mm
+b:Ge/MonitorChamber2/Include = "TRUE"
+s:Ge/MonitorChamber2/Message = "Constructing IBA Monitor Chamber 2"
 
 s:Ge/MonitorChamber2/Layer1/Parent = "MonitorChamber2"
 s:Ge/MonitorChamber2/Layer1/Type = "TsBox"
