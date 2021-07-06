@@ -75,14 +75,16 @@ class Component():
         name: str = None
         parameters: list = field(default_factory=list)
         
-    def __init__(self, btype):
+    def __init__(self, btype, phase=False):
         self.base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
         self.__outname = None
         self.__name = None
         self.__btype = btype
         self.__ctype = None
+        self.__phase = phase
         self.__imported = list()
-        self.__subcomponent = {'Basis':self.SubComponent(name='Basis')}
+        if self.phase: self.__subcomponent = {}
+        else: self.__subcomponent = {'Basis':self.SubComponent(name='Basis')}
     
     @property
     def outname(self):
@@ -116,6 +118,14 @@ class Component():
     def btype(self, btype):
         self.__btype = btype
         
+    @property
+    def phase(self):
+        return self.__phase
+    
+    @phase.setter
+    def phase(self, phase):
+        self.__phase = phase
+
     @property
     def imported(self):
         return self.__imported
@@ -186,10 +196,13 @@ class Component():
 
     def modify_parameter(self, subname, paras, delete=False):
         # para should be dictionary {"name":"value"}
-        para_list = []
-        for key, value in paras.items():
-            vtype, category, directory, name = self.__split_paraname(key)
-            para_list.append(self.Parameter(vtype=vtype, category=category, directory=directory, name=name, value=value))
+        if str(type(paras)) == "<class 'list'>":
+            para_list = paras
+        else:
+            para_list = []
+            for key, value in paras.items():
+                vtype, category, directory, name = self.__split_paraname(key)
+                para_list.append(self.Parameter(vtype=vtype, category=category, directory=directory, name=name, value=value))
             
         for new in para_list:
             if delete:
@@ -319,7 +332,6 @@ class Component():
     def component_list(self):
         outdict = {}
         common = {
-          'Beam':['Basis','Distribution'],
           'MonitorChamber':['Basis', 'CylinderFrame', 'BoxFrame', 'CylinderLayer', 'BoxLayer'],
         }
         scanning = {
@@ -330,16 +342,27 @@ class Component():
           'RangeModulator':['Basis','SmallWheel'], 
           'VC':['Basis','XJaws', 'YJaws'],
           'Snout':['Basis','BrassBlock', 'BrassCone'],
-          'Phantom':['Basis','WaterPhantom','Patient','PDD','DoseAtPhantom'],
-          'PhaseSpaceVolume':['PhaseSpaceVolume', 'PhaseSpaceOutput'],
-          'Contour':['Material','Parallel','Contour']
         }
-        outdict.update(common)
+        phase = {
+          'Control':['Time'],
+          'Beam':['Position','Distribution'],
+          'Phantom':['Phantom','WaterPhantom','Patient','PDD'],
+          'PhaseSpace':['Volume','Output'],
+          'Parallel':['Parallel'],
+          'Contour':['Contour','Material']
+
+        }
         if self.btype is None: return
         if self.btype.lower() == 'scanning':
+            outdict.update(common)
             outdict.update(scanning)
         elif self.btype.lower() == 'scattering':
+            outdict.update(common)
             outdict.update(scattering)
+        
+        if self.phase:
+            outdict = {}
+            outdict.update(phase)
 
         return outdict
 

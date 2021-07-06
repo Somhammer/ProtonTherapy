@@ -46,39 +46,113 @@ g_aperture = []
 g_compensator = []
 g_phantom = []
 
-class ComponentWindow(QDialog):
-    class Item(QWidget):
-        # Write items in listWidget
-        def __init__(self):
-            QWidget.__init__(self, flags=Qt.Widget)
-            self.layout = QBoxLayout(QBoxLayout.LeftToRight)
-            self.label = QLabel()
-            self.checkbox = QCheckBox()
-            self.lineValue = QLineEdit()
-            self.lineValue.setMouseTracking(True)
-
-        def import_preset(self, name, path):
-            self.layout.setDirection(QBoxLayout.TopToBottom)
-            self.checkbox.setText(name)
-            self.label.setText("("+path+")")
-            self.checkbox.setChecked(True)
-            self.layout.addWidget(self.checkbox)
-            self.layout.addWidget(self.label)
-            self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
-            self.setLayout(self.layout)
-
-        def add_parameter(self, name, value):
-            self.layout.setDirection(QBoxLayout.LeftToRight)
-            self.label.setText(name)
-            self.lineValue.setText(value)
-            self.layout.addWidget(self.label)
-            self.layout.addWidget(self.lineValue)
-            self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
-            self.setLayout(self.layout)
-        
-        def set_name(self, name):
-            self.label.setText(name)
+def setup_convalgo(fname):
+    if fname == "": return
                 
+    lst = fname.split('/')
+    name = lst[-1]
+    path = '/'.join(i for i in lst[:-1])
+    import getconvalgo as gc
+    convalgo = gc.GetParaFromConvAlgo(path, name)
+    g_convalgo['File'][0] = fname
+    g_convalgo['Number of Beams'][0] = len(convalgo.fscatterer)
+    g_convalgo['1st Scatterer'][0] = convalgo.fscatterer
+    g_convalgo['2nd Scatterer'][0] = convalgo.sscatterer
+    g_convalgo['Modulator'][0] = convalgo.modulator
+    g_convalgo['Stop Position'][0] = convalgo.stop
+    g_convalgo['Energy'][0] = convalgo.energy
+    g_convalgo['BCM'][0] = convalgo.bcm
+    g_convalgo['BWT'][0] = convalgo.bwt
+
+class Item(QWidget):
+    def __init__(self):
+        QWidget.__init__(self, flags=Qt.Widget)
+        self.layout = QBoxLayout(QBoxLayout.LeftToRight)
+
+    def add_label(self, name):
+        self.label = QLabel(name)
+        self.layout.addWidget(self.label)
+        self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
+        self.setLayout(self.layout)
+        
+    def add_checkbox(self, name, path=None, layout_direction=QBoxLayout.LeftToRight):
+        self.checkbox = QCheckBox()
+
+        self.layout.setDirection(layout_direction)
+        self.checkbox.setText(name)
+        self.checkbox.setChecked(True)
+        self.layout.addWidget(self.checkbox)
+        if path is not None:
+            self.label = QLabel()
+            self.label.setText("("+path+")")
+            self.layout.addWidget(self.label)
+        self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
+        self.setLayout(self.layout)
+
+    def add_lineedit(self, name, value, layout_direction=QBoxLayout.LeftToRight, readonly=False, makebtn=False):
+        self.label = QLabel()
+        self.lineValue = QLineEdit()
+        self.layout.setDirection(layout_direction)
+
+        self.label.setText(name)
+        self.lineValue.setText(value)
+        if readonly: 
+            self.lineValue.setReadOnly(True)
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.lineValue)
+        if makebtn:
+            self.pushOpen = QPushButton("Open")
+            self.pushOpen.clicked.connect(self.click_open)
+            self.layout.addWidget(self.pushOpen)
+        self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
+        self.setLayout(self.layout)
+
+    def click_open(self):
+        self.lineValue.setReadOnly(False)
+        if self.label.text().lower() == 'convalgo':
+            fname = QFileDialog.getOpenFileName(self, initialFilter = g_excel_extension[0], filter='\n'.join(i for i in g_excel_extension))[0]
+        if self.label.text().lower() == 'patient':
+            fname = QFileDialog.getExistingDirectory(self, "Select Patient CT directory")
+
+        self.lineValue.setText(fname)
+        self.lineValue.setReadOnly(True)
+
+class ModifyParameter(QDialog):
+    def __init__(self, parent, name="", value="", label_name="Name", label_value="Value"):
+        super(ModifyParameter, self).__init__(parent)
+        uic.loadUi(os.path.join(base_path,'ui','modification.ui'), self)
+        self.name = name
+        self.value = value
+        self.labelName.setText(label_name)
+        self.labelValue.setText(label_value)
+        
+        self.lineName.setText(self.name)
+        self.lineValue.setText(self.value)
+        self.lineName.returnPressed.connect(self.set_name)
+        self.lineValue.returnPressed.connect(self.set_value)
+        
+        self.pushOk.clicked.connect(self.click_ok)
+        self.pushCancel.clicked.connect(self.click_cancel)
+        self.show()
+        
+    def set_name(self):
+        self.name = self.lineName.text()
+    
+    def set_value(self):
+        self.value = self.lineValue.text()
+    
+    def click_ok(self):
+        self.set_name()
+        self.set_value()
+        self.accept()
+        
+    def click_cancel(self):
+        self.reject()
+    
+    def return_para(self):
+        return super().exec_()
+
+class ComponentWindow(QDialog):
     def __init__(self, parent, fname=None, modify_component=False):
         super(ComponentWindow, self).__init__(parent)
         uic.loadUi(os.path.join(base_path,'ui','component.ui'), self)
@@ -139,8 +213,8 @@ class ComponentWindow(QDialog):
         path = '/'.join(i for i in lst)
 
         witem = QListWidgetItem(self.listImport)
-        item = self.Item()
-        item.import_preset(name, path)
+        item = Item()
+        item.add_checkbox(name, path=path, layout_direction=QBoxLayout.TopToBottom)
         if item.checkbox.isChecked():
             self.add_file(path, item.checkbox)
         item.checkbox.stateChanged.connect(lambda: self.add_file(path, item.checkbox))
@@ -184,8 +258,8 @@ class ComponentWindow(QDialog):
         for para in paras:
             name = f'{para.vtype}:{para.category}/{para.directory}/{para.name}'
             witem = QListWidgetItem(listPara)
-            item = self.Item()
-            item.add_parameter(name, para.value)
+            item = Item()
+            item.add_lineedit(name, para.value)
             item.lineValue.textChanged.connect(lambda: self.modify_element(True))
             item.lineValue.returnPressed.connect(lambda: self.modify_element(True))
             listPara.setItemWidget(witem, item)
@@ -261,7 +335,7 @@ class ComponentWindow(QDialog):
             para = self.template.subcomponent[subcomp].parameters[idx]
             name = f'{para.vtype}:{para.category}/{para.directory}/{para.name}'
 
-            item.set_name(name=name)
+            item.label.setText(name)
         self.update_preview()
 
     def add_element(self):
@@ -273,8 +347,8 @@ class ComponentWindow(QDialog):
         self.template.modify_parameter(subcomp, {name:value})
         
         witem = QListWidgetItem(widget)
-        item = self.Item()
-        item.add_parameter(name, value)
+        item = Item()
+        item.add_lineedit(name, value)
         idx = widget.count() - 1
         widget.setItemWidget(witem, item)
         widget.addItem(witem)
@@ -421,39 +495,6 @@ class NewTab(QDialog):
         
     def return_para(self):
         return super().exec_()
-    
-class ModifyParameter(QDialog):
-    def __init__(self, parent, name="", value=""):
-        super(ModifyParameter, self).__init__(parent)
-        uic.loadUi(os.path.join(base_path,'ui','modification.ui'), self)
-        self.name = name
-        self.value = value
-        
-        self.lineName.setText(self.name)
-        self.lineValue.setText(self.value)
-        self.lineName.returnPressed.connect(self.set_name)
-        self.lineValue.returnPressed.connect(self.set_value)
-        
-        self.pushOk.clicked.connect(self.click_ok)
-        self.pushCancel.clicked.connect(self.click_cancel)
-        self.show()
-        
-    def set_name(self):
-        self.name = self.lineName.text()
-    
-    def set_value(self):
-        self.value = self.lineValue.text()
-    
-    def click_ok(self):
-        self.set_name()
-        self.set_value()
-        self.accept()
-        
-    def click_cancel(self):
-        self.reject()
-    
-    def return_para(self):
-        return super().exec_()
 
 class PatientWindow(QDialog):
     def __init__(self, parent, current=None):
@@ -541,128 +582,313 @@ class PatientWindow(QDialog):
         return super().exec_()
 
 class SimulationWindow(QDialog):
-    class Item(QWidget):
-        # Write items in listWidget
-        def __init__(self):
-            QWidget.__init__(self, flags=Qt.Widget)
-            self.layout = QBoxLayout(QBoxLayout.LeftToRight)
-            self.label = QLabel()
-            self.checkbox = QCheckBox()
-            self.lineValue = QLineEdit()
-            self.buttonOpen = QPushButton("Open")
-            self.buttonOpen.clicked.connect(lambda: self.click_open)
-            self.lineValue.setMouseTracking(True)
-
-        def click_open(self):
-            if self.checkbox.name().lower() == 'convalgo': fextension = g_text_extension
-            if self.checkbox.name().lower() == 'patient': fextension = g_excel_extension
-            fname = QFileDialog.getOpenFileName(self, initialFilter = fextension[0], filter='\n'.join(i for i in fextension))[0]
-            self.lineValue.setText(fname)
-
-        def make_checkbox(self, name, value):
-            self.checkbox.setText(name)
-            self.lineValue.setText(str(value))
-            self.checkbox.setChecked(True)
-            self.layout.addWidget(self.checkbox)
-            self.layout.addWidget(self.lineValue)
-            self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
-            if any(i in name for i in ['ConvAlgo','Patient']):
-                self.layout.addWidget(self.buttonOpen)
-            self.setLayout(self.layout)
-
     def __init__(self, parent):
         super(SimulationWindow, self).__init__(parent)
         uic.loadUi(os.path.join(base_path,'ui','simulation.ui'), self)
 
         self.instance = None
+        self.templates = {}
         self.set_action()
         self.show()
 
     def set_action(self):
-        self.pushAccept.clicked.connect(self.write_output)
-        self.pushOk.clicked.connect(self.click_ok)
+        self.pushMake.clicked.connect(self.write_output)
+        self.pushClear.clicked.connect(self.write_output)
         self.pushCancel.clicked.connect(self.click_cancel)
-        self.pushAdd.clicked.connect(self.add_import)
+        self.pushOpenFile.clicked.connect(self.add_import)
+        self.pushAddNewPara.clicked.connect(self.add_element)
+        self.pushAppendComp.clicked.connect(self.add_template)
+        #self.pushClearComp.clicked.connect()
         
-        macros = ['DoseSimulation']
+        macros = ['NewSimulation', 'DoseSimulation']
         self.comboMacro.addItem('Select')
+        self.comboMacro.addItem('New')
         self.comboMacro.addItem('Open')
-        self.comboMacro.insertSeparator(2)
+        self.comboMacro.insertSeparator(3)
         for macro in macros:
             self.comboMacro.addItem(macro)
         self.comboMacro.currentTextChanged.connect(self.open_macro)
 
+        self.comboComp.addItem('Select')
+        self.comboComp.addItem('New')
+        self.comboComp.insertSeparator(3)
+        temp = data.Component(btype=g_nozzle_type, phase=True)
+        for key in temp.component_list().keys():
+            self.comboComp.addItem(key)
+        self.comboComp.currentTextChanged.connect(lambda: self.new_template(self.comboComp.currentText()))
+
+        self.listTemplates.setContextMenuPolicy(Qt.ActionsContextMenu)
+        actionAdd = QAction("Add", self.listTemplates)
+        actionAdd.triggered.connect(self.add_component)        
+        self.listTemplates.addAction(actionAdd)
+        self.listTemplates.itemDoubleClicked.connect(self.add_component)
+
     def open_macro(self):
+        if self.comboMacro.currentText() == 'Select': return
+
         if self.comboMacro.currentText() == 'Open':
             fname = QFileDialog.getOpenFileName(self, filter = "Python files (*.py)")[0]
             if fname == "": return
             self.labelMacro.setText(" Custom File: "+fname.split('/')[-1])
+        elif self.comboMacro.currentText() == 'New':
+            fname = 'simulation.py'
         else:
             fname = f'{self.comboMacro.currentText().lower()}.py'
 
         import config as cfg
         proton = cfg.Proton()
         proton.load(fname)
-        self.instance = proton.process(proton.name(fname))(convalgo=g_convalgo, patient=g_patient, outdir=g_outdir)
-        requirement = self.instance.requirement()
-        for key, value in requirement.items():
+        self.instance = proton.process(proton.name(fname))(outdir=g_outdir, nozzle=g_nozzle_type, patient=g_patient)
+        requirements = self.instance.requirements
+        for key, value in requirements.items():
             witem = QListWidgetItem(self.listRequirement)
-            item = self.Item()
-            item.make_checkbox(key, value)
+            item = Item()
+            if any(key.lower() == i.lower() for i in ['convalgo', 'patient']):
+                item.add_lineedit(key, value[0], readonly=True, makebtn=True)
+            else:
+                item.add_lineedit(key, value[0])
             self.listRequirement.setItemWidget(witem, item)
             self.listRequirement.addItem(witem)
             witem.setSizeHint(item.sizeHint())
-            item.lineValue.textChanged.connect(lambda: self.set_requirement(item.checkbox, item.lineValue, requirement))
-            item.lineValue.returnPressed.connect(lambda: self.set_requirement(item.checkbox, item.lineValue, requirement))
+            item.lineValue.textChanged.connect(self.set_requirement)
+            item.lineValue.returnPressed.connect(self.set_requirement)
 
-        output = self.instance.output
-        for output in self.instance.output.keys():
+        self.comboComp.insertSeparator(self.comboComp.count())
+        for key in self.instance.keys:
+            self.comboComp.addItem(key)
+
+        for key in self.instance.keys:
             listImport = QListWidget()
             listImport.setContextMenuPolicy(Qt.ActionsContextMenu)
-            if self.instance.imported[output][0]:
-                for component in g_component:
-                    self.add_widget(listImport, component.name)
-            self.tabImport.addTab(listImport, output)
+            for component in g_component:
+                witem = QListWidgetItem(listImport)
+                item = Item()
+                item.add_checkbox(component.name, path=component.outname)
+                listImport.setItemWidget(witem, item)
+                listImport.addItem(witem)
+                witem.setSizeHint(item.sizeHint())
+            self.tabImport.addTab(listImport, key)
 
-    def set_requirement(self, checkbox, lineValue, requirement):
-        requirement[checkbox.text()] = lineValue.text()
+        for key in self.instance.keys:
+            listComponent = QListWidget()
+            listComponent.setContextMenuPolicy(Qt.ActionsContextMenu)
+            actionDel = QAction("Delete", listComponent)
+            actionDel.triggered.connect(self.delete_component)
+            listComponent.addAction(actionDel)
+            listComponent.itemDoubleClicked.connect(self.delete_component)
+            self.tabComponents.addTab(listComponent, key)
+
+    def set_requirement(self):
+        for idx in range(len(self.listRequirement)):
+            item = self.listRequirement.itemWidget(self.listRequirement.item(idx))
+            vtype = item.label.text()
+            vari = None
+            if vtype.lower() == "convalgo":
+                setup_convalgo(fname=item.lineValue.text())
+                vtype = g_convalgo['File']
+                vari = g_convalgo
+            elif vtype.lower() == "patient":
+                g_patient.patient_setup(item.lineValue.text())
+                vname = g_patient.directory
+                vari = g_patient
+            else:
+                vname = item.lineValue.text()
+                vari = item.lineValue.text()
+            self.instance.set_requirement(vtype=vtype, vname=vname, vari=vari)
         
     def add_import(self):
-        fname = QFileDialog.getOpenFileName(self, initialFilter = g_text_extension[0], filter='\n'.join(i for i in g_text_extension))[0]
+        fname = QFileDialog.getOpenFileName(self, "Import",  os.path.join(base_path,'data/components'), initialFilter = g_text_extension[0], filter='\n'.join(i for i in g_text_extension))[0]
         widget = self.tabImport.currentWidget()
-        self.add_widget(widget, fname)
+        witem = QListWidgetItem(widget)
+        item = Item()
+        item.add_checkbox(fname.split('/')[-1].replace('.tps',''), path=fname)
+        widget.setItemWidget(witem, item)
+        widget.addItem(witem)
+        witem.setSizeHint(item.sizeHint())
 
-    def add_widget(self, listWidget, name):
-        witem = QListWidgetItem(listWidget)
-        check = QCheckBox(name)
-        check.setChecked(True)
-        listWidget.setItemWidget(witem, check)
-        listWidget.addItem(witem)
-        witem.setSizeHint(check.sizeHint())
+    def new_template(self, cname):
+        if cname == '' or cname == 'Select':
+            return
+        self.tabComp.clear()
+        if cname == "New":
+            self.tabComp.clear()
+            template = data.Component(btype=g_nozzle_type)
+            template.name = ''
+            template.ctype = ''
+            modify = ModifyParameter(parent=self, name=template.name, value=template.ctype, label_name="Name", label_value="Type")
+            r = modify.return_para()
+            if r:
+                template.name = modify.name
+                template.ctype = modify.value
+            listPara = QListWidget()
+            listPara.setContextMenuPolicy(Qt.ActionsContextMenu)
+        
+            actions = {"Add":self.add_element, "Modify":self.modify_element,
+                    "Delete":self.delete_element, "Clear":self.clear_elements}
+            for key, value in actions.items():
+                action = QAction(key, listPara)
+                action.triggered.connect(value)
+                listPara.addAction(action)
+            listPara.itemDoubleClicked.connect(lambda: self.modify_element())
+            self.tabComp.addTab(listPara, template.name)
+            self.templates[template.name] = template
+        elif any(cname == i for i in self.instance.keys):
+            self.tabComp.clear()
+            template = data.Component(btype=g_nozzle_type)
+            template.name = cname
+            template.ctype = cname
+            listPara = QListWidget()
+            listPara.setContextMenuPolicy(Qt.ActionsContextMenu)
+        
+            actions = {"Add":self.add_element, "Modify":self.modify_element,
+                    "Delete":self.delete_element, "Clear":self.clear_elements}
+            for key, value in actions.items():
+                action = QAction(key, listPara)
+                action.triggered.connect(value)
+                listPara.addAction(action)
+            listPara.itemDoubleClicked.connect(lambda: self.modify_element())
+            self.tabComp.addTab(listPara, template.name)
+            self.templates[template.name] = template
+        else:
+            dirname = os.path.join(base_path, 'data/components', self.comboComp.currentText())
+            for f in os.listdir(dirname):
+                template = data.Component(btype=g_nozzle_type, phase=True)
+                template.load(fname=os.path.join(dirname, f))
+                template.ctype = cname
+                listPara = QListWidget()
+                listPara.setContextMenuPolicy(Qt.ActionsContextMenu)
+        
+                actions = {"Add":self.add_element, "Modify":self.modify_element,
+                        "Delete":self.delete_element, "Clear":self.clear_elements}
+                for key, value in actions.items():
+                    action = QAction(key, listPara)
+                    action.triggered.connect(value)
+                    listPara.addAction(action)
+                listPara.itemDoubleClicked.connect(lambda: self.modify_element())
+
+                paras = [i for i in template.subcomponent['Basis'].parameters]
+                for para in paras:
+                    name = f'{para.vtype}:{para.category}/{para.directory}/{para.name}'
+                    witem = QListWidgetItem(listPara)
+                    item = Item()
+                    item.add_lineedit(name, para.value)
+                    item.lineValue.textChanged.connect(lambda: self.modify_element(True))
+                    item.lineValue.returnPressed.connect(lambda: self.modify_element(True))
+                    listPara.setItemWidget(witem, item)
+                    listPara.addItem(witem)
+                    witem.setSizeHint(item.sizeHint())
+            
+                self.tabComp.addTab(listPara, template.name)
+                self.templates[template.name] = template
+
+    def add_element(self):
+        widget = self.tabComp.currentWidget()
+        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        name = self.lineNewParaName.text()
+        value = self.lineNewParaValue.text()
+        if name == "": return
+        self.template.modify_parameter(subcomp, {name:value})
+        
+        witem = QListWidgetItem(widget)
+        item = Item()
+        item.add_parameter(name, value)
+        idx = widget.count() - 1
+        widget.setItemWidget(witem, item)
+        widget.addItem(witem)
+        witem.setSizeHint(item.sizeHint())
+        self.update_preview()
+  
+    def delete_element(self):
+        widget = self.tabComp.currentWidget()
+        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        item = widget.itemWidget(widget.currentItem())
+        name = item.label.text()
+        value = item.lineValue.text()
+        self.template.modify_parameter(subcomp,{name:value},delete=True)
+        widget.takeItem(widget.currentRow())
+        self.update_preview()
+        
+    def modify_element(self, direct=False):
+        # FIXME
+        # widget 클릭 안하고 lineEdit 건드려서 엔터쳐서 이게 돌아가면 아이템 NoneType 되서 터짐.... 
+        widget = self.tabComp.currentWidget()
+        idx = widget.currentRow()
+        item = widget.itemWidget(widget.item(idx))
+        if item is None: return
+        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        name = self.template.subcomponent[subcomp].parameters[idx].fullname()
+        value = self.template.subcomponent[subcomp].parameters[idx].value
+        if not direct:
+            modify = ModifyParameter(self,name,value)
+            r = modify.return_para()
+            if r:
+                name = modify.name
+                value = modify.value
+        else:
+            value = item.lineValue.text()
+        self.template.modify_parameter(subcomp, {name:value})
+        item.lineValue.setText(value)
+        self.update_preview()
+
+    def clear_elements(self):
+        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        widget = self.tabComp.currentWidget()
+        for idx in range(widget.count()):
+            self.template.subcomponent[subcomp].parameters[idx].value = ''
+            widget.itemWidget(widget.item(idx)).lineValue.setText('')
+        self.update_preview()
+
+    def add_template(self):
+        name = self.tabComp.tabText(self.tabComp.currentIndex())
+        witem = QListWidgetItem(self.listTemplates)
+        item = Item()
+        item.add_label(name=f'{self.templates[name].ctype} - {name}')
+        self.listTemplates.setItemWidget(witem, item)
+        self.listTemplates.addItem(witem)
+        witem.setSizeHint(item.sizeHint())
+
+    def add_component(self):
+        widget = self.tabComponents.currentWidget()
+        witem = QListWidgetItem(widget)
+        item = Item()
+        i = self.listTemplates.itemWidget(self.listTemplates.currentItem())
+        item.add_label(i.label.text())
+        widget.setItemWidget(witem, item)
+        widget.addItem(witem)
+        witem.setSizeHint(item.sizeHint())
+    
+    def delete_component(self):
+        widget = self.tabComponents.currentWidget()
+        item = widget.takeItem(widget.currentRow())
 
     def write_output(self):
         if not self.instance.is_workable():        
             QMessageBox.warning(self, "Message", "Please, Fill requirements", QMessageBox.Ok)
             return
-        else:
-            global g_phantom, g_main
-            for idx in range(self.tabImport.count()):
-                widget = self.tabImport.widget(idx)
-                files = []
-                for idx2 in range(widget.count()):
-                    cname = widget.itemWidget(widget.item(idx2)).text()
-                    files.append(os.path.join(g_outdir,'nozzle',cname+'.tps'))
-                self.instance.set_import_files(self.tabImport.tabText(idx), files)
-            self.instance.set_parameters(g_component)
-            for key, value in self.instance.output.items():
-                if any(i in key.lower() for i in ['parallel','patient','phantom']):
-                    g_phantom = value
-                else:
-                    g_main.append(value)
-            if g_nozzle_type == "scattering":
-                global g_aperture, g_compensator
-                g_aperture = self.instance.save_aperture()
-                g_compensator = self.instance.save_compensator()
+            
+        tmp_dict = {i:[] for i in self.instance.keys}
+
+        for idx in range(self.tabImport.count()):
+            name = self.tabImport.tabText(idx)
+            widget = self.tabImport.widget(idx)
+            tmp = []
+            for idx2 in range(widget.count()):
+                item = widget.itemWidget(widget.item(idx2))
+                if item.checkbox.isChecked():
+                    text = item.label.text()[1:-1]
+                    tmp.append(text)
+            self.instance.set_import_files(name, tmp)
+        
+            widget = self.tabComponents.widget(idx)
+            for idx2 in range(widget.count()):
+                item = widget.itemWidget(widget.item(idx2))
+                text = item.label.text()
+                tmp = text.replace(' - ','-').split('-')
+                tmp = (tmp[0], tmp[1])
+                tmp_dict[name].append(tmp)
+
+        self.instance.set_templates(tmp_dict, self.templates)
+        self.instance.run()
         self.click_ok()
 
     def click_ok(self):
@@ -733,9 +959,33 @@ class RunWindow(QDialog):
     def generate_input(self):
         self.textLog.append("...Generate topas input files")
         try:
-            for i in ['nozzle','aperture','compensator','contour']:
+            lst = []
+            if g_nozzle_type == 'scanning': lst = ['nozzle', 'contour']
+            else: lst = ['nozzle', 'aperture', 'compensator', 'contour']
+            for i in lst:
                 if not os.path.exists(os.path.join(g_outdir,i)):
                     os.makedirs(os.path.join(g_outdir,i))
+
+            self.textLog.append("......Generate nozzle files")
+            for component in g_component:
+                f = open(os.path.join(g_outdir, 'nozzle',component.name+'.tps'),'w')
+                f.write(component.fulltext())
+
+            if g_nozzle_type == 'scattering':
+                self.textLog.append("......Generate aperture files")
+                for aperture in g_aperture:
+                    f = open(os.path.join(g_outdir, aperture[0]),'w')
+                    f.write(aperture[1])
+
+                self.textLog.append("......Generate compensator files")
+                for compensator in g_compensator:
+                    f = open(os.path.join(g_outdir, compensator[0]), 'w')
+                    f.write(compensator[1])        
+                        
+            self.textLog.append("......Generate contour files")
+            for contour in g_phantom:
+                f = open(os.path.join(g_outdir, 'contour', contour[0]), 'w')
+                f.write(contour[1])
 
             self.textLog.append("......Generate main files")
             for ibeam in range(len(g_main[0])):
@@ -746,27 +996,15 @@ class RunWindow(QDialog):
                     f = open(name, 'w')
                     f.write(main.fulltext())
                     temp[order] = name
+                    for i in main.imported:
+                        name = i.split('/')[-1]
+                        if not any(i in j for j in os.listdir(os.path.join(g_outdir,'nozzle'))):
+                            for (path, directories, files) in os.walk(base_path, 'data/components'):
+                                for f in files:
+                                    if f == name:
+                                        cmd = ['cp', os.path.join(path, f), os.path.join(g_outdir, 'nozzle', f)]
+                                        subprocess.call(cmd)
                 self.idict[ibeam] = temp
-
-            self.textLog.append("......Generate nozzle files")
-            for component in g_component:
-                f = open(os.path.join(g_outdir, 'nozzle',component.name+'.tps'),'w')
-                f.write(component.fulltext())
-
-            self.textLog.append("......Generate aperture files")
-            for aperture in g_aperture:
-                f = open(os.path.join(g_outdir, aperture[0]),'w')
-                f.write(aperture[1])
-
-            self.textLog.append("......Generate compensator files")
-            for compensator in g_compensator:
-                f = open(os.path.join(g_outdir, compensator[0]), 'w')
-                f.write(compensator[1])        
-                        
-            self.textLog.append("......Generate contour files")
-            for contour in g_phantom:
-                f = open(os.path.join(g_outdir, 'contour', contour[0]), 'w')
-                f.write(contour[1])
 
             self.checkInput.setCheckable(True)
             self.checkInput.setChecked(True)
@@ -805,18 +1043,6 @@ class RunWindow(QDialog):
         return super().exec_()
 
 class MainWindow(QMainWindow, form_class):
-    class Item(QWidget):
-        def __init__(self):
-            QWidget.__init__(self, flags=Qt.Widget)
-            self.name = None
-            
-        def save(self, name):
-            self.layout = QBoxLayout(QBoxLayout.LeftToRight)
-            self.label = QLabel(name)
-            self.layout.addWidget(self.label)
-            self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
-            self.setLayout(self.layout)
-
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -1069,8 +1295,8 @@ class MainWindow(QMainWindow, form_class):
             component.name = name
             g_template.append(component)
             item = QListWidgetItem(self.listTemplates)
-            f = self.Item()
-            f.save(component.name)
+            f = Item()
+            f.add_label(component.name)
             self.listTemplates.setItemWidget(item, f)
             self.listTemplates.addItem(item)
             item.setSizeHint(f.sizeHint())
@@ -1098,8 +1324,8 @@ class MainWindow(QMainWindow, form_class):
 
         if not replace:
             item = QListWidgetItem(self.listTemplates)
-            f = self.Item()
-            f.save(name)
+            f = Item()
+            f.add_label(name)
             self.listTemplates.setItemWidget(item, f)
             self.listTemplates.addItem(item)
             item.setSizeHint(f.sizeHint())
@@ -1142,6 +1368,7 @@ class MainWindow(QMainWindow, form_class):
         if len(g_template) < 1: return
         idx = self.listTemplates.currentRow()
         g_component.append(g_template[idx])
+        g_component[-1].outname = os.path.join(g_outdir, 'nozzle', g_component[-1].name+'.tps')
 
         replace = False
         if len(g_component)> 1 and any(g_component[idx].name == i.name for i in g_component[:-1]):
@@ -1294,30 +1521,13 @@ class MainWindow(QMainWindow, form_class):
 
     def load_convalgo(self):
         fname = QFileDialog.getOpenFileName(self, filter = g_excel_extension[0])[0]
-        if fname == "": return
-                
-        lst = fname.split('/')
-        name = lst[-1]
-        path = '/'.join(i for i in lst[:-1])
-        import getconvalgo as gc
-        convalgo = gc.GetParaFromConvAlgo(path, name)
-        g_convalgo['File'][0] = fname
-        g_convalgo['Number of Beams'][0] = len(convalgo.fscatterer)
-        g_convalgo['1st Scatterer'][0] = convalgo.fscatterer
-        g_convalgo['2nd Scatterer'][0] = convalgo.sscatterer
-        g_convalgo['Modulator'][0] = convalgo.modulator
-        g_convalgo['Stop Position'][0] = convalgo.stop
-        g_convalgo['Energy'][0] = convalgo.energy
-        g_convalgo['BCM'][0] = convalgo.bcm_name
-        g_convalgo['BWT'][0] = convalgo.bwt
+        if fname == '': return
+        setup_convalgo(fname=fname)
 
         def convert(item, typ):
-            if typ == "int":
-                i = int(item)
-            elif typ == "float":
-                i = round(float(item),3)
-            else:
-                i = item
+            if typ == "int": i = int(item)
+            elif typ == "float": i = round(float(item),3)
+            else: i = item
             return i
         for idx, name in enumerate(g_convalgo.keys()):
             value = g_convalgo[name]
