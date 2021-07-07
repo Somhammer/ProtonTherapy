@@ -42,6 +42,8 @@ g_convalgo = {
 }
 # Liquid component: Below components are changed for each beam sequences.
 g_main = []
+#g_phase = []
+#g_filters = []
 g_aperture = []
 g_compensator = []
 g_phantom = []
@@ -533,7 +535,7 @@ class PatientWindow(QDialog):
                 event.ignore()
 
     def set_action(self):
-        self.labelDir.setText("Directory: "+g_patient.directory)
+        self.lineDir.setText(g_patient.directory)
         current_idx = 0
         for idx, item in enumerate(g_patient.CT):
             if item == self.current: current_idx = idx
@@ -544,16 +546,6 @@ class PatientWindow(QDialog):
         self.pushPrev.clicked.connect(lambda: self.change_image(self.pushPrev))
         self.pushNext.clicked.connect(lambda: self.change_image(self.pushNext))
         self.pushClose.clicked.connect(self.click_close)
-
-        self.radioReal.toggled.connect(self.patient_kind)
-        self.radioWater.toggled.connect(self.patient_kind)
-    
-    def patient_kind(self):
-        radio = self.sender()
-        if "real" in radio.text().lower():
-            g_patient.is_real = True
-        else:
-            g_patient.is_real = False
         
     def show_image(self, ct):
         self.fig.clear()
@@ -588,10 +580,14 @@ class SimulationWindow(QDialog):
 
         self.instance = None
         self.templates = {}
+        self.components = {}
         self.set_action()
         self.show()
 
     def set_action(self):
+        self.pushLoad.clicked.connect(lambda: self.load_cfg(push=True))
+
+        self.pushSave.clicked.connect(self.save_cfg)
         self.pushMake.clicked.connect(self.write_output)
         self.pushClear.clicked.connect(self.write_output)
         self.pushCancel.clicked.connect(self.click_cancel)
@@ -678,6 +674,79 @@ class SimulationWindow(QDialog):
             listComponent.itemDoubleClicked.connect(self.delete_component)
             self.tabComponents.addTab(listComponent, key)
 
+        self.load_cfg(fname)
+
+    def clear_all(self):
+        self.templates = {}
+        self.components = {}
+
+    def save_cfg(self):
+        if self.comboMacro.currentText() == 'Select': return
+
+        fname = QFileDialog.getSaveFileName(self, 'Save', os.path.join(base_path, 'plugin'), filter="Nozzle files (*.nzl)")[0]
+        if not fname.endswith('.nzl'):
+            fname = fname.split('.')[0] + '.nzl'
+        fout = open(fname, 'w')
+        fout.write(f"Template: \n")
+        for name, component in self.components.items():
+            for subcomp in component.subcomponent.values():
+                for para in subcomp.parameters: para.draw = True
+            fulltext = component.fulltext().split('\n')
+            for idx, text in enumerate(fulltext):
+                fulltext[idx] = '      ' + text
+            fulltext = "\n\n".join(t for t in fulltext)
+            fout.write(f"  {name}:\n    Type: {component.ctype}\n    Text: >\n{fulltext}\n\n")
+
+        tmp_dict = {i:[] for i in self.instance.keys}
+        for idx in range(self.tabComponents.count()):
+            name = self.tabComponents.tabText(idx)
+            widget = self.tabComponents.widget(idx)
+            for idx2 in range(widget.count()):
+                item = widget.itemWidget(widget.item(idx2))
+                text = item.label.text()
+                tmp_dict[name].append(text)
+        
+        for key, values in tmp_dict.items():
+            fout.write(f"{key}:\n")
+            for value in values:
+                fout.write(f'  - "{value}"\n')
+        fout.close()
+
+    def load_cfg(self, fname=None, push=False):
+        if self.comboMacro.currentText() == 'Select': return
+        if not push and self.comboMacro.currentText() == "New": return
+        if fname is None and not push: return
+        if push:
+            fname = QFileDialog.getOpenFileName(self, 'Load Phase')[0]
+
+        self.clear_all()
+        with open(fname.replace('.py', '.nzl'), 'r') as f:
+            cfg = yaml.load(f, Loader=yaml.FullLoader)
+        for name, comp_info in cfg['Template'].items():
+            template = data.Component(btype=g_nozzle_type, phase=True)
+            template.load(comp_info['Text'], load=True)
+            template.name = name
+            template.ctype = comp_info['Type']
+
+            witem = QListWidgetItem(self.listTemplates)
+            item = Item()
+            item.add_label(name=f'{template.ctype} - {name}')
+            self.listTemplates.setItemWidget(witem, item)
+            self.listTemplates.addItem(witem)
+            witem.setSizeHint(item.sizeHint())
+
+        for idx in range(self.tabComponents.count()):
+            tabname = self.tabComponents.tabText(idx)
+            widget = self.tabComponents.widget(idx)
+            if not tabname in cfg: continue
+            for text in cfg[tabname]:
+                witem = QListWidgetItem(widget)
+                item = Item()
+                item.add_label(text)
+                widget.setItemWidget(witem, item)
+                widget.addItem(witem)
+                witem.setSizeHint(item.sizeHint())
+
     def set_requirement(self):
         for idx in range(len(self.listRequirement)):
             item = self.listRequirement.itemWidget(self.listRequirement.item(idx))
@@ -697,6 +766,8 @@ class SimulationWindow(QDialog):
             self.instance.set_requirement(vtype=vtype, vname=vname, vari=vari)
         
     def add_import(self):
+        if self.comboMacro.currentText() == 'Select': return
+
         fname = QFileDialog.getOpenFileName(self, "Import",  os.path.join(base_path,'data/components'), initialFilter = g_text_extension[0], filter='\n'.join(i for i in g_text_extension))[0]
         widget = self.tabImport.currentWidget()
         witem = QListWidgetItem(widget)
@@ -707,6 +778,8 @@ class SimulationWindow(QDialog):
         witem.setSizeHint(item.sizeHint())
 
     def new_template(self, cname):
+        if self.comboMacro.currentText() == 'Select': return
+
         if cname == '' or cname == 'Select':
             return
         self.tabComp.clear()
@@ -846,6 +919,7 @@ class SimulationWindow(QDialog):
         self.listTemplates.setItemWidget(witem, item)
         self.listTemplates.addItem(witem)
         witem.setSizeHint(item.sizeHint())
+        self.components[self.templates[name].name] = self.templates[name]
 
     def add_component(self):
         widget = self.tabComponents.currentWidget()
@@ -887,7 +961,7 @@ class SimulationWindow(QDialog):
                 tmp = (tmp[0], tmp[1])
                 tmp_dict[name].append(tmp)
 
-        self.instance.set_templates(tmp_dict, self.templates)
+        self.instance.set_templates(tmp_dict, self.components)
         self.instance.run()
         self.click_ok()
 
@@ -1098,13 +1172,6 @@ class MainWindow(QMainWindow, form_class):
         layoutNozzleMode.addWidget(self.radioScanning)
         self.groupNozzleMode.setLayout(layoutNozzleMode)
 
-        self.radioRealPatient = QRadioButton("Real Patient")
-        self.radioWaterPhantom = QRadioButton("Water Phantom")
-        layoutPatientMode = QHBoxLayout()
-        layoutPatientMode.addWidget(self.radioRealPatient)
-        layoutPatientMode.addWidget(self.radioWaterPhantom)
-        self.groupPatientType.setLayout(layoutPatientMode)
-
         layoutConvalgo = QGridLayout()
         self.conv_values = []
         for irow, text in enumerate(g_convalgo.keys()):
@@ -1115,9 +1182,11 @@ class MainWindow(QMainWindow, form_class):
             layoutConvalgo.addWidget(edit, irow, 1)
         self.groupConvalgo.setLayout(layoutConvalgo)
 
+        self.linePatientDir.setReadOnly(True)
         self.lineRTP.setReadOnly(True)
         self.lineRTS.setReadOnly(True)
         self.lineRD.setReadOnly(True)
+        self.lineMacro.setReadOnly(True)
 
     def set_actions(self):
         ### File
@@ -1236,11 +1305,12 @@ class MainWindow(QMainWindow, form_class):
         self.widgetNozzle.trigger_refresh()
 
         g_patient = data.Patient()
-        self.labelPatientDir.clear()
+        self.linePatientDir.clear()
         self.listPatientCT.clear()
         self.lineRTS.clear()
         self.lineRTP.clear()
         self.lineRD.clear()
+        self.lineMacro.clear()
 
         g_convalgo = {
             'File':[None,"str"], 'Number of Beams':[None, "int"], '1st Scatterer':[None, "int"], '2nd Scatterer':[None, "int"],
@@ -1253,7 +1323,6 @@ class MainWindow(QMainWindow, form_class):
         g_aperture = []
         g_compensator = []
         g_phantom = []
-        self.listMacro.clear()
 
     def new_simulation(self):
         reply = QMessageBox.question(self, "Message", "Are you sure to remove all?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -1472,7 +1541,7 @@ class MainWindow(QMainWindow, form_class):
         directory = QFileDialog.getExistingDirectory(self, "Select Patient CT directory")
         if directory == "": return
         g_patient.patient_setup(directory)
-        self.labelPatientDir.setText("Directory: "+g_patient.directory)
+        self.linePatientDir.setText(g_patient.directory)
         for f in g_patient.CT:
             self.listPatientCT.addItem(QListWidgetItem(str(f)))
         self.lineRTS.setText(g_patient.RTS)
@@ -1481,30 +1550,22 @@ class MainWindow(QMainWindow, form_class):
         
     def patient_view(self):
         if self.listPatientCT.count() != 0:
-            current = self.listPatientCT.currentItem().text()
+            if self.listPatientCT.currentItem() is None:
+                current = self.listPatientCT.item(0).text()
+            else:
+                current = self.listPatientCT.currentItem().text()
         else:
             current = ""
         pat = PatientWindow(self, current)
         r = pat.return_para()
         if r:
-            if g_patient.is_real:
-                self.radioRealPatient.click()
-            else:
-                self.radioWaterPhantom.click()
-            self.labelPatientDir.setText("Directory: "+g_patient.directory)
+            self.linePatientDir.setText(g_patient.directory)
             self.listPatientCT.clear()
             for f in g_patient.CT:
                 self.listPatientCT.addItem(QListWidgetItem(str(f)))
             self.lineRTS.setText(g_patient.RTS)
             self.lineRTP.setText(g_patient.RTP)
             self.lineRD.setText(g_patient.RD)
-    
-    def patient_kind(self):
-        radio = self.sender()
-        if "real" in radio.text().lower():
-            g_patient.is_real = True
-        else:
-            g_patient.is_real = False
 
     def simulation(self):
         if not self.check_beam_mode(): return
@@ -1512,7 +1573,7 @@ class MainWindow(QMainWindow, form_class):
         sim = SimulationWindow(self)
         r = sim.return_para()
         if r:
-            self.listMacro.addItem(QListWidgetItem(sim.instance.name))
+            self.lineMacro.setText(sim.instance.name)
 
     def run(self):
         if not self.check_beam_mode(): return
@@ -1717,4 +1778,4 @@ if __name__ == '__main__':
     app.setAttribute(Qt.AA_EnableHighDpiScaling, True)
 
     ex = MainWindow()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

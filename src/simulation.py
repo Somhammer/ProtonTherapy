@@ -19,18 +19,17 @@ class RTSinfo:
 
 class Simulation():
     def __init__(self, outdir='', nozzle=None, patient=None, convalgo=None):
+        self.name = "New Simulation"
         self.outdir = outdir
 
         self.nbeams = 1
         self.nparallel = 1
 
         self.workable = False
-        self.requirements = {
-            'Nozzle': [nozzle, nozzle],
-            'Patient': [patient.directory, patient],
-            #'Convalgo':{'Name':convalgo['File'], 'Value':convalgo}
-        }
-
+        self.requirements = {'Nozzle':[None, None]}
+        if nozzle is not None:
+            self.requirements['Nozzle'] = [nozzle, nozzle]
+  
         # For TOPAS Inputs
         self.keys = ["Read","Record","Others"]
         tmp = data.Component(btype="tmp", phase=True)
@@ -47,8 +46,8 @@ class Simulation():
         self.RTS = []
 
         self.phases = {i:[] for i in self.keys}
-        self.filters = []
-        self.contours = []
+        self.filters = [{'OutName':'','RawText':''}]
+        self.contours = [{'OutName':'','RawText':''}]
 
     def is_workable(self):
         workable = True
@@ -94,7 +93,6 @@ class Simulation():
         
     def set_templates(self, writting, templates):
         self.writting = writting
-        #for template in templates.items():
 
         self.templates = {}
         for name, template in templates.items():
@@ -102,35 +100,37 @@ class Simulation():
                 self.templates[template.ctype] = []
             self.templates[template.ctype].append(template)
 
-    def read_CT(self, patient, ibeam):
+    def read_CT(self, patient):
         if len(patient.CT) == 0: return
-        CT = CTinfo()
+        #CT = CTinfo()
         # Write yourself.
-        self.CT.append(CT)
+        # You can add variable into CTinfo like
+        #     CT.varname = value
+        # or write CTinfo dataclass directly.
+        # After reading, you should write save part like,
+        #     self.CT.append(CT)
 
     def read_RTP(self, patient, ibeam):
         if patient.RTP is None: return
-        RTP = RTPinfo()
+        #RTP = RTPinfo()
         # Write yourself.
-        self.RTP.append(RTP)
+        # After reading, you should write save part like,
+        #     self.RTP.append(RTP)
 
-    def read_RTS(self, patient, ibeam):
+    def read_RTS(self, patient):
         if patient.RTS is None: return
-        RTS = RTSinfo()
+        #RTS = RTSinfo()
         # Write yourself.
-
-        self.RTS.append(RTS)
+        # After reading, you should write save part like,
+        #     self.RTS.append(RTS)
 
     def calculate_parameters(self, ibeam):
         kwargs = {}
         # Write yourself.
+        # After calculation, you should write return part like,
         return kwargs
 
     def save_filters(self, ibeam):
-        # Write yourself.
-        pass
-
-    def save_contours(self, ibeam):
         # Write yourself.
         pass
 
@@ -156,16 +156,19 @@ class Simulation():
             self.phases[key] = phase
 
     def run(self):
-        patient = self.requirements['Patient'][1]
-        if not self.workable: return
-        if patient is not None:
-            self.read_CT(patient)
-            for ibeam in range(self.nbeams):
-                self.read_RTP(patient, ibeam)
-            self.read_RTS(patient)
+        if "Patient" in self.requirements:
+            patient = self.requirements['Patient'][1]
+            if not self.workable: return
+            if patient is not None:
+                self.read_CT(patient)
+                for ibeam in range(self.nbeams):
+                    self.read_RTP(patient, ibeam)
+                self.read_RTS(patient)
         
         for ibeam in range(self.nbeams):
-            kwargs = self.calculate_parameters()
-            self.save_phase(kwargs)
+            kwargs = self.calculate_parameters(ibeam)
+            filters = self.save_filters(ibeam)
+            if filters is not None: self.filters += filters
+            self.save_phase(**kwargs)
         
-        return self.phases, self.filters, self.contours
+        return self.phases, self.filters

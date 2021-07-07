@@ -26,7 +26,7 @@ class Proton():
         f = open(fname,'r')
         line = '\n'.join(i for i in f.readlines())
         p = ast.parse(line)
-        return [node.name for node in ast.walk(p) if isinstance(node, ast.ClassDef)][0]
+        return [node.name for node in ast.walk(p) if isinstance(node, ast.ClassDef)][-1]
 
     def process(self, name = None):
         if name is not None:

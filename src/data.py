@@ -503,6 +503,7 @@ class Component():
                 if not para.draw: continue
                 text += f'{para.fullname()} = {para.value}\n'
             text += '\n'
+        print(text)
         return text
 
 class Patient():
@@ -512,7 +513,6 @@ class Patient():
         self.RTP = None
         self.RTS = None
         self.RD = None
-        self.is_real = None
         
     def patient_setup(self, dirname):
         if dirname == "": return
