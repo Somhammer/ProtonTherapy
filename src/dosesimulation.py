@@ -9,33 +9,27 @@ import copy
 
 import simulation as sim
 import data
+    
+# Naming convention follows the pydicom's one.
+@dataclass
+class CTinfo(sim.CTinfo):
+    PixelSpacing: list = field(default_factory=list)
+    Position: list = field(default_factory=list)
+    Thickness: float = None
+    Rows: int = None
+    Cols: int = None
+    Manufacturer: str = None
+    Center: float = None
 
-class DoseSimulation(sim.Simulation):
-    # Naming convention in data classes follows the pydicom's one.
+@dataclass
+class RTPinfo(sim.RTPinfo):
     @dataclass
-    class CTinfo:
-        PixelSpacing: list = field(default_factory=list)
-        Position: list = field(default_factory=list)
-        Thickness: float = None
-        Rows: int = None
-        Cols: int = None
-        Manufacturer: str = None
-
-    @dataclass
-    class RTPinfo:
-        Snout: str = None
-        Aperture: str = None
-        Compensator: str = None
-        GantryAngle: float = None
-        Isocenter: list = field(default_factory=list)
-        
-    @dataclass
-    class Snout:
-        ID: str = None
+    class Snout():
+        ID: int = None
         Position: float = None
 
     @dataclass
-    class Aperture:
+    class Aperture():
         Thickness: float = None
         Isocenter: float = None
         Data: list = field(default_factory=list)
@@ -65,93 +59,255 @@ class DoseSimulation(sim.Simulation):
         RawText: str = None
         OutName: str = None
 
-    @dataclass
-    class RTSinfo:
-        TargetPosition: list = field(default_factory=list)
-        Parallel: list = field(default_factory=list)
+    Snout: InitVar[Snout] = Snout()
+    Aperture: InitVar[Aperture] = Aperture()
+    Compensator: InitVar[Compensator] = Compensator()
+    GantryAngle: float = None
+    Isocenter: list = field(default_factory=list)
 
+@dataclass
+class RTSinfo(sim.RTSinfo):
     @dataclass
-    class Parallel: 
-        Index: int = None
+    class Parallel:
+        ID: int = None
         Include: bool = None
         Density: float = None
-        Contour: list = field(default_factory=list)
+        Contours: list = field(default_factory=list)
 
     @dataclass
     class Contour:
-        Index: int = None
+        ID: int = None
         Size: int = None
         Polygons: list = field(default_factory=list)
-        
-    def __init__(self, outdir, convalgo = None, patient = None):
-        self.outdir = outdir
-        self.name = 'DoseSimulation'
 
-        self.workable = False
-        self.convalgo = convalgo
-        self.patient = patient
-        self.paras = {
-          # Default Value
-          "VirtualSID": 2000,
-          "nNodes": 0,
-          "nHistories": 2000,
-          "PhaseReuse": 5
-        }
-        self.output = {
-          'DSF':[],
-          'Record':[],
-          'Read':[],
-          'Parallels':[]
-        }
+    TargetPosition: list = field(default_factory=list)
+    Parallels: list = field(default_factory=list)
 
-        self.imported = {i:[True,[]] for i in list(self.output.keys())}
-        self.imported['Read'][0] = False
-        self.imported['Parallels'][0] = False
-
-        self.firstCT = None
-        self.lastCT = None
-        self.CTcenter = 0.0
-        self.RTP = []
-        self.RTS = None
-
-    def requirement(self):
-        if self.convalgo['File'][0] is not None:
-            fname = self.convalgo['File'][0]
-        else:
-            fname = ""
-        if self.patient is not None:
-            dirname = self.patient.directory
-        else:
-            dirname = ""
-        requirement = {"ConvAlgo":fname, "Patient":dirname}
-        requirement.update(self.paras)
-        return requirement
-
-    def set_import_files(self, cname, files):
-        self.imported[cname][1] = files
+class DoseSimulation(sim.Simulation):
+    def __init__(self, outdir='', nozzle=None, patient=None, convalgo=None):
+        super().__init__()
+        self.requirements['Patient'] = []
+        self.requirements['Convalgo'] = []
+        if patient is not None:
+            self.requirements['Patient'] = [patient.directory, patient]
+        if convalgo is not None:
+            self.requirements['Convalgo'] = [convalgo['File'], patient]
 
     def is_workable(self):
-        if self.convalgo['File'][0] is not None:
-            if self.patient.directory != "":
-                if any(i is not None for i in self.paras.values()):
-                    self.workable = True
-        return self.workable
+        super().is_workable()
 
-    def set_convalgo(self, conv):
-        self.convalgo = conv
-        return self.is_workable()
+    def set_requirement(self, vtype, vname, vari):
+        super().set_requirement()
 
-    def set_patient(self, patient):
-        self.patient = patient
-        return self.is_workable()
+    def number_of_beams(self):
+        super().number_of_beams()
+    
+    def number_of_pparallels(self):
+        super().number_of_parallels()
 
-    def set_paras(self, **kwargs):
-        for key, value in kwargs:
-            self.paras[key] = value
-        return self.is_workable()
+    def set_import_files(self, key, lst):
+        super().set_import_files()
 
-    def preview(self):
-        return
+    def set_templates(self, writting, templates):
+        super().set_templates()
+
+    def read_CT(self, patient):
+        if len(patient.CT) == 0: return
+        imageZ = len(patient.CT)
+        firstCT_file = dicom.dcmread(os.path.join(patient.directory, patient.CT[0]))
+        lastCT_file = dicom.dcmread(os.path.join(patient.directory, patient.CT[-1]))
+        
+        instance = firstCT_file.InstanceNumber
+        img_thick = firstCT_file.SliceThickness
+        if img_thick is None: img_thick = 0.0
+
+        firstCT = CTinfo(
+          Position = firstCT_file.ImagePositionPatient,
+          Thickness = float(img_thick),
+          PixelSpacing = firstCT_file.PixelSpacing,
+          Rows = firstCT_file.Rows,
+          Cols = firstCT_file.Columns,
+          Manufacturer = firstCT_file.Manufacturer
+        )
+        lastCT = copy.deepcopy(firstCT)
+        lastCT.position = lastCT_file.ImagePositionPatient
+
+        if firstCT.Position[-1] < firstCT.Position[-1]:
+            firstCT.Position[2] = firstCT.Position[2] + (instance - 1) * img_thick
+            lastCT.Position[2] = firstCT.Position[2] - (imageZ - instance) * img_thick
+        else:
+            firstCT.Position[2] = firstCT.Position[2] - (imageZ - instance) * img_thick
+            lastCT.Position[2] = firstCT.Position[2] - (instance - 1) * img_thick
+        firstCT.Center = (firstCT.Position[2] + lastCT.Position[2]) / 2.0
+
+        self.CT.append(firstCT, lastCT)
+
+    def read_RTP(self, patient, ibeam):
+        RTP_file = dicom.dcmread(os.path.join(patient.directory, patient.RTP))
+        sequence = RTP_file.IonBeamSequence[ibeam]
+        aperture_dir = sequence.IonBlockSequence[0]
+        compensator_dir = sequence.IonRangeCompensatorSequence[0]
+
+        convalgo = self.requirements['Convalgo'][1]
+        SAD_data = float(convalgo['VirtualSID']) * 10
+
+        RTP = RTPinfo(
+          GantryAngle = sequence.IonControlPointSequence[0].GantryAngle,
+          Isocenter = sequence.IonControlPointSequence[0].IsocenterPosition
+        )
+
+        RTP.Snout.ID = sequence.SnoutSequence[0].SnoutID.replace(' ','').replace('Snout',''),
+        RTP.Snout.Position = sequence.IonControlPointSequence[0].SnoutPosition
+
+        RTP.Aperture.Thickness = aperture_dir.BlockThickness
+        RTP.Aperture.Data = aperture_dir.BlockData,
+        RTP.Aperture.Isocenter = aperture_dir.IsocenterToBlockTrayDistance, 
+        RTP.Aperture.Points = aperture_dir.BlockNumberOfPoints
+        RTP.Aperture.AirGap = 1 - (RTP.Aperture.Isocenter - RTP.Aperture.Thickness) / SAD_data
+        
+        RTP.Compensator.Isocenter = compensator_dir.IsocenterToCompensatorTrayDistance
+        RTP.Compensator.Milling = compensator_dir.CompensatorMillingToolDiameter
+        RTP.Compensator.Thickness = compensator_dir.CompensatorThicknessData
+        RTP.Compensator.PixelSpacing = compensator_dir.CompensatorPixelSpacing
+        RTP.Compensator.Rows = compensator_dir.CompensatorRows
+        RTP.Compensator.Cols = compensator_dir.CompensatorColumns
+
+        tmp = (SAD_data - RTP.Compensator.Isocenter) / SAD_data
+        RTP.Compensator.PS = [tmp, tmp]
+        RTP.Compensator.Thickness = np.array(RTP.Compensator.Thickness)
+        RTP.Compensator.Thickness = np.reshape(RTP.Compensator.Thickness, (RTP.Compensator.Rows, RTP.Compensator.Cols))
+        RTP.Compensator.MaxThickness = np.amax(RTP.Compensator.Thickness)
+
+        tmp_rows = [0,0]
+
+        for i in range(RTP.Compensator.Cols):
+            for j in range(RTP.Compensator.Rows):
+                if RTP.Compensator.Thickness[j][i] != RTP.Compensator.MaxThickness:
+                    tmp_rows[0] = i + 1
+                    break
+            if tmp_rows[0] != 0: break
+            
+        for i in range(RTP.Compensator.Cols-1,0,-1):
+            for j in range(RTP.Compensator.Rows-1, 0, -1):
+                if RTP.Compensator.Thickness[j][i] != RTP.Compensator.MaxThickness:
+                    tmp_rows[1] = i
+                    break
+            if tmp_rows[1] != 0: break
+
+        tmp_cols1 = [0 for i in range(0,RTP.Compensator.Cols)]
+        tmp_cols2 = [0 for i in range(0,RTP.Compensator.Cols)]
+        row, col = np.where(RTP.Compensator.Thickness[:RTP.Compensator.Rows, (tmp_rows[0]-1):(tmp_rows[1]+1)] != RTP.Compensator.MaxThickness)
+        uni, cnt = np.unique(col, return_counts=True)
+
+        for i in range(len(cnt)):
+            tmp_cols1[i] = cnt[i]
+
+        for i in range(tmp_rows[0]-1,tmp_rows[1]+1):
+            for j in range(0,RTP.Compensator.Rows):
+                if RTP.Compensator.Thickness[j][i] != RTP.Compensator.MaxThickness:
+                    tmp_cols2[i] = j
+                    break
+        
+        rel_x = []
+        rel_y = []
+        rel_thi = []
+        tmp_cols = []
+        pos = compensator_dir.CompensatorPosition
+
+        for i in range(tmp_rows[0]-1, tmp_rows[1]+1):
+            rel_x.append((-pos[0] - (i * RTP.Compensator.PixelSpacing[0])) * RTP.Compensator.PS[0])
+            rel_y.append((pos[1] - (tmp_cols2[i] * RTP.Compensator.PixelSpacing[1])) * RTP.Compensator.PS[1])
+            tmp = []
+            for j in range(tmp_cols2[i], tmp_cols2[i]+tmp_cols1[i-(tmp_rows[0]-1)]):
+                tmp.append(RTP.Compensator.MaxThickness - RTP.Compensator.Thickness[j][i])
+            rel_thi.append(tmp)
+            tmp_cols.append((tmp_cols1[i], tmp_cols2[i], tmp_cols2[i] + tmp_cols1[i-(tmp_rows[0]-1)]))
+
+        RTP.Compensator.RelX = rel_x
+        RTP.Compensator.RelY = rel_y
+        RTP.Compensator.RelRows = tmp_rows
+        RTP.Compensator.RelCols = tmp_cols
+        RTP.Compensator.RelThickness = rel_thi
+
+        temp = str(RTP.Aperture.Points) + '\n'
+        for i in range(0, RTP.Aperture.Points):
+            temp += f'{-RTP.Aperture.Data[2*i] * RTP.Aperture.AirGap:.5g}, {RTP.Aperture.Data[2*i+1] * RTP.Aperture.AirGap:.5g}\n'
+        RTP.Aperture.RawText = temp
+        RTP.Aperture.OutName = f'aperture/ApertureFileIn{ibeam}.ap'
+
+        temp = f'{RTP.Compensator.RelRows[1] - RTP.Compensator.RelRows[0] + 2}\n{RTP.Compensator.MaxThickness:.5g}\n{RTP.Compensator.Milling:.5g}\n'
+        for i in range(len(RTP.Compensator.RelX)):
+            pos = f'{RTP.Compensator.RelCols[i][0]:.5g} {-RTP.Compensator.PixelSpacing[0] * RTP.Compensator.PS[0]:.5g} {RTP.Compensator.RelY[i]:.5g} {RTP.Compensator.RelX[i]:.5g}\n'
+            relthi = ''
+            for j in RTP.Compensator.RelThickness[i]:
+                relthi += f'{j:.5g} '
+            temp += pos + relthi + '\n'
+        temp +='0 0'
+        RTP.Compensator.RawText = temp
+        RTP.Compensator.OutName = f'compensator/CompensatorFileInRowsepths{ibeam}.rc'
+
+        self.RTP.append(RTP)
+
+    def read_RTS(self, patient):
+        if len(self.CT) < 2: return
+        RTS_file =  dicom.dcmread(os.path.join(patient.directory, patient.RTS))
+
+        RTS = RTSinfo(TargetPosition=target_pos)
+
+        target_pos = [
+              (2 * self.CT[0].Position[0] + (self.CT[0].Rows - 1) * self.CT[0].PixelSpacing[0]) / 2 - self.RTP[0].Isocenter[0], # x
+              (2 * self.CT[0].Position[1] + (self.CT[0].Cols - 1) * self.CT[0].PixelSpacing[1]) / 2 - self.RTP[0].Isocenter[1], # y
+              self.CTcenter - self.RTP[0].Isocenter[2] # z
+        ]
+
+        parallel = []
+        for iparallel in range(len(RTS_file.ROIContourSequence)):
+            sequence = RTS_file.ROIContourSequence[iparallel]
+            observation = RTS_file.RTROIObservationsSequence[iparallel]
+            try:
+                len(sequence.ContourSequence)
+            except:
+                continue
+
+            try:
+                density = float(observation.ROIPhysicalPropertiesSequence[0].ROIPhysicalPropertyValue)
+                include = True
+            except:
+                density = 0.0
+                include = False
+
+            contours = []
+            if sequence.ContourSequence is not None:
+                for icontour in range(len(sequence.ContourSequence)):
+                    csequence = sequence.ContourSequence[icontour]
+                    contours.append(RTS.Contour(
+                        Index = icontour,
+                        Size = csequence.NumberOfContourPoints,
+                        Polygons = csequence.ContourData
+                    ))
+            RTS.Parallels.append(RTS.Parallel(
+              ID = iparallel,
+              Include = include,
+              Density = density,
+              Contour = contours
+            ))
+        self.RTS = RTS
+        
+    def calculate_parameters(self, ibeam):
+        super().calculate_parameters()
+
+    def save_filters(self, ibeam):
+        RTP = self.RTP[ibeam]
+        aperture = {'OutName':RTP.Aperture.OutName, 'RawText':RTP.Aperture.RawText}
+        compensator = {'OutName': RTP.Compensator.OutName, 'RawText':RTP.Compensator.RawText}
+
+        return [aperture, compensator]
+
+    def save_phase(self, **kwargs):
+        super().save_phase()
+
+    def run(self):
+        super().run()
 
     def set_parameters(self, g_component):
         if not self.workable: return
@@ -170,190 +326,6 @@ class DoseSimulation(sim.Simulation):
 
         for iparallel in range(len(self.RTS.Parallel)):
             self.output['Parallels'].append(self.save_parallel(iparallel))
-
-    def read_CT(self):
-        imageZ = len(self.patient.CT)
-        firstCT = dicom.dcmread(os.path.join(self.patient.directory, self.patient.CT[0]))
-        lastCT = dicom.dcmread(os.path.join(self.patient.directory, self.patient.CT[-1]))
-        
-        instance = firstCT.InstanceNumber
-        img_thick = firstCT.SliceThickness
-        if img_thick is None: img_thick = 0.0
-
-        self.firstCT = self.CTinfo(
-          Position = firstCT.ImagePositionPatient,
-          Thickness = float(img_thick),
-          PixelSpacing = firstCT.PixelSpacing,
-          Rows = firstCT.Rows,
-          Cols = firstCT.Columns,
-          Manufacturer = firstCT.Manufacturer
-        )
-        self.lastCT = copy.deepcopy(self.firstCT)
-        self.lastCT.position = lastCT.ImagePositionPatient
-
-        if self.firstCT.Position[-1] < self.firstCT.Position[-1]:
-            self.firstCT.Position[2] = self.firstCT.Position[2] + (instance - 1) * img_thick
-            self.lastCT.Position[2] = self.firstCT.Position[2] - (imageZ - instance) * img_thick
-        else:
-            self.firstCT.Position[2] = self.firstCT.Position[2] - (imageZ - instance) * img_thick
-            self.lastCT.Position[2] = self.firstCT.Position[2] - (instance - 1) * img_thick
-        self.CTcenter = (self.firstCT.Position[2] + self.lastCT.Position[2]) / 2.0
-
-    def read_RTP(self, RTP, ibeam):
-        sequence = RTP.IonBeamSequence[ibeam]
-        dir_aper = sequence.IonBlockSequence[0]
-        dir_compen = sequence.IonRangeCompensatorSequence[0]
-
-        SAD_data = float(self.paras['VirtualSID']) * 10
-
-        snout = self.Snout(
-          ID = sequence.SnoutSequence[0].SnoutID.replace(' ','').replace('Snout',''),
-          Position = sequence.IonControlPointSequence[0].SnoutPosition
-        )
-
-        aperture = self.Aperture(
-          Thickness = dir_aper.BlockThickness,
-          Data = dir_aper.BlockData,
-          Isocenter = dir_aper.IsocenterToBlockTrayDistance, 
-          Points = dir_aper.BlockNumberOfPoints
-        )
-        aperture.AirGap = 1 - (aperture.Isocenter - aperture.Thickness) / SAD_data
-        
-        compensator = self.Compensator(
-          Isocenter = dir_compen.IsocenterToCompensatorTrayDistance,
-          Milling = dir_compen.CompensatorMillingToolDiameter,
-          Thickness = dir_compen.CompensatorThicknessData,
-          PixelSpacing = dir_compen.CompensatorPixelSpacing,
-          Rows = dir_compen.CompensatorRows,
-          Cols = dir_compen.CompensatorColumns
-        )
-        tmp = (SAD_data - compensator.Isocenter) / SAD_data
-        compensator.PS = [tmp, tmp]
-        compensator.Thickness = np.array(compensator.Thickness)
-        compensator.Thickness = np.reshape(compensator.Thickness, (compensator.Rows, compensator.Cols))
-        compensator.MaxThickness = np.amax(compensator.Thickness)
-
-        tmp_rows = [0,0]
-
-        for i in range(compensator.Cols):
-            for j in range(compensator.Rows):
-                if compensator.Thickness[j][i] != compensator.MaxThickness:
-                    tmp_rows[0] = i + 1
-                    break
-            if tmp_rows[0] != 0: break
-            
-        for i in range(compensator.Cols-1,0,-1):
-            for j in range(compensator.Rows-1, 0, -1):
-                if compensator.Thickness[j][i] != compensator.MaxThickness:
-                    tmp_rows[1] = i
-                    break
-            if tmp_rows[1] != 0: break
-
-        tmp_cols1 = [0 for i in range(0,compensator.Cols)]
-        tmp_cols2 = [0 for i in range(0,compensator.Cols)]
-        row, col = np.where(compensator.Thickness[:compensator.Rows, (tmp_rows[0]-1):(tmp_rows[1]+1)] != compensator.MaxThickness)
-        uni, cnt = np.unique(col, return_counts = True)
-
-        for i in range(len(cnt)):
-            tmp_cols1[i] = cnt[i]
-
-        for i in range(tmp_rows[0]-1,tmp_rows[1]+1):
-            for j in range(0,compensator.Rows):
-                if compensator.Thickness[j][i] != compensator.MaxThickness:
-                    tmp_cols2[i] = j
-                    break
-        
-        rel_x = []
-        rel_y = []
-        rel_thi = []
-        tmp_cols = []
-        pos = dir_compen.CompensatorPosition
-
-        for i in range(tmp_rows[0]-1, tmp_rows[1]+1):
-            rel_x.append((-pos[0] - (i * compensator.PixelSpacing[0])) * compensator.PS[0])
-            rel_y.append((pos[1] - (tmp_cols2[i] * compensator.PixelSpacing[1])) * compensator.PS[1])
-            tmp = []
-            for j in range(tmp_cols2[i], tmp_cols2[i]+tmp_cols1[i-(tmp_rows[0]-1)]):
-                tmp.append(compensator.MaxThickness - compensator.Thickness[j][i])
-            rel_thi.append(tmp)
-            tmp_cols.append((tmp_cols1[i], tmp_cols2[i], tmp_cols2[i] + tmp_cols1[i-(tmp_rows[0]-1)]))
-
-        compensator.RelX = rel_x
-        compensator.RelY = rel_y
-        compensator.RelRows = tmp_rows
-        compensator.RelCols = tmp_cols
-        compensator.RelThickness = rel_thi
-
-        temp = str(aperture.Points) + '\n'
-        for i in range(0, aperture.Points):
-            temp += f'{-aperture.Data[2*i]*aperture.AirGap:.5g}, {aperture.Data[2*i+1]*aperture.AirGap:.5g}\n'
-        aperture.RawText = temp
-        aperture.OutName = f'aperture/ApertureFileIn{ibeam}.ap'
-
-        temp = f'{compensator.RelRows[1] - compensator.RelRows[0] + 2}\n{compensator.MaxThickness:.5g}\n{compensator.Milling:.5g}\n'
-        for i in range(len(compensator.RelX)):
-            pos = f'{compensator.RelCols[i][0]:.5g} {-compensator.PixelSpacing[0]*compensator.PS[0]:.5g} {compensator.RelY[i]:.5g} {compensator.RelX[i]:.5g}\n'
-            relthi = ''
-            for j in compensator.RelThickness[i]:
-                relthi += f'{j:.5g} '
-            temp += pos + relthi + '\n'
-        temp +='0 0'
-        compensator.RawText = temp
-        compensator.OutName = f'compensator/CompensatorFileInRowsepths{ibeam}.rc'
-
-        RTP = self.RTPinfo(
-          Snout = snout,
-          Aperture = aperture,
-          Compensator = compensator,
-          GantryAngle = sequence.IonControlPointSequence[0].GantryAngle,
-          Isocenter = sequence.IonControlPointSequence[0].IsocenterPosition
-        )
-        return RTP
-
-    def read_RTS(self, RTS):
-        if self.firstCT is None: return
-        if self.lastCT is None: return
-
-        target_pos = [
-              (2 * self.firstCT.Position[0] + (self.firstCT.Rows - 1) * self.firstCT.PixelSpacing[0]) / 2 - self.RTP[0].Isocenter[0], # x
-              (2 * self.firstCT.Position[1] + (self.firstCT.Cols - 1) * self.firstCT.PixelSpacing[1]) / 2 - self.RTP[0].Isocenter[1], # y
-              self.CTcenter - self.RTP[0].Isocenter[2] # z
-        ]
-
-        parallel = []
-        for iparallel in range(len(RTS.ROIContourSequence)):
-            sequence = RTS.ROIContourSequence[iparallel]
-            observation = RTS.RTROIObservationsSequence[iparallel]
-            try:
-                len(sequence.ContourSequence)
-            except:
-                continue
-
-            try:
-                density = float(observation.ROIPhysicalPropertiesSequence[0].ROIPhysicalPropertyValue)
-                include = True
-            except:
-                density = 0.0
-                include = False
-
-            idx = 0
-            contour = []
-            if sequence.ContourSequence is not None:
-                for icontour in range(len(sequence.ContourSequence)):
-                    csequence = sequence.ContourSequence[icontour]
-                    contour.append(self.Contour(
-                    Index = icontour,
-                    Size = csequence.NumberOfContourPoints,
-                    Polygons = csequence.ContourData
-                    ))
-
-            parallel.append(self.Parallel(
-              Index = iparallel,
-              Include = include,
-              Density = density,
-              Contour = contour
-            ))
-        self.RTS = self.RTSinfo(Parallel=parallel, TargetPosition=target_pos)
 
     def nozzle_template(self, category, **kwargs):
         name = kwargs['Name']
@@ -420,20 +392,6 @@ class DoseSimulation(sim.Simulation):
             }
         else:
             return False
-
-    def save_aperture(self):
-        aperture = []
-        for RTP in self.RTP:
-            temp = (RTP.Aperture.OutName, RTP.Aperture.RawText)
-            aperture.append(temp)
-        return aperture
-
-    def save_compensator(self):
-        compensator = []
-        for RTP in self.RTP:
-            temp = (RTP.Compensator.OutName, RTP.Compensator.RawText)
-            compensator.append(temp)
-        return compensator
 
     def save_nozzle(self, ibeam, g_component):
         def set_value(value, ibeam):
