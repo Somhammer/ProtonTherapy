@@ -17,13 +17,13 @@ class Proton():
             pass
         try:
             import importlib
-            self.module = importlib.import_module('src.'+module)
+            self.module = importlib.import_module('plugin.'+module)
         except BaseException as err:
             serr = str(err)
             print("Error to load the module src/" + module + ": " + serr)
     
     def name(self, fname):
-        f = open(fname,'r')
+        f = open(os.path.join(self.base_path, 'plugin', fname),'r')
         line = '\n'.join(i for i in f.readlines())
         p = ast.parse(line)
         return [node.name for node in ast.walk(p) if isinstance(node, ast.ClassDef)][-1]
