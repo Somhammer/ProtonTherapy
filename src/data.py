@@ -233,7 +233,7 @@ class Component():
                 para.name = new[3]
                 return
             
-    def load(self, fname, load=False, draw_all=False):
+    def load(self, fname, load=False, draw_all=False, add=''):
         if draw_all: draw=True
         else: draw=False
         isdir = False
@@ -253,11 +253,15 @@ class Component():
                     finditem = True
                     continue
                 for f in os.listdir(os.path.join(component_path, directory)):
-                    if fname+'.tps' == f or fname+'.tps' == os.path.join(directory, f):
+                    text = fname
+                    if not fname.endswith('.tps'):
+                        text += '.tps'
+                    if text == f or text == os.path.join(directory, f):
                         fname = os.path.join(component_path, directory, f)
                         finditem = True
                         continue
             if not finditem:
+                print("Fail to find item")
                 return
 
         paras = {}
@@ -290,8 +294,11 @@ class Component():
                 paras[subname].append(line)
 
         for sub, lines in paras.items():
-            if not sub in self.__subcomponent:
-                self.__subcomponent[sub] = self.SubComponent(name=sub)
+            subname = sub
+            if add != '': subname = add
+            if not subname in self.subcomponent:
+                self.subcomponent[subname] = self.SubComponent(name=subname)
+
             for line in lines:
                 line = line.split('#')[0]
                 line = line.replace('\t','').replace('\n', '')
@@ -326,8 +333,8 @@ class Component():
                     directory = '/'.join(i for i in tmp[1:-1])
                     name = tmp[-1].replace('\t','').replace(' ','')
                 value = line[-1]
-                        
-                self.__subcomponent[sub].parameters.append(self.Parameter(vtype=vtype, category=category, directory=directory, name=name, value=value, draw=draw))
+                
+                self.subcomponent[subname].parameters.append(self.Parameter(vtype=vtype, category=category, directory=directory, name=name, value=value, draw=draw))
 
     def component_list(self):
         outdict = {}
@@ -503,7 +510,6 @@ class Component():
                 if not para.draw: continue
                 text += f'{para.fullname()} = {para.value}\n'
             text += '\n'
-        print(text)
         return text
 
 class Patient():
