@@ -40,6 +40,9 @@ g_convalgo = {
   'BCM':[None, "str"],
   'BWT':[None, "str"]
 }
+g_phase = {}
+g_order = {}
+g_filter = []
 # Liquid component: Below components are changed for each beam sequences.
 g_main = []
 #g_phase = []
@@ -188,8 +191,10 @@ class ComponentWindow(QDialog):
         self.pushAdd.clicked.connect(self.add_element)
         self.pushClearVals.clicked.connect(self.clear_elements)
         self.pushChangeName.clicked.connect(lambda: self.change_compname(self.lineName.text()))
+        self.pushChangeSubname.clicked.connect(lambda:  self.change_subname(self.lineSubname.text()))
         self.pushAppend.clicked.connect(self.append_component)
         self.pushAppendAll.clicked.connect(lambda: self.append_component(save_all=True))
+        self.pushDeleteTab.clicked.connect(self.delete_subcomp)
         self.pushClearAll.clicked.connect(self.clear_all)
         self.pushMake.clicked.connect(self.click_make)
         self.pushClearPrev.clicked.connect(self.clear_preview)
@@ -244,17 +249,16 @@ class ComponentWindow(QDialog):
         self.listImport.clear()
         self.update_preview()
 
-    def draw_para_widget(self, tabname):
+    def draw_para_widget(self, tabname, tabidx=-999):
         listPara = QListWidget()
         listPara.setContextMenuPolicy(Qt.ActionsContextMenu)
         
-        actions = {"Add":self.add_element, "Modify":self.modify_element,
-                   "Delete":self.delete_element, "Clear":self.clear_elements}
+        actions = {"Modify":self.modify_element, "Delete":self.delete_element}
         for key, value in actions.items():
             action = QAction(key, listPara)
             action.triggered.connect(value)
             listPara.addAction(action)
-        listPara.itemDoubleClicked.connect(lambda: self.modify_element())
+        listPara.itemDoubleClicked.connect(self.modify_element)
 
         paras = [i for i in self.template.subcomponent[tabname].parameters]
         for para in paras:
@@ -267,7 +271,10 @@ class ComponentWindow(QDialog):
             listPara.setItemWidget(witem, item)
             listPara.addItem(witem)
             witem.setSizeHint(item.sizeHint())
-        index = self.tabComp.addTab(listPara, tabname)
+        if not tabidx < 0:
+            index = self.tabComp.insertTab(tabidx, listPara, tabname)
+        else:
+            index = self.tabComp.addTab(listPara, tabname)
         return index
 
     def new_template(self, item):
@@ -312,14 +319,18 @@ class ComponentWindow(QDialog):
         if r:
             subcomp = newtab.comboSubcomp.currentText()
             tabname = newtab.lineTabName.text()
-            fname = os.path.join(base_path,'data/components',self.comboComp.currentText(),subcomp+'.tps')
-            self.template.load(fname=fname)
-            self.template.modify_subname(subcomp, tabname)
+            #fname = os.path.join(base_path,'data/components',self.comboComp.currentText(),subcomp+'.tps')
+            fname = os.path.join(self.template.ctype, subcomp+'.tps')
+            print(fname)
+            self.template.load(fname=fname, add=tabname)
+            print(self.template.subcomponent.keys())
             index = self.draw_para_widget(tabname=tabname)
             self.tabComp.setCurrentIndex(index)
         self.update_preview()
 
     def change_compname(self, name):
+        for value in self.template.subcomponent.values():
+            print(value.name)
         self.template.modify_name(self.template.name, name)
         self.lineOutput.setText(self.template.name)
         self.tabComp.clear()
@@ -328,16 +339,19 @@ class ComponentWindow(QDialog):
             self.draw_para_widget(tabname=tab)
         self.update_preview()
 
+    def delete_subcomp(self):
+        tabname = self.tabComp.tabText(self.tabComp.currentIndex())
+        self.template.modify_subcomponent(subname=tabname, paras=None, delete=True)
+        self.tabComp.removeTab(self.tabComp.currentIndex())
+
     def change_subname(self, name):
-        widget = self.tabComp.currentWidget()
-        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        idx = self.tabComp.currentIndex()
+        subcomp = self.tabComp.tabText(idx)
+        if not self.template.subcomponent[subcomp].parameters[0].directory:
+            return
         self.template.modify_subname(subcomp, name)
-
-        for idx in round(self.widget.count()):
-            para = self.template.subcomponent[subcomp].parameters[idx]
-            name = f'{para.vtype}:{para.category}/{para.directory}/{para.name}'
-
-            item.label.setText(name)
+        self.tabComp.removeTab(idx)
+        self.draw_para_widget(tabname=name, tabidx = idx)
         self.update_preview()
 
     def add_element(self):
@@ -889,8 +903,8 @@ class SimulationWindow(QDialog):
         item = widget.itemWidget(widget.item(idx))
         if item is None: return
         subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
-        name = self.template.subcomponent[subcomp].parameters[idx].fullname()
-        value = self.template.subcomponent[subcomp].parameters[idx].value
+        name = self.templates.subcomponent[subcomp].parameters[idx].fullname()
+        value = self.templates.subcomponent[subcomp].parameters[idx].value
         if not direct:
             modify = ModifyParameter(self,name,value)
             r = modify.return_para()
@@ -962,7 +976,8 @@ class SimulationWindow(QDialog):
                 tmp_dict[name].append(tmp)
 
         self.instance.set_templates(tmp_dict, self.components)
-        self.instance.run()
+        g_phase, g_filters = self.instance.run()
+        g_order = self.instance.order
         self.click_ok()
 
     def click_ok(self):
@@ -1040,37 +1055,26 @@ class RunWindow(QDialog):
                 if not os.path.exists(os.path.join(g_outdir,i)):
                     os.makedirs(os.path.join(g_outdir,i))
 
-            self.textLog.append("......Generate nozzle files")
+            self.textLog.append("......Generate topas files")
             for component in g_component:
-                f = open(os.path.join(g_outdir, 'nozzle',component.name+'.tps'),'w')
+                f = open(os.path.join(component.outname),'w')
                 f.write(component.fulltext())
 
-            if g_nozzle_type == 'scattering':
-                self.textLog.append("......Generate aperture files")
-                for aperture in g_aperture:
-                    f = open(os.path.join(g_outdir, aperture[0]),'w')
-                    f.write(aperture[1])
+            self.textLog.append("......Generate filter files")
+            for fil in g_filters:
+                f = open(os.path.join(fil['OutName']), 'w')
+                f.write(fil['RawText'])
 
-                self.textLog.append("......Generate compensator files")
-                for compensator in g_compensator:
-                    f = open(os.path.join(g_outdir, compensator[0]), 'w')
-                    f.write(compensator[1])        
-                        
-            self.textLog.append("......Generate contour files")
-            for contour in g_phantom:
-                f = open(os.path.join(g_outdir, 'contour', contour[0]), 'w')
-                f.write(contour[1])
-
-            self.textLog.append("......Generate main files")
-            for ibeam in range(len(g_main[0])):
-                temp = {}
-                for order in range(len(g_main)):
-                    main = g_main[order][ibeam]
-                    name = os.path.join(g_outdir, main.name+'.tps')
-                    f = open(name, 'w')
-                    f.write(main.fulltext())
-                    temp[order] = name
-                    for i in main.imported:
+            self.textLog.append("......Generate phase files")
+            temp = g_phase.keys()
+            self.idict = {i:{order:None for order in g_order.values()} for i in range(len(temp[0]))}
+            for key, phases in g_phase.items():
+                order = g_order[key]
+                for ibeam, phase in enumerate(phases):
+                    f = open(os.path.join(phase.outname), 'w')
+                    f.write(phaes.fulltext())
+                    self.idict[ibeam][order] = phase.outname
+                    for i in phase.imported:
                         name = i.split('/')[-1]
                         if not any(i in j for j in os.listdir(os.path.join(g_outdir,'nozzle'))):
                             for (path, directories, files) in os.walk(base_path, 'data/components'):
@@ -1078,7 +1082,6 @@ class RunWindow(QDialog):
                                     if f == name:
                                         cmd = ['cp', os.path.join(path, f), os.path.join(g_outdir, 'nozzle', f)]
                                         subprocess.call(cmd)
-                self.idict[ibeam] = temp
 
             self.checkInput.setCheckable(True)
             self.checkInput.setChecked(True)
