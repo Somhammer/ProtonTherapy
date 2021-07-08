@@ -810,8 +810,7 @@ class SimulationWindow(QDialog):
             listPara = QListWidget()
             listPara.setContextMenuPolicy(Qt.ActionsContextMenu)
         
-            actions = {"Add":self.add_element, "Modify":self.modify_element,
-                    "Delete":self.delete_element, "Clear":self.clear_elements}
+            actions = {"Modify":self.modify_element, "Delete":self.delete_element}
             for key, value in actions.items():
                 action = QAction(key, listPara)
                 action.triggered.connect(value)
@@ -827,8 +826,7 @@ class SimulationWindow(QDialog):
             listPara = QListWidget()
             listPara.setContextMenuPolicy(Qt.ActionsContextMenu)
         
-            actions = {"Add":self.add_element, "Modify":self.modify_element,
-                    "Delete":self.delete_element, "Clear":self.clear_elements}
+            actions = {"Modify":self.modify_element, "Delete":self.delete_element}
             for key, value in actions.items():
                 action = QAction(key, listPara)
                 action.triggered.connect(value)
@@ -845,8 +843,8 @@ class SimulationWindow(QDialog):
                 listPara = QListWidget()
                 listPara.setContextMenuPolicy(Qt.ActionsContextMenu)
         
-                actions = {"Add":self.add_element, "Modify":self.modify_element,
-                        "Delete":self.delete_element, "Clear":self.clear_elements}
+                actions = {"Modify":self.modify_element, "Delete":self.delete_element}
+
                 for key, value in actions.items():
                     action = QAction(key, listPara)
                     action.triggered.connect(value)
@@ -867,63 +865,6 @@ class SimulationWindow(QDialog):
             
                 self.tabComp.addTab(listPara, template.name)
                 self.templates[template.name] = template
-
-    def add_element(self):
-        widget = self.tabComp.currentWidget()
-        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
-        name = self.lineNewParaName.text()
-        value = self.lineNewParaValue.text()
-        if name == "": return
-        self.template.modify_parameter(subcomp, {name:value})
-        
-        witem = QListWidgetItem(widget)
-        item = Item()
-        item.add_parameter(name, value)
-        idx = widget.count() - 1
-        widget.setItemWidget(witem, item)
-        widget.addItem(witem)
-        witem.setSizeHint(item.sizeHint())
-        self.update_preview()
-  
-    def delete_element(self):
-        widget = self.tabComp.currentWidget()
-        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
-        item = widget.itemWidget(widget.currentItem())
-        name = item.label.text()
-        value = item.lineValue.text()
-        self.template.modify_parameter(subcomp,{name:value},delete=True)
-        widget.takeItem(widget.currentRow())
-        self.update_preview()
-        
-    def modify_element(self, direct=False):
-        # FIXME
-        # widget 클릭 안하고 lineEdit 건드려서 엔터쳐서 이게 돌아가면 아이템 NoneType 되서 터짐.... 
-        widget = self.tabComp.currentWidget()
-        idx = widget.currentRow()
-        item = widget.itemWidget(widget.item(idx))
-        if item is None: return
-        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
-        name = self.templates.subcomponent[subcomp].parameters[idx].fullname()
-        value = self.templates.subcomponent[subcomp].parameters[idx].value
-        if not direct:
-            modify = ModifyParameter(self,name,value)
-            r = modify.return_para()
-            if r:
-                name = modify.name
-                value = modify.value
-        else:
-            value = item.lineValue.text()
-        self.template.modify_parameter(subcomp, {name:value})
-        item.lineValue.setText(value)
-        self.update_preview()
-
-    def clear_elements(self):
-        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
-        widget = self.tabComp.currentWidget()
-        for idx in range(widget.count()):
-            self.template.subcomponent[subcomp].parameters[idx].value = ''
-            widget.itemWidget(widget.item(idx)).lineValue.setText('')
-        self.update_preview()
 
     def add_template(self):
         name = self.tabComp.tabText(self.tabComp.currentIndex())
@@ -949,6 +890,54 @@ class SimulationWindow(QDialog):
         widget = self.tabComponents.currentWidget()
         item = widget.takeItem(widget.currentRow())
 
+    def add_element(self):
+        widget = self.tabComp.currentWidget()
+        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        name = self.lineNewParaName.text()
+        value = self.lineNewParaValue.text()
+        if name == "": return
+        self.templates[subcomp].modify_parameter(subcomp, {name:value})
+        
+        witem = QListWidgetItem(widget)
+        item = Item()
+        item.add_lineedit(name, value)
+        idx = widget.count() - 1
+        widget.setItemWidget(witem, item)
+        widget.addItem(witem)
+        witem.setSizeHint(item.sizeHint())
+        self.update_preview()
+  
+    def delete_element(self):
+        widget = self.tabComp.currentWidget()
+        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        item = widget.itemWidget(widget.currentItem())
+        name = item.label.text()
+        value = item.lineValue.text()
+        self.templates[subcomp].modify_parameter('Basis',{name:value},delete=True)
+        widget.takeItem(widget.currentRow())
+        
+    def modify_element(self,direct=False):
+        # FIXME
+        # widget 클릭 안하고 lineEdit 건드려서 엔터쳐서 이게 돌아가면 아이템 NoneType 되서 터짐.... 
+        widget = self.tabComp.currentWidget()
+        idx = widget.currentRow()
+        item = widget.itemWidget(widget.item(idx))
+        if item is None: return
+        subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
+        print(self.templates[subcomp].subcomponent)
+        name = self.templates[subcomp].subcomponent['Basis'].parameters[idx].fullname()
+        value = self.templates[subcomp].subcomponent['Basis'].parameters[idx].value
+        if not direct:
+            modify = ModifyParameter(self,name,value)
+            r = modify.return_para()
+            if r:
+                name = modify.name
+                value = modify.value
+        else:
+            value = item.lineValue.text()
+        self.templates[subcomp].modify_parameter('Basis', {name:value})
+        item.lineValue.setText(value)
+        
     def write_output(self):
         if not self.instance.is_workable():        
             QMessageBox.warning(self, "Message", "Please, Fill requirements", QMessageBox.Ok)
