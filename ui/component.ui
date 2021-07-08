@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1259</width>
-    <height>452</height>
+    <width>1288</width>
+    <height>475</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,9 +23,9 @@
    <iconset>
     <normaloff>../icons/ncc.png</normaloff>../icons/ncc.png</iconset>
   </property>
-  <layout class="QGridLayout" name="gridLayout_5">
-   <item row="0" column="0">
-    <layout class="QGridLayout" name="gridLayout_4">
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <layout class="QGridLayout" name="gridLayout_1">
      <item row="1" column="0">
       <widget class="QLabel" name="labelOutput">
        <property name="text">
@@ -80,13 +80,65 @@
      </item>
     </layout>
    </item>
-   <item row="0" column="1">
-    <layout class="QGridLayout" name="gridLayout_3">
-     <property name="horizontalSpacing">
-      <number>2</number>
-     </property>
-     <item row="2" column="7">
+   <item>
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="0" column="3">
+      <widget class="QPushButton" name="pushChangeName">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Change</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="6">
+      <widget class="QPushButton" name="pushClearVals">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Clear Values</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1" colspan="2">
+      <widget class="QLineEdit" name="lineNewParaName">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="3" colspan="2">
+      <widget class="QLineEdit" name="lineNewParaValue">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::StrongFocus</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="5">
       <widget class="QPushButton" name="pushAdd">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="focusPolicy">
         <enum>Qt::NoFocus</enum>
        </property>
@@ -95,10 +147,37 @@
        </property>
       </widget>
      </item>
+     <item row="0" column="0">
+      <widget class="QComboBox" name="comboComp">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="4">
+      <widget class="QLabel" name="labelSubname">
+       <property name="text">
+        <string>SubName</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="6">
+      <widget class="QPushButton" name="pushChangeSubname">
+       <property name="text">
+        <string>Change</string>
+       </property>
+      </widget>
+     </item>
      <item row="2" column="0">
       <widget class="QLabel" name="labelVariable">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -116,7 +195,36 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="3">
+     <item row="1" column="0" colspan="7">
+      <widget class="QTabWidget" name="tabComp">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="mouseTracking">
+        <bool>false</bool>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::TabFocus</enum>
+       </property>
+       <property name="currentIndex">
+        <number>-1</number>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLineEdit" name="lineName">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
       <widget class="QLabel" name="labelName">
        <property name="font">
         <font>
@@ -131,53 +239,26 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0" colspan="3">
-      <widget class="QComboBox" name="comboComp">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
+     <item row="0" column="5">
+      <widget class="QLineEdit" name="lineSubname"/>
      </item>
-     <item row="2" column="6">
-      <widget class="QLineEdit" name="lineNewParaValue">
+     <item row="3" column="0" colspan="2">
+      <widget class="QPushButton" name="pushAppend">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
        <property name="focusPolicy">
-        <enum>Qt::StrongFocus</enum>
+        <enum>Qt::NoFocus</enum>
        </property>
-      </widget>
-     </item>
-     <item row="2" column="1" colspan="5">
-      <widget class="QLineEdit" name="lineNewParaName"/>
-     </item>
-     <item row="2" column="8">
-      <widget class="QPushButton" name="pushClearVals">
        <property name="text">
-        <string>Clear Values</string>
+        <string>Append</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="0" colspan="9">
-      <widget class="QTabWidget" name="tabComp">
-       <property name="mouseTracking">
-        <bool>false</bool>
-       </property>
-       <property name="focusPolicy">
-        <enum>Qt::TabFocus</enum>
-       </property>
-       <property name="currentIndex">
-        <number>-1</number>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="7" colspan="2">
+     <item row="3" column="2" colspan="2">
       <widget class="QPushButton" name="pushAppendAll">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -193,22 +274,6 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0" colspan="6">
-      <widget class="QPushButton" name="pushAppend">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
-       </property>
-       <property name="text">
-        <string>Append</string>
-       </property>
-      </widget>
-     </item>
      <item row="3" column="6">
       <widget class="QPushButton" name="pushClearAll">
        <property name="text">
@@ -216,27 +281,17 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="4" colspan="4">
-      <widget class="QLineEdit" name="lineName">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="8">
-      <widget class="QPushButton" name="pushChangeName">
+     <item row="3" column="5">
+      <widget class="QPushButton" name="pushDeleteTab">
        <property name="text">
-        <string>Change</string>
+        <string>Delete Tab</string>
        </property>
       </widget>
      </item>
     </layout>
    </item>
-   <item row="0" column="2">
-    <layout class="QGridLayout" name="gridLayout_2">
+   <item>
+    <layout class="QGridLayout" name="gridLayout_3">
      <item row="2" column="0">
       <widget class="QPushButton" name="pushMake">
        <property name="sizePolicy">
@@ -285,7 +340,14 @@
       </widget>
      </item>
      <item row="1" column="0" colspan="3">
-      <widget class="QTextBrowser" name="textPreview"/>
+      <widget class="QTextBrowser" name="textPreview">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
      </item>
      <item row="2" column="1">
       <widget class="QPushButton" name="pushClearPrev">
@@ -306,12 +368,7 @@
  </widget>
  <tabstops>
   <tabstop>listImport</tabstop>
-  <tabstop>comboComp</tabstop>
-  <tabstop>lineName</tabstop>
-  <tabstop>tabComp</tabstop>
   <tabstop>pushCancel</tabstop>
-  <tabstop>lineNewParaName</tabstop>
-  <tabstop>lineNewParaValue</tabstop>
   <tabstop>textPreview</tabstop>
  </tabstops>
  <resources/>
