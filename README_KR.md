@@ -87,9 +87,13 @@ conda env create --file setup.yaml
 
 ### 둘러보기
 #### Main
+<img src="figs/Main.png" width="100%" height="100%" title="Main Window"></img>
 #### Template
+<img src="figs/Template.png" width="100%" height="100%" title="Main Window"></img>
 #### Patient
+<img src="figs/Patient.png" width="100%" height="100%" title="Main Window"></img>
 #### Simulation
+<img src="figs/Simulation.png" width="100%" height="100%" title="Main Window"></img>
 #### Run
 
 ### 사용방법
