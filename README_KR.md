@@ -91,7 +91,7 @@ conda env create --file setup.yaml
 #### Template
 <img src="figs/Template.png" width="100%" height="100%" title="Main Window"></img>
 #### Patient
-<img src="figs/Patient.png" width="100%" height="100%" title="Main Window"></img>
+<img src="figs/Patient.png" width="50%" height="50%" title="Main Window"></img>
 #### Simulation
 <img src="figs/Simulation.png" width="100%" height="100%" title="Main Window"></img>
 #### Run
