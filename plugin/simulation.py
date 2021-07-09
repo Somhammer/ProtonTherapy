@@ -18,7 +18,7 @@ class RTSinfo:
     ID: int = None
 
 class Simulation():
-    def __init__(self, outdir='', nozzle=None, patient=None, convalgo=None):
+    def __init__(self, outdir=None, nozzle=None, patient=None, convalgo=None):
         self.name = "New Simulation"
         self.outdir = outdir
 
@@ -57,7 +57,6 @@ class Simulation():
 
         if any(not i for i in requirements): self.workable = False
         else: self.workable = True
-
         return self.workable
 
     def set_requirement(self, vtype, vname, vari):
@@ -131,14 +130,23 @@ class Simulation():
         component = copy.deepcopy(template)
         for subname, subcomp in component.subcomponent.items():
             for para in subcomp.parameters:
-                fullname = para.fullname
+                fullname = para.fullname()
                 value = para.value
-                for key, value in kwargs.items():
-                    fullname = fullname.replace(f'{{{key}}}', value)
-                    value = value.replace(f'{{{key}}}', value)
-                if fullname != para.fullname:
-                    component.modify_parameter(subname, {para.fullname, para.value}, delete=True)
-                component.modify_parameter(subname, {fullname, value})
+                for key, val in kwargs.items():
+                    val = str(val)
+                    if f'{{{key}}}' in fullname:
+                        fullname = fullname.replace(f'{{{key}}}', val)
+                    if f'{{{key}}}' in str(value):
+                        value = str(value).replace(f'{{{key}}}', val)
+                    else: continue
+
+                if fullname != para.fullname():
+                    component.modify_parameter(subname, {para.fullname():para.value}, delete=True)
+                component.modify_parameter(subname, {fullname:value})
+            for para in subcomp.parameters:
+                fullname = para.fullname()
+                for key, val in kwargs.items():
+                    val = str(val)
             for para in subcomp.parameters: para.draw = True
         return component
 
@@ -153,10 +161,11 @@ class Simulation():
             for ctype, templates in self.templates.items():
                 if not any(ctype == i[0] for i in self.writting[key]): continue
                 for template in templates:
-                    if not any(template.name == i[1] for i in self.writting[key]): continue
+                    if not any(template.name == i[1] for i in self.writting[key]):
+                        continue
                     component = self.change_parameters(template, **kwargs)
                     for subname, subcomp in component.subcomponent.items():
-                        phase.modify_subcomponent(subname=subname, paras=subcomp.parameters)
+                        phase.modify_subcomponent(subname=template.name, paras=subcomp.parameters)
                 phase.ctype = ctype
             for item in self.imported[key]:
                 phase.modify_file(item)
@@ -173,11 +182,12 @@ class Simulation():
                     self.read_RTP(patient, ibeam)
                 self.read_RTS(patient)
         
+        self.filters = []
         for ibeam in range(self.nbeams):
             kwargs = self.set_parameters(ibeam)
             if kwargs is None: kwargs = {}
             filters = self.save_filters(ibeam)
-            if filters is not None: self.filters += filters
+            self.filters += filters
             self.save_phase(ibeam, **kwargs)
         
         return self.phases, self.filters

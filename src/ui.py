@@ -44,12 +44,6 @@ g_phase = {}
 g_order = {}
 g_filter = []
 # Liquid component: Below components are changed for each beam sequences.
-g_main = []
-#g_phase = []
-#g_filters = []
-g_aperture = []
-g_compensator = []
-g_phantom = []
 
 def setup_convalgo(fname):
     if fname == "": return
@@ -321,16 +315,12 @@ class ComponentWindow(QDialog):
             tabname = newtab.lineTabName.text()
             #fname = os.path.join(base_path,'data/components',self.comboComp.currentText(),subcomp+'.tps')
             fname = os.path.join(self.template.ctype, subcomp+'.tps')
-            print(fname)
             self.template.load(fname=fname, add=tabname)
-            print(self.template.subcomponent.keys())
             index = self.draw_para_widget(tabname=tabname)
             self.tabComp.setCurrentIndex(index)
         self.update_preview()
 
     def change_compname(self, name):
-        for value in self.template.subcomponent.values():
-            print(value.name)
         self.template.modify_name(self.template.name, name)
         self.lineOutput.setText(self.template.name)
         self.tabComp.clear()
@@ -639,7 +629,6 @@ class SimulationWindow(QDialog):
         if self.comboMacro.currentText() == 'Open':
             fname = QFileDialog.getOpenFileName(self, filter = "Python files (*.py)")[0]
             if fname == "": return
-            self.labelMacro.setText(" Custom File: "+fname.split('/')[-1])
         elif self.comboMacro.currentText() == 'New':
             fname = 'simulation.py'
         else:
@@ -648,6 +637,7 @@ class SimulationWindow(QDialog):
         import config as cfg
         proton = cfg.Proton()
         proton.load(fname)
+        cls_name = proton.name(fname)
         self.instance = proton.process(proton.name(fname))(outdir=g_outdir, nozzle=g_nozzle_type, patient=g_patient)
         requirements = self.instance.requirements
         for key, value in requirements.items():
@@ -734,13 +724,14 @@ class SimulationWindow(QDialog):
             fname = QFileDialog.getOpenFileName(self, 'Load Phase')[0]
 
         self.clear_all()
-        with open(fname.replace('.py', '.nzl'), 'r') as f:
+        with open(os.path.join(base_path, 'plugin', fname.replace('.py', '.nzl')), 'r') as f:
             cfg = yaml.load(f, Loader=yaml.FullLoader)
         for name, comp_info in cfg['Template'].items():
             template = data.Component(btype=g_nozzle_type, phase=True)
             template.load(comp_info['Text'], load=True)
             template.name = name
             template.ctype = comp_info['Type']
+            self.components[template.name] = template
 
             witem = QListWidgetItem(self.listTemplates)
             item = Item()
@@ -768,7 +759,7 @@ class SimulationWindow(QDialog):
             vari = None
             if vtype.lower() == "convalgo":
                 setup_convalgo(fname=item.lineValue.text())
-                vtype = g_convalgo['File']
+                vname = g_convalgo['File']
                 vari = g_convalgo
             elif vtype.lower() == "patient":
                 g_patient.patient_setup(item.lineValue.text())
@@ -924,7 +915,6 @@ class SimulationWindow(QDialog):
         item = widget.itemWidget(widget.item(idx))
         if item is None: return
         subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
-        print(self.templates[subcomp].subcomponent)
         name = self.templates[subcomp].subcomponent['Basis'].parameters[idx].fullname()
         value = self.templates[subcomp].subcomponent['Basis'].parameters[idx].value
         if not direct:
@@ -939,7 +929,7 @@ class SimulationWindow(QDialog):
         item.lineValue.setText(value)
         
     def write_output(self):
-        if not self.instance.is_workable():        
+        if not self.instance.is_workable():
             QMessageBox.warning(self, "Message", "Please, Fill requirements", QMessageBox.Ok)
             return
             
@@ -965,7 +955,8 @@ class SimulationWindow(QDialog):
                 tmp_dict[name].append(tmp)
 
         self.instance.set_templates(tmp_dict, self.components)
-        g_phase, g_filters = self.instance.run()
+        global g_phase, g_filter, g_order
+        g_phase, g_filter = self.instance.run()
         g_order = self.instance.order
         self.click_ok()
 
@@ -1017,8 +1008,8 @@ class RunWindow(QDialog):
     def run(self):
         self.initialize()
         self.generate_input()
-        self.execute_topas()
-        self.do_postprocess()
+        #self.execute_topas()
+        #self.do_postprocess()
 
     def undo(self, checkbox):
         if checkbox.isCheckable():
@@ -1038,8 +1029,8 @@ class RunWindow(QDialog):
         self.textLog.append("...Generate topas input files")
         try:
             lst = []
-            if g_nozzle_type == 'scanning': lst = ['nozzle', 'contour']
-            else: lst = ['nozzle', 'aperture', 'compensator', 'contour']
+            if g_nozzle_type == 'scanning': lst = ['nozzle', 'parallels']
+            else: lst = ['nozzle', 'aperture', 'compensator', 'parallels']
             for i in lst:
                 if not os.path.exists(os.path.join(g_outdir,i)):
                     os.makedirs(os.path.join(g_outdir,i))
@@ -1050,27 +1041,34 @@ class RunWindow(QDialog):
                 f.write(component.fulltext())
 
             self.textLog.append("......Generate filter files")
-            for fil in g_filters:
-                f = open(os.path.join(fil['OutName']), 'w')
+            for fil in g_filter:
+                f = open(os.path.join(g_outdir, fil['OutName']), 'w')
                 f.write(fil['RawText'])
 
             self.textLog.append("......Generate phase files")
+            for key, values in g_phase.items():
+                if key.lower() != 'patient': continue
+                for value in values:
+                    f = open(os.path.join(value.outname), 'w')
+                    f.write(value.fulltext())
+                del g_phase[key]
+                 
             temp = g_phase.keys()
-            self.idict = {i:{order:None for order in g_order.values()} for i in range(len(temp[0]))}
+            self.idict = {i:{order:None for order in g_order.values()} for i in temp}
             for key, phases in g_phase.items():
                 order = g_order[key]
                 for ibeam, phase in enumerate(phases):
                     f = open(os.path.join(phase.outname), 'w')
-                    f.write(phaes.fulltext())
-                    self.idict[ibeam][order] = phase.outname
+                    f.write(phase.fulltext())
+                    self.idict[key][ibeam] = phase.outname
                     for i in phase.imported:
                         name = i.split('/')[-1]
-                        if not any(i in j for j in os.listdir(os.path.join(g_outdir,'nozzle'))):
-                            for (path, directories, files) in os.walk(base_path, 'data/components'):
-                                for f in files:
-                                    if f == name:
-                                        cmd = ['cp', os.path.join(path, f), os.path.join(g_outdir, 'nozzle', f)]
-                                        subprocess.call(cmd)
+                        if any(name in j for j in os.listdir(os.path.join(g_outdir,'nozzle'))): continue
+                        for (path, directories, files) in os.walk(base_path, 'data/components'):
+                            for f in files:
+                                if f == name:
+                                    cmd = ['cp', os.path.join(path, f), os.path.join(g_outdir, 'nozzle', f)]
+                                    subprocess.call(cmd)
 
             self.checkInput.setCheckable(True)
             self.checkInput.setChecked(True)
@@ -1760,8 +1758,6 @@ class Painter(QWidget):
             start = (self.zeros[0]+3*relz,self.zeros[1]-5*height/2)
             end = (self.zeros[0]+3*relz+5*width, self.zeros[1]+5*height/2)
         
-        #print(int(start[0]),int(start[1]),int(end[0]-start[0]),int(end[1]-start[1]))
-
         self.painter.drawRect(int(start[0]),int(start[1]),int(end[0]-start[0]),int(end[1]-start[1]))
 
 if __name__ == '__main__':

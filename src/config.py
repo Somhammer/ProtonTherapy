@@ -20,21 +20,25 @@ class Proton():
             self.module = importlib.import_module('plugin.'+module)
         except BaseException as err:
             serr = str(err)
-            print("Error to load the module src/" + module + ": " + serr)
+            print("Error to load the module plugin/" + module + ": " + serr)
     
     def name(self, fname):
         f = open(os.path.join(self.base_path, 'plugin', fname),'r')
         line = '\n'.join(i for i in f.readlines())
         p = ast.parse(line)
-        return [node.name for node in ast.walk(p) if isinstance(node, ast.ClassDef)][-1]
+        classes = [node.name for node in ast.walk(p) if isinstance(node, ast.ClassDef)]
+        target = fname.replace('.py','')
+        for clss in classes:
+            if target == clss.lower():
+                return clss
 
     def process(self, name = None):
         if name is not None:
             instance = eval('self.module.'+name)
         else:
             clsmembers = inspect.getmembers(self.module, inspect.isclass)
-            for cls in clsmembers:
-                instance = eval('self.module.'+cls[0])
+            for clss in clsmembers:
+                instance = eval('self.module.'+clss[0])
                 loc = inspect.getfile(instance)
                 if self.base_path in loc:
                     break

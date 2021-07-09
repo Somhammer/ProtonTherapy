@@ -3,7 +3,7 @@ import copy
 from dataclasses import dataclass, field, InitVar
 
 import src.data as data
-import simulation as sim
+import plugin.simulation as sim
 
 @dataclass
 class CTinfo(sim.CTinfo):
@@ -23,7 +23,7 @@ class RTSinfo(sim.RTSinfo):
     pass
 
 class ExampleSimulation(sim.Simulation):
-    def __init__(self, outdir='', nozzle=None, patient=None, convalgo=None):
+    def __init__(self, outdir=None, nozzle=None, patient=None, convalgo=None):
         super().__init__()
     
     def is_workable(self):
