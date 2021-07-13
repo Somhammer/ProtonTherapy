@@ -270,24 +270,12 @@ set_import_files, set_templates는 GUI와 통신을 해 헤더 파일과 구성�
     def set_parameters():
         ...
         kwargs = {
-          'nNodes':f'0',
           'nSize':f'{len(convalgo["BCM"][0])}',
           'Stop':f'{convalgo["Stop Position"][0]/256*100:.5g}',
           'BCM':'0 0 0 '+' '.join(str(convalgo['BCM'][0][i]) for i in range(3,len(convalgo['BCM'][0]))),
           'BWT':' '.join(f'{i:.5g}' for i in convalgo['BWT'][0]),
-          'S1Number':int(set_value(convalgo['1st Scatterer'][0], ibeam)),
-          'S2Angle':int(set_value(convalgo['2nd Scatterer'][0], ibeam)),
-          'SnoutID':f'{self.RTP[ibeam].Snout.ID}',
-          'SnoutTransZ':f'{-self.RTP[ibeam].Compensator.Isocenter - self.RTP[ibeam].Compensator.MaxThickness - 312.5:.5g}',
-          'PhaseSpaceOutput':os.path.join(self.outdir, f'PhaseSpace_beam{ibeam}'),
-          'PDDOutput':os.path.join(self.outdir, f'PDD_beam{ibeam}'),
-          'DoseAtPhantomOutput':os.path.join(self.outdir, f'DoseAtPhantom_beam{ibeam}'),
           'nSequentialTimes':int(set_value(convalgo['Stop Position'][0], ibeam)),
           'DicomDirectory': patient.directory,
-          'ApertureFile':os.path.join(self.outdir, self.RTP[ibeam].Aperture.OutName),
-          'CompensatorFile':os.path.join(self.outdir, self.RTP[ibeam].Compensator.OutName),
-          'Energy':f'{set_value(convalgo["Energy"][0], ibeam):.5g}',
-          'RMTrack':int(set_value(convalgo['Modulator'][0], ibeam))
         }
         ...
         return kwargs
