@@ -205,8 +205,92 @@ set_import_files, set_templates는 GUI와 통신을 해 헤더 파일과 구성�
 
 유저가 작성해야 될 중요한 함수는 read_CT, read_RTP, read_RTS, set_parameters, save_filters이다. read_* 함수들은 각각 CT, RTP, RTS를 읽는 함수이고 여기서 담을 정보를 정해서 데이터 클래스에 넘겨주게 된다.
 
+아래 코드는 CT파일을 읽는 예제 코드이다. pydicom을 이용해 파일을 불러오고 이 중 필요한 값들을 CTinfo 클래스를 만들어 저장한 뒤, self.CT 리스트에 붙여준다.
+```python
+    def read_CT(self, patient):
+        if len(patient.CT) == 0: return
+        self.dicom = patient.directory
+        imageZ = len(patient.CT)
+        firstCT_file = dicom.dcmread(os.path.join(patient.directory, patient.CT[0]))
+        lastCT_file = dicom.dcmread(os.path.join(patient.directory, patient.CT[-1]))
+
+        instance = firstCT_file.InstanceNumber
+        img_thick = firstCT_file.SliceThickness
+        if img_thick is None: img_thick = 0.0
+
+        firstCT = CTinfo(
+          Position = firstCT_file.ImagePositionPatient,
+          Thickness = float(img_thick),
+          PixelSpacing = firstCT_file.PixelSpacing,
+          Rows = firstCT_file.Rows,
+          Cols = firstCT_file.Columns,
+          Manufacturer = firstCT_file.Manufacturer
+        )
+        lastCT = copy.deepcopy(firstCT)
+        lastCT.position = lastCT_file.ImagePositionPatient
+
+        if firstCT.Position[-1] < firstCT.Position[-1]:
+            firstCT.Position[2] = firstCT.Position[2] + (instance - 1) * img_thick
+            lastCT.Position[2] = firstCT.Position[2] - (imageZ - instance) * img_thick
+        else:
+            firstCT.Position[2] = firstCT.Position[2] - (imageZ - instance) * img_thick
+            lastCT.Position[2] = firstCT.Position[2] - (instance - 1) * img_thick
+        firstCT.Center = (firstCT.Position[2] + lastCT.Position[2]) / 2.0
+
+        self.CT.append(firstCT)
+        self.CT.append(lastCT)
+
+```
+
 다음은 이렇게 만든 정보들을 적용하는 과정이다.
 먼저 Simulation GUI에서 구성요소들을 만들 때, 변수 값 혹은 이름 값을 i:Component/Value1 = {Value1} 중괄호로 둘러 싸서 작성을 한다.
+
+아래는 GUI를 통해 만든 구성요소 저장파일의 일부이다.
+```
+      d:Tf/TimelineEnd = {Stop} ms
+
+      i:Tf/NumberOfSequentialTimes = {nSequentialTimes}
+
+      dv:Tf/BeamWeight/Times = {nSize} {BWT} ms
+
+      iv:Tf/BeamWeight/Values = {nSize} {BCM}
+
+      s:Tf/BeamCurrent/Function = "Step"
+
+      dv:Tf/BeamCurrent/Times = 1 100 ms
+
+      iv:Tf/BeamCurrent/Values = 1 2000
+
+```
+중괄호로 둘러싸인 Stop, nSequentialTimes, BWT 등을 set_parameter의 kwargs에 저장하면 인풋 파일을 만들 때 적용이 된다.
+
 그리고 set_parameters에서 dictionary 형태로 중괄호에 둘러싸인 이름을 key로, 적용할 값을 value로 작성하면 자동으로 읽어 처리하게 된다.
 
+```python
+    def set_parameters():
+        ...
+        kwargs = {
+          'nNodes':f'0',
+          'nSize':f'{len(convalgo["BCM"][0])}',
+          'Stop':f'{convalgo["Stop Position"][0]/256*100:.5g}',
+          'BCM':'0 0 0 '+' '.join(str(convalgo['BCM'][0][i]) for i in range(3,len(convalgo['BCM'][0]))),
+          'BWT':' '.join(f'{i:.5g}' for i in convalgo['BWT'][0]),
+          'S1Number':int(set_value(convalgo['1st Scatterer'][0], ibeam)),
+          'S2Angle':int(set_value(convalgo['2nd Scatterer'][0], ibeam)),
+          'SnoutID':f'{self.RTP[ibeam].Snout.ID}',
+          'SnoutTransZ':f'{-self.RTP[ibeam].Compensator.Isocenter - self.RTP[ibeam].Compensator.MaxThickness - 312.5:.5g}',
+          'PhaseSpaceOutput':os.path.join(self.outdir, f'PhaseSpace_beam{ibeam}'),
+          'PDDOutput':os.path.join(self.outdir, f'PDD_beam{ibeam}'),
+          'DoseAtPhantomOutput':os.path.join(self.outdir, f'DoseAtPhantom_beam{ibeam}'),
+          'nSequentialTimes':int(set_value(convalgo['Stop Position'][0], ibeam)),
+          'DicomDirectory': patient.directory,
+          'ApertureFile':os.path.join(self.outdir, self.RTP[ibeam].Aperture.OutName),
+          'CompensatorFile':os.path.join(self.outdir, self.RTP[ibeam].Compensator.OutName),
+          'Energy':f'{set_value(convalgo["Energy"][0], ibeam):.5g}',
+          'RMTrack':int(set_value(convalgo['Modulator'][0], ibeam))
+        }
+        ...
+        return kwargs
+```
+이렇게 만든 kwargs는 run 함수를 통해 change_parameter에 전달되고 구성요소의 변수값들이 변하게 된다.
 다른 함수로는 save_filters가 있는데 이는 Aperture나 Compensator 같은 것들을 저장하는 함수인데, 이는 유저가 직접 작성해야 한다.
