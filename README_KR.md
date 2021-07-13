@@ -165,3 +165,48 @@ Import Files 창에는 본인이 추가한 노즐 구성요소들이 표시된�
 이렇게 구성요소를 모두 추가했으면 Make 버튼을 누르면 된다. 그리고 Main 창에서 툴바의 Run 버튼을 누르면 오늘 날짜로 prod 밑에 폴더가 만들어진다.
 
 ### Plugin 작성법
+환자에 따라 인풋 파일에 들어가는 변수 값들이 달라지는 경우가 있다. 이것들을 처리하기 위해서 플러그인을 작성해 시뮬레이션 창에서 추가할 수 있다. 플러그인은 파이썬 클래스이며 기본적으로 plugin 폴더 내의 simulation.py에 있는 Simulation 클래스를 상속해야 한다.
+
+```python
+import plugin.simulation as sim
+...
+class CustomSimulation(sim.Simulation):
+...
+```
+
+simulation.py 는 세 개의 데이터 클래스와 하나의 클래스로 이루어져 있다.
+데이터 클래스는 CT 파일들의 정보를 담는 CTinfo, RTPinfo, RTSinfo로 이루어져 있다. 각각의 클래스는 ID 하나만 담고 있는데 유저는 이 세개의 데이터 클래스 각각을 상속해 담고 싶은 변수를 추가할 수 있다.
+
+```python
+@dataclass
+class CTinfo(sim.CTinfo):
+    PixelSpacing: list: list = field(default_factory=list)
+    Position: list = field(default_factory=list)
+    Thickness: float = None
+```
+
+이렇게 만든 데이터 클래스는 시뮬레이션 클래스 내부에서 선언해 환자 정보를 담아 전달할 수 있다.
+
+그리고 Simulation 클래스에는 다음과 같은 함수들이 있다.
+
+```python
+__init__, is_workable, set_requirement, number_of_beams, number_of_parallels, 
+set_import_files, set_templates, read_CT, read_RTP, read_RTS, set_parameters, 
+change_parameters, save_filters, save_phase, run
+```
+
+__init__ 함수는 문자 그대로 클래스를 초기화 하는 함수이다. 여기에는 클래스에서 사용할 변수들이 담겨 있으며 추가할 변수들 혹은 초기값이 있다면 유저가 직접 추가할 수 있다. 특히 __init__ 함수에서 요구사항에 들어갈 것을 dictionary 형식으로 추가해줄 수 있다. dictinoary의 key로는 요구사항의 이름이 들어가며 값에는 ['파일경로', 변수] 가 리스트로 들어간다.
+
+is_workable, set_requirement는 요구사항과 관련된 함수인데, 만약 요구사항이 만족된다면 is_workable이 True를 반환하고 run 함수가 동작할 수 있게 한다.
+
+number_of_beams와 number_of_parallels는 beam과 parallel world의 갯수를 반환해주는 함수이다. 필요에 따라서 CT 파일들을 읽는 함수에 적용해줄 수 있다.
+
+set_import_files, set_templates는 GUI와 통신을 해 헤더 파일과 구성요소들을 가져오는 함수이다. 이는 GUI가 자동으로 처리하니 유저는 작성할 필요가 없다.
+
+유저가 작성해야 될 중요한 함수는 read_CT, read_RTP, read_RTS, set_parameters, save_filters이다. read_* 함수들은 각각 CT, RTP, RTS를 읽는 함수이고 여기서 담을 정보를 정해서 데이터 클래스에 넘겨주게 된다.
+
+다음은 이렇게 만든 정보들을 적용하는 과정이다.
+먼저 Simulation GUI에서 구성요소들을 만들 때, 변수 값 혹은 이름 값을 i:Component/Value1 = {Value1} 중괄호로 둘러 싸서 작성을 한다.
+그리고 set_parameters에서 dictionary 형태로 중괄호에 둘러싸인 이름을 key로, 적용할 값을 value로 작성하면 자동으로 읽어 처리하게 된다.
+
+다른 함수로는 save_filters가 있는데 이는 Aperture나 Compensator 같은 것들을 저장하는 함수인데, 이는 유저가 직접 작성해야 한다.
