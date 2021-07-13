@@ -160,6 +160,8 @@ Import Files 창에는 본인이 추가한 노즐 구성요소들이 표시된�
 
 가운데 창은 Template 창과 비슷하게 구성요소를 추가하는 창이다. 이 창을 통해 만든 요소는 Append 버튼을 누르면 옆의 Simulation Components 창에 표시된다. 이 곳에 나타난 구성요소들은 아래 탭에 더블클릭을 이용해 추가할 수 있다. 더블클릭을 통한 추가는 현재 선택중인 탭에만 적용된다. 그렇기 때문에 만약 Beam Distribution 정보가 Read, Others에만 필요하다면 Record 탭을 누르고 더블클릭, Others 탭을 누르고 더블클릭하면 된다.
 
+<img src="figs/Simulation2.png" width="100%" height="100%" title="Simulation Window"></img>
+
 이렇게 구성요소를 모두 추가했으면 Make 버튼을 누르면 된다. 그리고 Main 창에서 툴바의 Run 버튼을 누르면 오늘 날짜로 prod 밑에 폴더가 만들어진다.
 
 ### Plugin 작성법
