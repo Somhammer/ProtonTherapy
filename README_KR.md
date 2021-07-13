@@ -162,7 +162,7 @@ Import Files 창에는 본인이 추가한 노즐 구성요소들이 표시된�
 
 <img src="figs/Simulation2.png" width="100%" height="100%" title="Simulation Window"></img>
 
-이렇게 구성요소를 모두 추가했으면 Make 버튼을 누르면 된다. 그리고 Main 창에서 툴바의 Run 버튼을 누르면 오늘 날짜로 prod 밑에 폴더가 만들어진다.
+이렇게 구성요소를 모두 추가했으면 Save 버튼을 통해 저장할 수 있으며 모든 작업이 끝났다면 Make 버튼을 누르면 된다. 그리고 Main 창에서 툴바의 Run 버튼을 누르면 오늘 날짜로 prod 밑에 폴더가 만들어진다.
 
 ### Plugin 작성법
 환자에 따라 인풋 파일에 들어가는 변수 값들이 달라지는 경우가 있다. 이것들을 처리하기 위해서 플러그인을 작성해 시뮬레이션 창에서 추가할 수 있다. 플러그인은 파이썬 클래스이며 기본적으로 plugin 폴더 내의 simulation.py에 있는 Simulation 클래스를 상속해야 한다.
