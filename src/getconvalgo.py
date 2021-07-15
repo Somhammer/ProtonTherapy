@@ -30,7 +30,7 @@ class GetParaFromConvAlgo():
             if main.row_values(31)[col] == '': break
             if str(type(main.row_values(31)[col])) == "<class 'str'>": continue
             GetParaFromConvAlgo.fscatterer.append(main.row_values(31)[col])
-        GetParaFromConvAlgo.sscatterer = main.cell_value(37, 2)
+        GetParaFromConvAlgo.sscatterer = main.cell_value(36, 2)
         GetParaFromConvAlgo.modulator = main.cell_value(33, 2)
         GetParaFromConvAlgo.stop = main.cell_value(34, 2)
         GetParaFromConvAlgo.energy = main.cell_value(53, 2)
@@ -64,7 +64,7 @@ class GetParaFromConvAlgo():
             if cell.value == None: break
             if str(type(cell.value)) == "<class 'str'>": continue
             GetParaFromConvAlgo.fscatterer.append(cell.value)
-        GetParaFromConvAlgo.sscatterer = main['C38'].value
+        GetParaFromConvAlgo.sscatterer = main['C37'].value
         GetParaFromConvAlgo.modulator = main['C34'].value
         GetParaFromConvAlgo.stop = main['C35'].value
         GetParaFromConvAlgo.energy = main['C54'].value

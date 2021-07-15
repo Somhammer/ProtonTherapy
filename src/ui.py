@@ -205,7 +205,7 @@ class ComponentWindow(QDialog):
         self.tabAddBtn = QToolButton()
         self.tabComp.setCornerWidget(self.tabAddBtn, Qt.TopRightCorner)
         self.tabAddBtn.setAutoRaise(True)
-        self.tabAddBtn.setIcon(QIcon("../icons/new.png"))
+        self.tabAddBtn.setIcon(QIcon(os.path.join(base_path,"icons/new.png")))
         self.tabAddBtn.clicked.connect(self.add_subcomponent)
 
     def draw_import_widget(self, fname):
@@ -600,7 +600,7 @@ class SimulationWindow(QDialog):
         self.pushAppendComp.clicked.connect(self.add_template)
         #self.pushClearComp.clicked.connect()
         
-        macros = ['NewSimulation', 'DoseSimulation']
+        macros = ['Scattering', 'Scanning']
         self.comboMacro.addItem('Select')
         self.comboMacro.addItem('New')
         self.comboMacro.addItem('Open')
@@ -1046,7 +1046,7 @@ class RunWindow(QDialog):
                 f.write(fil['RawText'])
 
             self.textLog.append("......Generate phase files")
-            for key, values in g_phase.items():
+            for key, values in list(g_phase.items()):
                 if key.lower() != 'patient': continue
                 for value in values:
                     f = open(os.path.join(value.outname), 'w')
@@ -1073,7 +1073,8 @@ class RunWindow(QDialog):
             self.checkInput.setCheckable(True)
             self.checkInput.setChecked(True)
             self.textLog.append("Topas input files are generated.")
-        except:
+        except BaseException as err:
+            self.textLog.append(str(err))
             self.textLog.append("Generation is failed.")
             
     def execute_topas(self):
@@ -1424,26 +1425,33 @@ class MainWindow(QMainWindow, form_class):
     def add_component(self):
         if not self.check_beam_mode(): return
 
-        if len(g_template) < 1: return
-        idx = self.listTemplates.currentRow()
-        g_component.append(g_template[idx])
-        g_component[-1].outname = os.path.join(g_outdir, 'nozzle', g_component[-1].name+'.tps')
+        global g_component, g_template
+
+        template_id = self.listTemplates.currentRow()
+        if len(g_template) < template_id: return
 
         replace = False
-        if len(g_component)> 1 and any(g_component[idx].name == i.name for i in g_component[:-1]):
-            reply = QMessageBox.question(self, "Message", f'Are you sure to replace {g_template[idx].name}?',
-              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                replace = True
-                for idx, component in enumerate(g_component[:-1]):
-                    if g_template[idx].name == component.name:
-                        g_component[idx] = component
-                        g_component.pop(len(g_component)-1)
-            else:
-                return
+        if len(g_component) > 1:
+            if any(g_template[template_id].name == i.name for i in g_component):
+                reply = QMessageBox.question(self, "Message", f'Are you sure to replace {g_template[template_id].name}?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    replace = True
 
-        components = []
-        for subname, subcomp in g_component[-1].subcomponent.items():
+        if replace and len(g_component) > 1:
+            for idx, component in enumerate(g_component):
+                if g_template[template_id].name == component.name:
+                    component_id = idx
+                    break
+            g_component[component_id] = g_template[template_id]
+        else:
+            component_id = -1
+            g_component.append(g_template[template_id])
+            g_component[-1].outname = os.path.join(g_outdir, 'nozzle', g_component[-1].name+'.tps')
+            component_id = len(g_component) - 1
+
+        component = g_component[component_id]
+        component_table = []
+        for subname, subcomp in component.subcomponent.items():
             info = {'Name':'','Component':'','Parent':'',
                     'HLX':"0.0 mm",'HLY':"0.0 mm",'HLZ':"0.0 mm",
                     'RMin':"0.0 mm",'RMax':"0.0 mm",
@@ -1451,49 +1459,119 @@ class MainWindow(QMainWindow, form_class):
                     'RotX':"0.0 deg",'RotY':"0.0 deg",'RotZ':"0.0 deg",
                     'TransX':"0.0 mm",'TransY':"0.0 mm",'TransZ':"0.0 mm"}
             if subname == 'Basis':
-                info['Name'] = g_component[-1].name
-                info['Component'] = g_component[-1].ctype
+                info['Name'] = component.name
+                info['Component'] = component.ctype
             else:
                 info['Name'] = f'└─{subcomp.name}'
                 info['Component'] = subcomp.name
             for para in subcomp.parameters:
                 if any(para.name.lower() == i.lower() for i in info.keys()):
                     info[para.name] = para.value
-
-            components.append(info)
+            component_table.append(info)
 
         if replace:
+            row_start_id = -999
             for irow in range(self.tableComp.rowCount()):
-                for icol in range(self.tableComp.columnCount()):
-                    colname = self.tableComp.horizontalHeaderItem(icol).text()
-                    value = components[irow][colname]
-                    self.tableComp.setItem(irow, icol, QTableWidgetItem(str(value)))
+                rowname = self.tableComp.item(irow,0).text()
+                if rowname == component.name:
+                    row_start_id = irow
+                    break
         else:
-            for component in components:
-                row = self.tableComp.rowCount() + 1
-                self.comp_to_table_map[row-1] = len(g_component) - 1
-                self.tableComp.setRowCount(row)
-                for col, val in enumerate(component.values()):
-                    self.tableComp.setItem(row-1,col,QTableWidgetItem(str(val)))
+            row_start_id = self.tableComp.rowCount()
+
+        map_length = len(self.comp_to_table_map)
+        for irow in range(row_start_id, row_start_id+len(component_table)):
+            if not replace:
+                self.tableComp.setRowCount(row_start_id + len(component_table))
+            self.comp_to_table_map[irow] = component_id
+            table_id = irow - row_start_id
+            for icol in range(self.tableComp.columnCount()):
+                colname = self.tableComp.horizontalHeaderItem(icol).text()
+                value = component_table[table_id][colname]
+                self.tableComp.setItem(irow, icol, QTableWidgetItem(str(value)))
         self.tableComp.resizeColumnsToContents()
         self.widgetNozzle.trigger_refresh()
 
-    def modify_component(self):
+    def modify_component(self, delete=False):
         if not self.check_beam_mode(): return
 
         if len(g_component) < 1: return
         row = self.tableComp.currentRow()
         idx = self.comp_to_table_map[row]
 
-        component = ComponentWindow(self, fname=idx, modify_component=True)
-        r = component.return_para()
-        if r:
+        if delete:
+            keys = list(g_component[idx].subcomponent.keys())
+            length = len(keys)
+            for key in keys:
+                g_component[idx].modify_subcomponent(key, {}, delete=True)
+        else:
+            component = ComponentWindow(self, fname=idx, modify_component=True)
+            r = component.return_para()
+            if not r:
+                return
+        
+        rowmin = 999
+        rowmax = -999
+        for key, value in self.comp_to_table_map.items():
+            if not value == idx: continue
+            if rowmin > key: rowmin = key
+            if rowmax < key: rowmax = key
+
+        table_length = rowmax - rowmin + 1
+        while table_length != len(g_component[idx].subcomponent):
+            #print(table_length, rowmin, rowmax, len(g_component[idx].subcomponent), self.tableComp.rowCount(), idx)
+            for irow in range(rowmin, rowmax+1):
+                cname = self.tableComp.item(irow, 0).text()
+                if not '└─' in cname:
+                    cname = 'Basis'
+                else:
+                    cname = cname.replace('└─','')
+                if not cname in g_component[idx].subcomponent:
+                    target = irow
+                    break
+
+            self.tableComp.removeRow(target)
+            del(self.comp_to_table_map[target])
+            new = {}
+            for key in list(self.comp_to_table_map.keys()):
+                if key < target:
+                    new[key] = self.comp_to_table_map[key]
+                else:
+                    new[key-1] = self.comp_to_table_map[key]
+            self.comp_to_table_map = new
+            """
+            for key in list(self.comp_to_table_map.keys()):
+                if key < target: continue
+                print(key, self.comp_to_table_map)
+                self.comp_to_table_map[key - 1] = self.comp_to_table_map[key]
+            """
             rowmin = 999
             rowmax = -999
+            match = False
             for key, value in self.comp_to_table_map.items():
                 if not value == idx: continue
-                if rowmin > key: rowmin = key
-                if rowmax < key: rowmax = key
+                if rowmin > key: 
+                    rowmin = key
+                    match = True
+                if rowmax < key: 
+                    rowmax = key
+                    match = True
+            table_length = rowmax - rowmin + 1
+            if not match:
+                rowmin = 0
+                rowmax = 0
+                table_length = 0
+
+        new = {}
+        for key in sorted(self.comp_to_table_map):
+            if delete:
+                new[key] = self.comp_to_table_map[key] - 1
+            else:
+                new[key] = self.comp_to_table_map[key]
+        self.comp_to_table_map = new
+        if delete:
+            del g_component[idx]
+        else:
             for irow in range(rowmin, rowmax+1):
                 name = self.tableComp.item(irow, 1).text().replace('└─','')
                 if not name in g_component[idx].subcomponent:
@@ -1506,15 +1584,17 @@ class MainWindow(QMainWindow, form_class):
                         if para.name.lower() == paraname.lower():
                             self.tableComp.setItem(irow, icol, QTableWidgetItem(str(para.value)))
                             continue
-            self.tableComp.resizeColumnsToContents()
-            self.widgetNozzle.trigger_refresh()
+        self.tableComp.resizeColumnsToContents()
+        self.widgetNozzle.trigger_refresh()
 
     def delete_component(self):
         if not self.check_beam_mode(): return
-
+        self.modify_component(delete=True)
+        """
         if len(g_component) < 1: return
         row = self.tableComp.currentRow()
         idx = self.comp_to_table_map[row]
+
         rowmin = 999
         rowmax = -999
         for key, value in self.comp_to_table_map.items():
@@ -1526,6 +1606,7 @@ class MainWindow(QMainWindow, form_class):
         g_component.pop(idx)
         self.tableComp.resizeColumnsToContents()
         self.widgetNozzle.trigger_refresh()
+        """
 
     def patient_setup(self):
         directory = QFileDialog.getExistingDirectory(self, "Select Patient CT directory")

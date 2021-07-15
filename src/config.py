@@ -27,7 +27,7 @@ class Proton():
         line = '\n'.join(i for i in f.readlines())
         p = ast.parse(line)
         classes = [node.name for node in ast.walk(p) if isinstance(node, ast.ClassDef)]
-        target = fname.replace('.py','')
+        target = fname.replace('.py','').split('/')[-1]
         for clss in classes:
             if target == clss.lower():
                 return clss
