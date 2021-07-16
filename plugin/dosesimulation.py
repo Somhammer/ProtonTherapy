@@ -86,12 +86,13 @@ class RTSinfo(sim.RTSinfo):
 class DoseSimulation(sim.Simulation):
     def __init__(self, outdir=None, nozzle=None, patient=None, convalgo=None):
         super().__init__(outdir=outdir, nozzle=nozzle, patient=patient, convalgo=convalgo)
+        self.name = "Dose Scale Factor Calculation"
         self.requirements['Patient'] = []
         self.requirements['Convalgo'] = [None,None]
         if patient is not None:
             self.requirements['Patient'] = [patient.directory, patient]
         if convalgo is not None:
-            self.requirements['Convalgo'] = [convalgo['File'], patient]
+            self.requirements['Convalgo'] = [convalgo['File'], convalgo]
         self.order = {"Others":0,"Record":1,"Read":2}
 
     def is_workable(self):
@@ -152,7 +153,7 @@ class DoseSimulation(sim.Simulation):
         compensator_dir = sequence.IonRangeCompensatorSequence[0]
 
         convalgo = self.requirements['Convalgo'][1]
-        SAD_data = 230 * 10
+        SAD_data = 200 * 10
 
         RTP = RTPinfo(
           GantryAngle = sequence.IonControlPointSequence[0].GantryAngle,
@@ -167,7 +168,8 @@ class DoseSimulation(sim.Simulation):
         RTP.Aperture.Isocenter = aperture_dir.IsocenterToBlockTrayDistance
         RTP.Aperture.Points = aperture_dir.BlockNumberOfPoints
         RTP.Aperture.AirGap = 1 - (RTP.Aperture.Isocenter - RTP.Aperture.Thickness) / SAD_data
-        
+        print(f'1 - ({RTP.Aperture.Isocenter} - {RTP.Aperture.Thickness})/{SAD_data} = {RTP.Aperture.AirGap}')
+
         RTP.Compensator.Isocenter = compensator_dir.IsocenterToCompensatorTrayDistance
         RTP.Compensator.Milling = compensator_dir.CompensatorMillingToolDiameter
         RTP.Compensator.Thickness = compensator_dir.CompensatorThicknessData

@@ -178,6 +178,10 @@ class ComponentWindow(QDialog):
         self.pushImportClear.clicked.connect(self.import_clear)
         # Element
         ### LineEdit
+        self.lineOutput.returnPressed.connect(lambda: self.set_name(self.lineOutput.text()))
+        self.lineOutput.textChanged.connect(lambda: self.set_name(self.lineOutput.text()))
+        self.lineCtype.returnPressed.connect(lambda: self.set_ctype(self.lineCtype.text()))
+        self.lineCtype.textChanged.connect(lambda: self.set_ctype(self.lineCtype.text()))
         self.lineNewParaName.returnPressed.connect(self.add_element)
         self.lineNewParaValue.returnPressed.connect(self.add_element)
         self.lineName.returnPressed.connect(lambda: self.change_compname(self.lineName.text()))
@@ -207,6 +211,12 @@ class ComponentWindow(QDialog):
         self.tabAddBtn.setAutoRaise(True)
         self.tabAddBtn.setIcon(QIcon(os.path.join(base_path,"icons/new.png")))
         self.tabAddBtn.clicked.connect(self.add_subcomponent)
+
+    def set_name(self, text):
+        self.template.name = text
+
+    def set_ctype(self, text):
+        self.template.ctype = text
 
     def draw_import_widget(self, fname):
         lst = fname.split('/')
@@ -299,6 +309,7 @@ class ComponentWindow(QDialog):
             self.draw_para_widget(tabname=tab)
 
         self.lineOutput.setText(self.template.name)
+        self.lineCtype.setText(self.template.ctype)
         if item == "Load":
             self.append_component(save_all=True)
         self.update_preview()
@@ -313,7 +324,6 @@ class ComponentWindow(QDialog):
         if r:
             subcomp = newtab.comboSubcomp.currentText()
             tabname = newtab.lineTabName.text()
-            #fname = os.path.join(base_path,'data/components',self.comboComp.currentText(),subcomp+'.tps')
             fname = os.path.join(self.template.ctype, subcomp+'.tps')
             self.template.load(fname=fname, add=tabname)
             index = self.draw_para_widget(tabname=tabname)
@@ -451,6 +461,8 @@ class ComponentWindow(QDialog):
 
         self.lineOutput.setText(self.template.name)
         self.lineOutput.setReadOnly(True)
+        self.lineCtype.setText(self.template.ctype)
+        self.lineCtype.setReadOnly(True)
         self.update_preview()
 
     def click_make(self):
@@ -593,20 +605,19 @@ class SimulationWindow(QDialog):
 
         self.pushSave.clicked.connect(self.save_cfg)
         self.pushMake.clicked.connect(self.write_output)
-        self.pushClear.clicked.connect(self.write_output)
+        self.pushClear.clicked.connect(self.clear_all)
         self.pushCancel.clicked.connect(self.click_cancel)
         self.pushOpenFile.clicked.connect(self.add_import)
         self.pushAddNewPara.clicked.connect(self.add_element)
         self.pushAppendComp.clicked.connect(self.add_template)
-        #self.pushClearComp.clicked.connect()
         
-        macros = ['Scattering', 'Scanning']
+        #macros = ['Scattering', 'Scanning']
         self.comboMacro.addItem('Select')
         self.comboMacro.addItem('New')
         self.comboMacro.addItem('Open')
-        self.comboMacro.insertSeparator(3)
-        for macro in macros:
-            self.comboMacro.addItem(macro)
+        #self.comboMacro.insertSeparator(3)
+        #for macro in macros:
+        #    self.comboMacro.addItem(macro)
         self.comboMacro.currentTextChanged.connect(self.open_macro)
 
         self.comboComp.addItem('Select')
@@ -623,16 +634,28 @@ class SimulationWindow(QDialog):
         self.listTemplates.addAction(actionAdd)
         self.listTemplates.itemDoubleClicked.connect(self.add_component)
 
+    def clear_all(self):
+        self.instance = None
+        self.templates = {}
+        self.components = {}
+        self.listRequirement.clear()
+        self.tabImport.clear()
+        self.listTemplates.clear()
+        self.tabComponents.clear()
+
     def open_macro(self):
         if self.comboMacro.currentText() == 'Select': return
 
         if self.comboMacro.currentText() == 'Open':
-            fname = QFileDialog.getOpenFileName(self, filter = "Python files (*.py)")[0]
+            fname = QFileDialog.getOpenFileName(self, 'Open', os.path.join(base_path,'plugin'), filter = "Python files (*.py)")[0]
             if fname == "": return
         elif self.comboMacro.currentText() == 'New':
             fname = 'simulation.py'
         else:
             fname = f'{self.comboMacro.currentText().lower()}.py'
+
+        print("MELONA")
+        self.clear_all()
 
         import config as cfg
         proton = cfg.Proton()
@@ -680,10 +703,6 @@ class SimulationWindow(QDialog):
 
         self.load_cfg(fname)
 
-    def clear_all(self):
-        self.templates = {}
-        self.components = {}
-
     def save_cfg(self):
         if self.comboMacro.currentText() == 'Select': return
 
@@ -722,8 +741,8 @@ class SimulationWindow(QDialog):
         if fname is None and not push: return
         if push:
             fname = QFileDialog.getOpenFileName(self, 'Load Phase')[0]
+            if fname == '': return
 
-        self.clear_all()
         with open(os.path.join(base_path, 'plugin', fname.replace('.py', '.nzl')), 'r') as f:
             cfg = yaml.load(f, Loader=yaml.FullLoader)
         for name, comp_info in cfg['Template'].items():
@@ -774,6 +793,7 @@ class SimulationWindow(QDialog):
         if self.comboMacro.currentText() == 'Select': return
 
         fname = QFileDialog.getOpenFileName(self, "Import",  os.path.join(base_path,'data/components'), initialFilter = g_text_extension[0], filter='\n'.join(i for i in g_text_extension))[0]
+        if fname == '': return
         widget = self.tabImport.currentWidget()
         witem = QListWidgetItem(widget)
         item = Item()
@@ -997,35 +1017,9 @@ class RunWindow(QDialog):
         self.run()
 
     def set_action(self):
-        self.checkInit.clicked.connect(lambda: self.undo(self.checkInit))
-        self.checkInput.clicked.connect(lambda: self.undo(self.checkInput))
-        self.checkTopasRun.clicked.connect(lambda: self.undo(self.checkTopasRun))
-        self.checkPost.clicked.connect(lambda: self.undo(self.checkPost))
-        
-        self.pushResubmit.clicked.connect(self.resubmit_process)
-        self.pushSaveLog.clicked.connect(self.save_log)
+        self.pushOk.clicked.connect(self.click_ok)
     
     def run(self):
-        self.initialize()
-        self.generate_input()
-        #self.execute_topas()
-        #self.do_postprocess()
-
-    def undo(self, checkbox):
-        if checkbox.isCheckable():
-            checkbox.setChecked(True)
-
-    def initialize(self):
-        self.textLog.append("...Initialize topas")
-        try:
-            self.topas.set_path(g_outdir)
-            self.checkInit.setCheckable(True)
-            self.checkInit.setChecked(True)
-            self.textLog.append("Parameter setting is success.")
-        except:
-            self.textLog.append("Parameter setting is failed.")
-            
-    def generate_input(self):
         self.textLog.append("...Generate topas input files")
         try:
             lst = []
@@ -1070,13 +1064,12 @@ class RunWindow(QDialog):
                                     cmd = ['cp', os.path.join(path, f), os.path.join(g_outdir, 'nozzle', f)]
                                     subprocess.call(cmd)
 
-            self.checkInput.setCheckable(True)
-            self.checkInput.setChecked(True)
             self.textLog.append("Topas input files are generated.")
         except BaseException as err:
             self.textLog.append(str(err))
             self.textLog.append("Generation is failed.")
             
+    """
     def execute_topas(self):
         self.textLog.append("...Execute Topas")
         try:
@@ -1088,22 +1081,10 @@ class RunWindow(QDialog):
             self.textLog.append("Simulation is success.")
         except:
             self.textLog.append("Simlation is failed.")
+    """ 
+    def click_ok(self):
+        self.accept()
 
-    def do_postprocess(self):
-        self.textLog.append("...Do post process")
-        try:
-            self.checkPost.setCheckable(True)
-            self.checkPost.setChecked(True)
-            self.textLog.append("Success. All processes has been completed.")
-        except:
-            self.textLog.append("Post process is failed.")
-
-    def resubmit_process(self):
-        return
-        
-    def save_log(self):
-        return
-        
     def return_para(self):
         return super().exec_()
 
@@ -1363,26 +1344,22 @@ class MainWindow(QMainWindow, form_class):
             self.add_component()
 
     def generate_template(self, name, idx=-999):
+        global g_template
+
         replace = False
         if any(name == i.name for i in g_template[:-1]):
             reply = QMessageBox.question(self, "Message", f'Are you sure to replace {name}?',
               QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 replace = True
-                for idx, template in enumerate(g_template[:-1]):
-                    if name == template.name:
-                        g_template[idx] = template
-                        g_template.pop(len(g_template)-1)
             else:
                 return
 
-        if idx >= 0:
+        if replace:
             item = self.listTemplates.itemWidget(self.listTemplates.item(idx))
             item.name = name
             item.label.setText(name)
-            return
-
-        if not replace:
+        else:
             item = QListWidgetItem(self.listTemplates)
             f = Item()
             f.add_label(name)
@@ -1397,11 +1374,10 @@ class MainWindow(QMainWindow, form_class):
         r = template.return_para()
         if r:
             template = g_template[-1]
-            self.generate_template(template.name)        
+            self.generate_template(template.name)
 
     def modify_template(self):
         if not self.check_beam_mode(): return
-
         if len(g_template) < 1: return
         idx = self.listTemplates.currentRow()
 
@@ -1409,9 +1385,8 @@ class MainWindow(QMainWindow, form_class):
         r = template.return_para()
         if r:
             template = g_template[-1]
-            if template.name != g_template[idx].name:
-                g_template[idx] = template
-                g_template.pop(len(g_template)-1)
+            g_template[idx] = template
+            del g_template[-1]
             self.generate_template(template.name, idx)
     
     def delete_template(self):
@@ -1436,6 +1411,8 @@ class MainWindow(QMainWindow, form_class):
                 reply = QMessageBox.question(self, "Message", f'Are you sure to replace {g_template[template_id].name}?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     replace = True
+                else:
+                    return
 
         if replace and len(g_component) > 1:
             for idx, component in enumerate(g_component):
@@ -1519,7 +1496,6 @@ class MainWindow(QMainWindow, form_class):
 
         table_length = rowmax - rowmin + 1
         while table_length != len(g_component[idx].subcomponent):
-            #print(table_length, rowmin, rowmax, len(g_component[idx].subcomponent), self.tableComp.rowCount(), idx)
             for irow in range(rowmin, rowmax+1):
                 cname = self.tableComp.item(irow, 0).text()
                 if not '└─' in cname:
@@ -1539,12 +1515,7 @@ class MainWindow(QMainWindow, form_class):
                 else:
                     new[key-1] = self.comp_to_table_map[key]
             self.comp_to_table_map = new
-            """
-            for key in list(self.comp_to_table_map.keys()):
-                if key < target: continue
-                print(key, self.comp_to_table_map)
-                self.comp_to_table_map[key - 1] = self.comp_to_table_map[key]
-            """
+
             rowmin = 999
             rowmax = -999
             match = False
@@ -1590,23 +1561,6 @@ class MainWindow(QMainWindow, form_class):
     def delete_component(self):
         if not self.check_beam_mode(): return
         self.modify_component(delete=True)
-        """
-        if len(g_component) < 1: return
-        row = self.tableComp.currentRow()
-        idx = self.comp_to_table_map[row]
-
-        rowmin = 999
-        rowmax = -999
-        for key, value in self.comp_to_table_map.items():
-            if not value == idx: continue
-            if rowmin > key: rowmin = key
-            if rowmax < key: rowmax = key
-        for irow in range(rowmin, rowmax+1):
-            self.tableComp.removeRow(rowmin)
-        g_component.pop(idx)
-        self.tableComp.resizeColumnsToContents()
-        self.widgetNozzle.trigger_refresh()
-        """
 
     def patient_setup(self):
         directory = QFileDialog.getExistingDirectory(self, "Select Patient CT directory")
@@ -1648,7 +1602,6 @@ class MainWindow(QMainWindow, form_class):
 
     def run(self):
         if not self.check_beam_mode(): return
-
         run = RunWindow(self)
 
     def load_convalgo(self):

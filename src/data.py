@@ -336,6 +336,11 @@ class Component():
                 
                 self.subcomponent[subname].parameters.append(self.Parameter(vtype=vtype, category=category, directory=directory, name=name, value=value, draw=draw))
 
+        if self.ctype is not None:
+            for key in list(self.component_list().keys()):
+                if key in self.ctype:
+                    self.ctype = key
+
     def component_list(self):
         outdict = {}
         common = {
@@ -357,7 +362,6 @@ class Component():
           'PhaseSpace':['Volume','Output'],
           'Parallel':['Parallel'],
           'Contour':['Contour','Material']
-
         }
         if self.btype is None: return
         if self.btype.lower() == 'scanning':

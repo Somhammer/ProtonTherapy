@@ -1,0 +1,454 @@
+Template:
+  Overall:
+    Type: Control
+    Text: >
+
+
+      b:Ts/PauseBeforeSequence = "False"
+
+      i:Ts/ShowHistoryCountAtInterval = 0
+              
+      i:Ts/NumberOfThreads = {nNodes}
+
+      i:Ts/MaxInteruptedHistories = 10000000
+
+
+  Time:
+    Type: Control
+    Text: >
+
+
+      d:Tf/TimelineEnd = {Stop} ms
+
+      i:Tf/NumberOfSequentialTimes = {nSequentialTimes}
+
+      dv:Tf/BeamWeight/Times = {nSize} {BWT} ms
+
+      iv:Tf/BeamWeight/Values = {nSize} {BCM}
+
+      s:Tf/BeamCurrent/Function = "Step"
+
+      dv:Tf/BeamCurrent/Times = 1 100 ms
+
+      iv:Tf/BeamCurrent/Values = 1 2000
+
+
+  Distribution:
+    Type: Beam
+    Text: >
+
+
+      s:So/Beam/Type = "Beam"
+      
+      s:So/Beam/Component = "BeamPosition"
+      
+      s:So/Beam/BeamParticle = "proton"
+      
+      d:So/Beam/BeamEnergy = {Energy} MeV
+      
+      u:So/Beam/BeamEnergySpread = {EnergySpread}
+      
+      s:So/Beam/BeamPositionDistribution = "Gaussian"
+      
+      s:So/Beam/BeamPositionCutoffShape = "Ellipse"
+      
+      d:So/Beam/BeamPositionCutoffX = 0.1 cm
+      
+      d:So/Beam/BeamPositionCutoffY = 0.1 cm
+      
+      d:So/Beam/BeamPositionSpreadX = 0.1 cm
+      
+      d:So/Beam/BeamPositionSpreadY = 0.1 cm
+      
+      s:So/Beam/BeamAngularDistribution = "Gaussian"
+      
+      d:So/Beam/BeamAngularCutoffX = 0.01 deg
+      
+      d:So/Beam/BeamAngularCutoffY = 0.01 deg
+      
+      d:So/Beam/BeamAngularSpreadX = 0.01 deg
+      
+      d:So/Beam/BeamAngularSpreadY = 0.01 deg
+      
+      i:So/Beam/NumberOfHistoriesInRun = Tf/BeamCurrent/Value * Tf/BeamWeight/Value
+
+
+  Phantom:
+    Type: Phantom
+    Text: >
+
+
+      s:Ge/Phantom/Type = "Group"
+
+      s:Ge/Phantom/Material = "G4_WATER"
+      
+      d:Ge/Phantom/TransX = 0 mm
+      
+      d:Ge/Phantom/TransY = 0 mm
+      
+      d:Ge/Phantom/TransZ = 0 mm
+      
+      d:Ge/Phantom/RotX = 0 deg
+      
+      d:Ge/Phantom/RotY = -90 deg
+      
+      d:Ge/Phantom/RotZ = -90 deg
+      
+      s:Ge/Phantom/DicomDirectory = ""
+
+
+  WaterPhantom:
+    Type: Phantom
+    Text: >
+
+
+      s:Ge/WaterPhantom/Parent = "Gantry"
+      
+      s:Ge/WaterPhantom/Type = "TsBox"
+      
+      s:Ge/WaterPhantom/Material = "G4_WATER"
+      
+      d:Ge/WaterPhantom/HLX = 10.0 cm
+      
+      d:Ge/WaterPhantom/HLY = 10.0 cm
+      
+      d:Ge/WaterPhantom/HLZ = 10.0 cm
+      
+      d:Ge/WaterPhantom/TransX = 0.0 cm
+      
+      d:Ge/WaterPhantom/TransY = 0.0 cm
+      
+      d:Ge/WaterPhantom/TransZ = 0.0 cm
+      
+      d:Ge/WaterPhantom/RotX = 0.0 deg
+      
+      d:Ge/WaterPhantom/RotY = 0.0 deg
+      
+      d:Ge/WaterPhantom/RotZ = 0.0 deg
+      
+      d:Ge/WaterPhantom/MaxStepSize = 0.5 mm
+
+
+  Patient:
+    Type: Phantom
+    Text: >
+
+
+      s:Ge/Patient/Parent = "Phantom"
+      
+      s:Ge/Patient/Type = "TsDicomPatient"
+      
+      s:Ge/Patient/Material = "G4_WATER"
+      
+      d:Ge/Patient/TransX = -58.706 mm
+      
+      d:Ge/Patient/TransY = -76.114 mm
+      
+      d:Ge/Patient/TransZ = 8.1396 mm
+      
+      d:Ge/Patient/RotX = 0 deg
+      
+      d:Ge/Patient/RotY = 0 deg
+      
+      d:Ge/Patient/RotZ = 0 deg
+      
+      s:Ge/Patient/DicomDirectory = "{DicomDirectory}"
+
+
+  PDD:
+    Type: Phantom
+    Text: >
+
+
+      s:Ge/PDD/Parent = "WaterPhantom"
+      
+      s:Ge/PDD/Type = "TsBox"
+      
+      s:Ge/PDD/Material = "G4_WATER"
+      
+      d:Ge/PDD/HLX = 0.5 cm
+      
+      d:Ge/PDD/HLY = 0.5 cm
+      
+      d:Ge/PDD/HLZ = Ge/WaterPhantom/HLZ cm
+      
+      d:Ge/PDD/TransX = 0.0 cm
+      
+      d:Ge/PDD/TransY = 0.0 cm
+      
+      d:Ge/PDD/TransZ = 0.0 cm
+      
+      d:Ge/PDD/RotX = 0.0 deg
+      
+      d:Ge/PDD/RotY = 0.0 deg
+      
+      d:Ge/PDD/RotZ = 0.0 deg
+      
+      i:Ge/PDD/XBins = 1
+      
+      i:Ge/PDD/YBins = 1
+      
+      i:Ge/PDD/ZBins = 200
+
+      s:Sc/PDD/Quantity = "DoseToWater"
+      
+      s:Sc/PDD/Component = "PDD"
+      
+      b:Sc/PDD/OutputToConsole = "False"
+      
+      s:Sc/PDD/OutputType = "csv"
+      
+      s:Sc/PDD/OutputFile = "{PDDOutput}"
+      
+      s:Sc/PDD/IfOutputFileAlreadyExists = "Overwrite"
+
+
+  DoseAtPhantom:
+    Type: Phantom
+    Text: >
+
+
+      s:Sc/DoseAtPhantom/Component = "Patient"
+      
+      s:Sc/DoseAtPhantom/OutputType = "DICOM"
+      
+      s:Sc/DoseAtPhantom/OutputFile = "{DoseAtPhantomOutput}"
+      
+      s:Sc/DoseAtPhantom/IfOutputFileAlreadyExists = "Increment"
+      
+      u:Sc/DoseAtPhantom/DICOMOutputScaleFactor = 10000
+      
+      b:Sc/DoseAtPhantom/DICOMOutput32BitsPerPixel = "True"
+
+
+  Volume:
+    Type: PhaseSpace
+    Text: >
+      
+      s:Ge/PhaseSpaceVolume/Type = "TsBox"
+
+      s:Ge/PhaseSpaceVol/Parent = "Snout"
+
+      s:Ge/PhaseSpaceVol/Material = "Parent"
+
+      d:Ge/PhaseSpaceVol/HLX = 20.0 cm
+
+      d:Ge/PhaseSpaceVol/HLY = 20.0 cm
+
+      d:Ge/PhaseSpaceVol/HLZ = 0.05 mm
+
+      d:Ge/PhaseSpaceVol/TrnasX = 0.0 m
+
+      d:Ge/PhaseSpaceVol/TransY = 0.0 m
+
+      d:Ge/PhaseSpaceVol/TransZ = Ge/Aperture/LowerEdge + 0.025 cm
+
+      d:Ge/PhaseSpaceVol/RotX = 0.0 deg
+
+      d:Ge/PhaseSpaceVol/RotY = 0.0 deg
+
+      d:Ge/PhaseSpaceVol/RotZ = 0.0 deg
+
+
+  Output:
+    Type: PhaseSpace
+    Text: >
+
+
+      s:Sc/PhaseSpaceOutput/Quantity = "PhaseSpace"
+      
+      s:Sc/PhaseSpaceOutput/Surface = "PhaseSpaceVol/ZMinusSurface"
+      
+      b:Sc/PhaseSpaceOutput/OutputToConsole = "True"
+      
+      s:Sc/PhaseSpaceOutput/OutputType = "Binary"
+      
+      s:Sc/PhaseSpaceOutput/OutputFile = "{PhaseSpaceOutput}"
+      
+      b:Sc/PhaseSpaceOutput/IncludeTOPASTime = "False"
+      
+      b:Sc/PhaseSpaceOutput/IncludeTimeOfFlight = "False"
+      
+      b:Sc/PhaseSpaceOutput/IncludeRunID   = "False"
+      
+      b:Sc/PhaseSpaceOutput/IncludeEventID = "False"
+      
+      b:Sc/PhaseSpaceOutput/IncludeTrackID = "False"
+      
+      b:Sc/PhaseSpaceOutput/IncludeParentID = "False"
+      
+      b:Sc/PhaseSpaceOutput/IncludeVertexInfo = "True"
+      
+      b:Sc/PhaseSpaceOutput/IncludeSeed = "False"
+      
+      sv:Sc/PhaseSpaceOutput/OnlyIncludeParticlesNamed = 2 "proton" "neutron"
+      
+      s:Sc/PhaseSpaceOutput/IfOutputFileAlreadyExists = "Increment"
+
+
+  Parallel:
+    Type: Parallel
+    Text: >
+
+      s:Ge/{PatientParallelName}/Parent = "PhantomBox"
+      
+      s:Ge/{PatientParallelName}/Type = "Group"
+      
+      s:Ge/{PatientParallelName}/Material = "{Material}"
+      
+      d:Ge/{PatientParallelName}/TransX = {ParallelTransX} mm
+      
+      d:Ge/{PatientParallelName}/TransY = {ParallelTransY} mm
+      
+      d:Ge/{PatientParallelName}/TransZ = {ParallelTransZ} mm
+      
+      s:Ge/{PatientParallelName}/ParallelWorldName = "{PatientParallelName}"
+      
+      b:Ge/{PatientParallelName}/IsParallel = "True"
+
+
+  Contour:
+    Type: Contour
+    Text: >
+
+
+      s:Ge/{ContourName}/Parent = "Patient"
+      
+      s:Ge/{ContourName}/Type = "G4ExtrudedSolid"
+      
+      s:Ge/{ContourName}/Material = "{Material}" 
+      
+      d:Ge/{ContourName}/HLZ = {ContourHLZ} mm
+      
+      d:Ge/{ContourName}/TransX = 0.0 mm
+      
+      d:Ge/{ContourName}/TransZ = {ContourTransZ} mm
+
+      dv:Ge/{ContourName}/Off1 = 2 0 0 mm
+      
+      dv:Ge/{ContourName}/Off2 = 2 0 0 mm
+      
+      u:Ge/{ContourName}/Scale1 = 1.000000
+      
+      u:Ge/{ContourName}/Scale2 = 1.000000
+      
+      s:Ge/{ContourName}/ParallelWorldName = "{ParallelWorldName}"
+      
+      b:Ge/{ContourName}/IsParallel = "True"
+      
+      dv:Ge/{ContourName}/Polygons = {nPolygons} {Polygons}
+
+
+  Material:
+    Type: Contour
+    Text: >
+
+
+      sv:Ma/Contour/Components = 2  "Hydrogen" "Oxygen"
+      
+      uv:Ma/Contour/Fractions = 2 0.1119 0.8881
+      
+      d:Ma/Contour/Density = 0 g/cm3
+
+
+  Record:
+    Type: Record
+    Text: >
+
+
+      Ge/CheckForOverlaps = "True"
+      
+      b:Ge/QuitIfOverlapDetected = "False"
+
+      Ge/Scatterer1/Lollipop{S1Number} = Ge/Scatterer1/RotZ_InBeam deg
+      
+      s:Tf/RangeModulator_Rotation/Function = "Linear deg"
+      
+      d:Tf/RangeModulator_Rotation/Rate = 3.6 deg/ms
+      
+      d:Tf/RangeModulator_Rotation/StartValue = Ge/RangeModulator/Track/ZeroAngle deg
+      
+      d:Tf/RangeModulator_Rotation/RepetitionInterval = 100.0 ms
+      
+      d:Ge/RangeModulator/Track/ZeroAngle = Ge/RangeModulator/Track{RMTrack} - Ge/RangeModulator/Small/Track{RMSmallTrack} deg
+      
+      Ge/RangeModulator/SmallWheel{RMSmallWheel}/RotZ = Tf/RangeModulator_Rotation/Value deg
+      
+      Ge/RangeModulator/Track = -1 * Ge/RangeModulator/Track{RMTrack} deg
+      
+      Ge/Scatterer2/Holder/Rotz = Ge/Scatterer2/RotZForS{S2Angle} deg
+      
+      Ge/Snout/Aperture/InputFile = "{ApertureFile}"
+
+      Ge/Snout/Compensator/InputFile = "{CompensatorFile}"
+
+
+  Read:
+    Type: Read
+    Text: >
+
+      sv:Ma/NiGas/Components = 1 "Nitrogen"
+      
+      uv:Ma/NiGas/Fractions = 1 1.0
+      
+      d:Ma/NiGas/Density = 0.001251 g/cm3
+
+      s:Ge/World/Material = "NiGas"
+      
+      d:Ge/World/HLX = 1.0 m
+      
+      d:Ge/World/HLY = 1.0 m
+      
+      d:Ge/World/HLZ = 3.0 m
+
+      s:Ph/ListName = "Default"
+      
+      s:Ph/Default/Type = "Geant4_Modular"
+      
+      sv:Ph/Default/Modules = 6 "g4em-standard_opt4" "g4decay" "g4h-elastic" "g4h-phy_QGSP_BIC" "g4ion-binarycascade" "g4stopping"
+      
+      d:Ph/Default/EMRangeMin = 100 ev
+      
+      d:Ph/Default/EMRangeMax = 500 MeV
+      
+      sv:Ph/Default/LayeredMassGeometryWorlds = {nParallels} "{ParallelName}"
+
+
+  Others:
+    Type: Others
+    Text: >
+
+
+      Ge/Snout/TransZ = {SnoutTransZ} mm
+      
+      Ge/Snout/SNTTypeR1 = Ge/Snout/SNT{SnoutID}R1 mm
+      
+      Ge/Snout/SNTTypeR2 = Ge/Snout/SNT{SnoutID}R2 mm
+
+
+Read:
+  - "Control - Overall"
+  - "Phantom - Phantom"
+  - "Phantom - Patient"
+  - "Phantom - DoseAtPhantom"
+  - "Read - Read"
+
+
+Record:
+  - "Control - Overall"
+  - "Control - Time"
+  - "Beam - Distribution"
+  - "PhaseSpace - Volume"
+  - "PhaseSpace - Output"
+  - "Record - Record"
+
+
+Others:
+  - "Control - Overall"
+  - "Control - Time"
+  - "Beam - Distribution"
+  - "Phantom - WaterPhantom"
+  - "Phantom - PDD"
+  - "Record - Record"
+  - "Others - Others"
+

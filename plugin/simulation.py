@@ -129,24 +129,23 @@ class Simulation():
     def change_parameters(self, template, **kwargs):
         component = copy.deepcopy(template)
         for subname, subcomp in component.subcomponent.items():
+            removed = {}
             for para in subcomp.parameters:
                 fullname = para.fullname()
                 value = para.value
+
+                if '{' in fullname:
+                    removed[fullname] = value
+
                 for key, val in kwargs.items():
                     val = str(val)
                     if f'{{{key}}}' in fullname:
                         fullname = fullname.replace(f'{{{key}}}', val)
                     if f'{{{key}}}' in str(value):
                         value = str(value).replace(f'{{{key}}}', val)
-                    else: continue
-
-                if fullname != para.fullname():
-                    component.modify_parameter(subname, {para.fullname():para.value}, delete=True)
                 component.modify_parameter(subname, {fullname:value})
-            for para in subcomp.parameters:
-                fullname = para.fullname()
-                for key, val in kwargs.items():
-                    val = str(val)
+
+            component.modify_parameter(subname, removed, delete=True)            
             for para in subcomp.parameters: para.draw = True
         return component
 
