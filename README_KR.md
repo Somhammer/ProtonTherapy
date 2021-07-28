@@ -78,6 +78,11 @@ conda install openpyxl
 conda install xlrd
 conda install pyyaml
 ```
+### 실행
+프로그램은 src 폴더 내의 ui.py를 파이썬으로 실행하면 된다.
+```python
+python3 ui.py
+```
 
 ### 둘러보기
 ProtonTherapy는 노즐 견본을 가져와서 값들을 변경하고 저장 할 수 있다. 값들은 직접 변경하거나 유저가 작성한 플러그인을 사용해 바꿀 수 있다. 이렇게 만들어진 노즐 구성요소들은 prod 폴더 안에 저장이 된다. 그리고 저장된 노즐들은 TOPAS의 input으로 들어갈 수 있다.
