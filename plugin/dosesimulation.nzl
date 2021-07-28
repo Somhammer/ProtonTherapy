@@ -225,7 +225,7 @@ Template:
     Type: PhaseSpace
     Text: >
       
-      s:Ge/PhaseSpaceVolume/Type = "TsBox"
+      s:Ge/PhaseSpaceVol/Type = "TsBox"
 
       s:Ge/PhaseSpaceVol/Parent = "Snout"
 
@@ -344,11 +344,11 @@ Template:
     Text: >
 
 
-      sv:Ma/Contour/Components = 2  "Hydrogen" "Oxygen"
+      sv:Ma/{PatientParallelName}Material/Components = 2  "Hydrogen" "Oxygen"
       
-      uv:Ma/Contour/Fractions = 2 0.1119 0.8881
+      uv:Ma/{PatientParallelName}Material/Fractions = 2 0.1119 0.8881
       
-      d:Ma/Contour/Density = 0 g/cm3
+      d:Ma/{PatientParallelName}Material/Density = {Density} g/cm3
 
 
   Record:
@@ -411,7 +411,7 @@ Template:
       
       d:Ph/Default/EMRangeMax = 500 MeV
       
-      sv:Ph/Default/LayeredMassGeometryWorlds = {nParallels} "{ParallelName}"
+      sv:Ph/Default/LayeredMassGeometryWorlds = {nParallels} {ParallelName}
 
 
   Others:
@@ -452,3 +452,7 @@ Others:
   - "Record - Record"
   - "Others - Others"
 
+Parallel:
+  - "Parallel - Parallel"
+  - "Contour - Contour"
+  - "Contour - Material"

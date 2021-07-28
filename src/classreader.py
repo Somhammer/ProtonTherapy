@@ -2,11 +2,12 @@ import os, sys
 import inspect
 import ast
 
+import src.variables as var
+
 class Proton():
     def __init__(self):
-        self.base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-        sys.path.append(self.base_path)
         self.module = None
+        print(sys.path)
 
     def load(self, module):
         module = module.replace('.py','')
@@ -23,7 +24,7 @@ class Proton():
             print("Error to load the module plugin/" + module + ": " + serr)
     
     def name(self, fname):
-        f = open(os.path.join(self.base_path, 'plugin', fname),'r')
+        f = open(os.path.join(var.BASE_PATH, 'plugin', fname),'r')
         line = '\n'.join(i for i in f.readlines())
         p = ast.parse(line)
         classes = [node.name for node in ast.walk(p) if isinstance(node, ast.ClassDef)]
@@ -33,6 +34,7 @@ class Proton():
                 return clss
 
     def process(self, name = None):
+        print(name)
         if name is not None:
             instance = eval('self.module.'+name)
         else:
@@ -40,20 +42,20 @@ class Proton():
             for clss in clsmembers:
                 instance = eval('self.module.'+clss[0])
                 loc = inspect.getfile(instance)
-                if self.base_path in loc:
+                if var.BASE_PATH in loc:
                     break
         return instance
 
 class Topas():
     def __init__(self):
-        self.base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+        var.BASE_PATH = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
         self.topas_path = ''
         self.output_path = ''
         self.input = {} # order:file
-        sys.path.append(self.base_path)
+        sys.path.append(var.BASE_PATH)
 
     def set_path(self, outpath):
-        ptext = open(os.path.join(self.base_path,'path.dat'),'r').readlines()[0].replace('\n','')
+        ptext = open(os.path.join(var.BASE_PATH,'path.dat'),'r').readlines()[0].replace('\n','')
         self.topas_path = ptext.split('=')[-1]
         self.output_path = outpath
 

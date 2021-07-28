@@ -8,7 +8,9 @@ import pydicom as dicom
 import copy
 
 import plugin.simulation as sim
+from src.utils import readBCM
 import src.data as data
+import src.variables as var
     
 # Naming convention follows the pydicom's one.
 @dataclass
@@ -84,15 +86,12 @@ class RTSinfo(sim.RTSinfo):
     Parallels: list = field(default_factory=list)
 
 class DoseSimulation(sim.Simulation):
-    def __init__(self, outdir=None, nozzle=None, patient=None, convalgo=None):
-        super().__init__(outdir=outdir, nozzle=nozzle, patient=patient, convalgo=convalgo)
+    def __init__(self, outdir=None, nozzle=None, patient=None, parameters=None):
+        super().__init__(outdir=outdir, nozzle=nozzle, patient=patient, parameters=parameters)
         self.name = "Dose Scale Factor Calculation"
         self.requirements['Patient'] = []
-        self.requirements['Convalgo'] = [None,None]
         if patient is not None:
             self.requirements['Patient'] = [patient.directory, patient]
-        if convalgo is not None:
-            self.requirements['Convalgo'] = [convalgo['File'], convalgo]
         self.order = {"Others":0,"Record":1,"Read":2}
 
     def is_workable(self):
@@ -103,8 +102,10 @@ class DoseSimulation(sim.Simulation):
 
     def number_of_beams(self):
         super().number_of_beams()
+        if self.nbeams > len(self.parameters):
+            self.nbeams = len(self.parameters)
     
-    def number_of_pparallels(self):
+    def number_of_parallels(self):
         super().number_of_parallels()
 
     def set_import_files(self, key, lst):
@@ -152,8 +153,9 @@ class DoseSimulation(sim.Simulation):
         aperture_dir = sequence.IonBlockSequence[0]
         compensator_dir = sequence.IonRangeCompensatorSequence[0]
 
-        convalgo = self.requirements['Convalgo'][1]
-        SAD_data = 200 * 10
+        virtualSID = float(self.parameters[ibeam]['SSD'][0]) + float(self.parameters[ibeam]['Range in patients'][0]) - float(self.parameters[ibeam]['SOBP'][0])/2
+        #virtualSID = 230
+        SAD_data = virtualSID * 10
 
         RTP = RTPinfo(
           GantryAngle = sequence.IonControlPointSequence[0].GantryAngle,
@@ -168,7 +170,6 @@ class DoseSimulation(sim.Simulation):
         RTP.Aperture.Isocenter = aperture_dir.IsocenterToBlockTrayDistance
         RTP.Aperture.Points = aperture_dir.BlockNumberOfPoints
         RTP.Aperture.AirGap = 1 - (RTP.Aperture.Isocenter - RTP.Aperture.Thickness) / SAD_data
-        print(f'1 - ({RTP.Aperture.Isocenter} - {RTP.Aperture.Thickness})/{SAD_data} = {RTP.Aperture.AirGap}')
 
         RTP.Compensator.Isocenter = compensator_dir.IsocenterToCompensatorTrayDistance
         RTP.Compensator.Milling = compensator_dir.CompensatorMillingToolDiameter
@@ -305,38 +306,69 @@ class DoseSimulation(sim.Simulation):
             else:
                 return value
 
-        convalgo = self.requirements['Convalgo'][1]
         patient = self.requirements['Patient'][1]
+        BCM = []
+        BWT = []
+        BCM, BWT = readBCM(str(self.parameters[ibeam]["BCM"][0]))
 
         kwargs = {
           'nNodes':f'0', 
-          'nSize':f'{len(convalgo["BCM"][0])}',
-          'Stop':f'{convalgo["Stop Position"][0]/256*100:.5g}',
-          'BCM':'0 0 0 '+' '.join(str(convalgo['BCM'][0][i]) for i in range(3,len(convalgo['BCM'][0]))), 
-          'BWT':' '.join(f'{i:.5g}' for i in convalgo['BWT'][0]),
-          'S1Number':int(set_value(convalgo['1st Scatterer'][0], ibeam)),
-          'S2Angle':int(set_value(convalgo['2nd Scatterer'][0], ibeam)),
+          'nSize':f'{len(BCM)}',
+          'Stop':f'{float(self.parameters[ibeam]["Stop Position"][0])/256*100:.5g}',
+          'BCM':'0 0 0 '+' '.join(str(BCM[i]) for i in range(3,len(BCM))), 
+          'BWT':' '.join(f'{i:.5g}' for i in BWT),
+          'S2Angle':int(self.parameters[ibeam]['2nd Scatterer'][0]),
           'SnoutID':f'{self.RTP[ibeam].Snout.ID}',
           'SnoutTransZ':f'{-self.RTP[ibeam].Compensator.Isocenter - self.RTP[ibeam].Compensator.MaxThickness - 312.5:.5g}',
           'PhaseSpaceOutput':os.path.join(self.outdir, f'PhaseSpace_beam{ibeam}'),
           'PDDOutput':os.path.join(self.outdir, f'PDD_beam{ibeam}'),
           'DoseAtPhantomOutput':os.path.join(self.outdir, f'DoseAtPhantom_beam{ibeam}'),
-          'nSequentialTimes':int(set_value(convalgo['Stop Position'][0], ibeam)),
+          'nSequentialTimes':int(self.parameters[ibeam]['Stop Position'][0]),
           'DicomDirectory': patient.directory,
           'ApertureFile':os.path.join(self.outdir, self.RTP[ibeam].Aperture.OutName),
           'CompensatorFile':os.path.join(self.outdir, self.RTP[ibeam].Compensator.OutName),
-          'Energy':f'{set_value(convalgo["Energy"][0], ibeam):.5g}',
-          'RMTrack':int(set_value(convalgo['Modulator'][0], ibeam))
+          'Energy':f'{float(self.parameters[ibeam]["Beam Energy"][0]):.5g}',
+          'RMTrack':int(self.parameters[ibeam]['Range Modulator'][0])
         }
-        espread = (1.0289 - 0.0008 * (math.log(set_value(convalgo['Energy'][0], ibeam)) - 3.432) / 0.5636) / set_value(convalgo['Energy'][0], ibeam) * 100
+        espread = (1.0289 - 0.0008 * (math.log(float(kwargs['Energy'])) - 3.432) / 0.5636) / float(kwargs['Energy']) * 100
         kwargs['EnergySpread'] = f'{espread:.5g}'
         kwargs['RMSmallTrack'] = int((kwargs['RMTrack'] + 2) % 3)
         kwargs['RMSmallWheel'] = int((kwargs['RMTrack'] + 2) / 3)
 
+        for i in range(len(self.parameters[ibeam]['1st Scatterer'])):
+            kwargs[f'S1Number{i}'] = int(self.parameters[ibeam]['1st Scatterer'][i])
+
+        if not ibeam == 0:
+            for ctype, templates in self.templates.items():
+                for template in templates:
+                    for subname, subcomp in template.subcomponent.items():
+                        for para in subcomp.parameters:
+                            if 'S1Number' in para.fullname() and para.name != 'S1Number':
+                                template.modify_parameter(subcomp.name, {para.fullname():para.value}, delete=True)
+
+        for ctype, templates in self.templates.items():
+            for template in templates:
+                for subname, subcomp in template.subcomponent.items():
+                    flag = False
+                    new = {}
+                    old = {}
+                    for para in subcomp.parameters:
+                        if not 'S1Number' in para.fullname(): continue
+                        flag = True
+                        name = para.fullname()
+                        value = para.value
+                        for i in range(len(self.parameters[ibeam]['1st Scatterer'])):
+                            new[name.replace('S1Number', f'S1Number{i}')] = value
+                        old = {name:value}
+                    if flag:
+                        template.modify_parameter(subcomp.name, old, delete=True)
+                        template.modify_parameter(subcomp.name, new)
+
         kwargs['nParallels'] = len(self.RTS.Parallels)
-        parallels = ""
+        parallels = ''
         for parallel in self.RTS.Parallels:
-            parallels += f"PatientParallel{parallel.ID} "
+            if parallel.Include:
+                parallels += f'"PatientParallel{parallel.ID}" '
         kwargs['ParallelName'] = parallels
 
         return kwargs
@@ -356,42 +388,68 @@ class DoseSimulation(sim.Simulation):
     def save_phase(self, ibeam, **kwargs):
         if not "Patient" in self.phases:
             self.phases["Patient"] = []
+        for template in self.templates['Contour']:
+            if template.name == "Contour":
+                contour_template_tmp = copy.deepcopy(template)
+            if template.name == "Material":
+                material_template = copy.deepcopy(template)
+
+        imported = []
         for parallel in self.RTS.Parallels:
+            if not parallel.Include: continue
+
             parallel_template = copy.deepcopy(self.templates['Parallel'][0])
-            kwargs = {
+            pkwargs = {
                 "PatientParallelName":f"PatientParallel{parallel.ID}",
-                "Material":"Contour",
+                "Material":f"PatientParallel{parallel.ID}Material",
                 "ParallelTransX":f'{self.RTS.TargetPosition[0]:.5g}',
                 "ParallelTransY":f'{self.RTS.TargetPosition[1]:.5g}',
                 "ParallelTransZ":f'{self.RTS.TargetPosition[2]:.5g}',
             }
-            patient = self.change_parameters(parallel_template, **kwargs)
+            patient = self.change_parameters(parallel_template, **pkwargs)
+
+            mkwargs = {
+                "PatientParallelName": pkwargs['PatientParallelName'],
+                "Density":parallel.Density
+            }
+            material = self.change_parameters(material_template, **mkwargs)
+            patient.modify_subcomponent(f'{parallel_template.name}Material', material.subcomponent['Basis'].parameters)
 
             contours = []
             for contour in parallel.Contours:
-                contour_template = copy.deepcopy(self.templates['Contour'][0])
+                contour_template = copy.deepcopy(contour_template_tmp)
                 idx = np.arange(0, contour.Size*3, 3) + 2
                 z = contour.Polygons[2]
                 polygons = np.delete(np.array(contour.Polygons), idx)
-                polygons = " ".join(f'{i:.5g}' for i in contour.Polygons) + ' mm'
-                kwargs = {
+                polygons = " ".join(f'{i:.5g}' for i in polygons) + ' mm'
+                ckwargs = {
                   "ContourName": f"Contour{contour.ID}",
-                  "Material":"Contour",
+                  "Material": f"{pkwargs['PatientParallelName']}Material",
                   "ContourHLZ":f'{self.CT[0].Thickness/2.0:.5g}',
                   'ContourTransZ':f'{z - self.CT[0].Center:.5g}',
-                  'nPolygons':f'{contour.Size}',
+                  'nPolygons':f'{2*contour.Size}',
                   'Polygons':f'{polygons}',
-                  'ParallelWorldName':parallel_template.name
+                  'ParallelWorldName':pkwargs['PatientParallelName']
                 }
-                contours.append(self.change_parameters(contour_template, **kwargs))
+                contours.append(self.change_parameters(contour_template, **ckwargs))
             
             for contour in contours:
-                patient.modify_subcomponent(kwargs['ContourName'], contour.subcomponent['Basis'].parameters)
+                patient.modify_subcomponent(ckwargs['ContourName'], contour.subcomponent['Basis'].parameters)
             patient.outname = os.path.join(self.outdir, 'parallels', f'PatientParallel{parallel.ID}.tps')
             self.phases['Patient'].append(patient)
-
-            kwargs = self.set_parameters(ibeam)
-            super().save_phase(ibeam, **kwargs)
+            imported.append(patient.outname)
+        
+        imported.append(os.path.join(var.BASE_PATH, 'data/components/NCC/', f'HUtoMaterialSchneider_{self.CT[0].Manufacturer[0]}.tps'))
+        self.set_import_files('Read', imported)
+        super().save_phase(ibeam, **kwargs)
 
     def run(self):
-        return super().run()
+        self.phases, self.filters = super().run()
+        value = ""
+        for para in self.phases['Others'][0].subcomponent['Record'].parameters:
+            if para.fullname() == "Ge/Snout/Compensator/InputFile":
+                value = para.value
+                break
+            
+        self.phases['Others'][0].modify_parameter('Record', {"Ge/Snout/Compensator/InputFile":value}, delete=True)
+        return self.phases, self.filters

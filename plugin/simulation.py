@@ -18,9 +18,10 @@ class RTSinfo:
     ID: int = None
 
 class Simulation():
-    def __init__(self, outdir=None, nozzle=None, patient=None, convalgo=None):
+    def __init__(self, outdir=None, nozzle=None, patient=None, parameters=None):
         self.name = "New Simulation"
         self.outdir = outdir
+        self.parameters = parameters
 
         self.nbeams = 1
         self.nparallel = 1
@@ -183,6 +184,7 @@ class Simulation():
         
         self.filters = []
         for ibeam in range(self.nbeams):
+            print("Start run beam", ibeam)
             kwargs = self.set_parameters(ibeam)
             if kwargs is None: kwargs = {}
             filters = self.save_filters(ibeam)
