@@ -241,7 +241,7 @@ Template:
 
       d:Ge/PhaseSpaceVol/TransY = 0.0 m
 
-      d:Ge/PhaseSpaceVol/TransZ = Ge/Aperture/LowerEdge + 0.025 cm
+      d:Ge/PhaseSpaceVol/TransZ = Ge/Snout/Compensator/LowerEdge + 0.025 cm
 
       d:Ge/PhaseSpaceVol/RotX = 0.0 deg
 
@@ -312,31 +312,31 @@ Template:
     Text: >
 
 
-      s:Ge/{ContourName}/Parent = "Patient"
+      s:Ge/{ParallelWorldName}/{ContourName}/Parent = "Patient"
       
-      s:Ge/{ContourName}/Type = "G4ExtrudedSolid"
+      s:Ge/{ParallelWorldName}/{ContourName}/Type = "G4ExtrudedSolid"
       
-      s:Ge/{ContourName}/Material = "{Material}" 
+      s:Ge/{ParallelWorldName}/{ContourName}/Material = "{Material}" 
       
-      d:Ge/{ContourName}/HLZ = {ContourHLZ} mm
+      d:Ge/{ParallelWorldName}/{ContourName}/HLZ = {ContourHLZ} mm
       
-      d:Ge/{ContourName}/TransX = 0.0 mm
+      d:Ge/{ParallelWorldName}/{ContourName}/TransX = 0.0 mm
       
-      d:Ge/{ContourName}/TransZ = {ContourTransZ} mm
+      d:Ge/{ParallelWorldName}/{ContourName}/TransZ = {ContourTransZ} mm
 
-      dv:Ge/{ContourName}/Off1 = 2 0 0 mm
+      dv:Ge/{ParallelWorldName}/{ContourName}/Off1 = 2 0 0 mm
       
-      dv:Ge/{ContourName}/Off2 = 2 0 0 mm
+      dv:Ge/{ParallelWorldName}/{ContourName}/Off2 = 2 0 0 mm
       
-      u:Ge/{ContourName}/Scale1 = 1.000000
+      u:Ge/{ParallelWorldName}/{ContourName}/Scale1 = 1.000000
       
-      u:Ge/{ContourName}/Scale2 = 1.000000
+      u:Ge/{ParallelWorldName}/{ContourName}/Scale2 = 1.000000
       
-      s:Ge/{ContourName}/ParallelWorldName = "{ParallelWorldName}"
+      s:Ge/ParallelWorldName}/{ContourName}/ParallelWorldName = "{ParallelWorldName}"
       
-      b:Ge/{ContourName}/IsParallel = "True"
+      b:Ge/ParallelWorldName}/{ContourName}/IsParallel = "True"
       
-      dv:Ge/{ContourName}/Polygons = {nPolygons} {Polygons}
+      dv:Ge/{ParallelWorldName}/{ContourName}/Polygons = {nPolygons} {Polygons}
 
 
   Material:
