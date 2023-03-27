@@ -6,16 +6,22 @@ class Item(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.layout = QBoxLayout(QBoxLayout.LeftToRight)
+        self.label = QLabel()
+        self.checkbox = QCheckBox()
+
+    def get_label(self):
+        return self.label
+
+    def get_checkbox(self):
+        return self.checkbox
 
     def add_label(self, name):
         self.label = QLabel(name)
         self.layout.addWidget(self.label)
         self.layout.setSizeConstraint(QBoxLayout.SetFixedSize)
         self.setLayout(self.layout)
-        
-    def add_checkbox(self, name, path=None, layout_direction=QBoxLayout.LeftToRight):
-        self.checkbox = QCheckBox()
 
+    def add_checkbox(self, name, path=None, layout_direction=QBoxLayout.LeftToRight):
         self.layout.setDirection(layout_direction)
         self.checkbox.setText(name)
         self.checkbox.setChecked(True)

@@ -2,6 +2,8 @@ import os
 from dataclasses import dataclass, field
 from copy import copy 
 
+import src.variables as var
+
 class Component():
     @dataclass(order=True)
     class Parameter:
@@ -75,11 +77,11 @@ class Component():
         name: str = None
         parameters: list = field(default_factory=list)
         
-    def __init__(self, btype, phase=False):
+    def __init__(self, nozzle_type, phase=False):
         self.base_path = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
         self.__outname = None
         self.__name = None
-        self.__btype = btype
+        self.__nozzle_type = nozzle_type
         self.__ctype = None
         self.__phase = phase
         self.__imported = list()
@@ -111,12 +113,12 @@ class Component():
         self.__ctype = ctype
 
     @property
-    def btype(self):
-        return self.__btype
+    def nozzle_type(self):
+        return self.__nozzle_type
 
-    @btype.setter
-    def btype(self, btype):
-        self.__btype = btype
+    @nozzle_type.setter
+    def nozzle_type(self, nozzle_type):
+        self.__nozzle_type = nozzle_type
         
     @property
     def phase(self):
@@ -237,6 +239,8 @@ class Component():
         if draw_all: draw=True
         else: draw=False
         isdir = False
+        if '\\' in fname:
+            fname = fname.replace('\\','/')
         if os.path.isdir(fname):
             isdir = True
             self.name = fname.split('/')[-1]
@@ -261,7 +265,6 @@ class Component():
                         finditem = True
                         continue
             if not finditem:
-                print("Fail to find item")
                 return
 
         paras = {}
@@ -341,7 +344,7 @@ class Component():
                 if key in self.ctype:
                     self.ctype = key
 
-    def component_list(self):
+    def component_list(self, is_scorer=False):
         outdict = {}
         common = {
           'MonitorChamber':['Basis', 'CylinderFrame', 'BoxFrame', 'CylinderLayer', 'BoxLayer'],
@@ -363,18 +366,21 @@ class Component():
           'Parallel':['Parallel'],
           'Contour':['Contour','Material']
         }
-        if self.btype is None: return
-        if self.btype.lower() == 'scanning':
-            outdict.update(common)
-            outdict.update(scanning)
-        elif self.btype.lower() == 'scattering':
-            outdict.update(common)
-            outdict.update(scattering)
-        
-        if self.phase:
+        if is_scorer:
             outdict = {}
             outdict.update(phase)
-
+        else:
+            if self.nozzle_type is None: return
+            if self.nozzle_type == var.FBRT1:
+                outdict.update(common)
+                outdict.update(scattering)
+            elif self.nozzle_type == var.GTR2:
+                outdict.update(common)
+                outdict.update(scattering)
+            elif self.nozzle_type == var.GTR3:
+                outdict.update(common)
+                outdict.update(scanning)
+        
         return outdict
 
     def find_parameter(self, name):

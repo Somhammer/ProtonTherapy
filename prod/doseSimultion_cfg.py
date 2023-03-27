@@ -19,7 +19,7 @@ parameters = {
 }
 
 proton = cfg.Proton()
-proton.load('dose_simulation')
+proton.load('dose_backup')
 instance = proton.process('DoseSimulation')(parameters)
 instance.set_parameters()
 para, script = instance.write_scripts()

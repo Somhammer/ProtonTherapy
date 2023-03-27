@@ -7,7 +7,6 @@ import src.variables as var
 class Proton():
     def __init__(self):
         self.module = None
-        print(sys.path)
 
     def load(self, module):
         module = module.replace('.py','')
@@ -34,7 +33,6 @@ class Proton():
                 return clss
 
     def process(self, name = None):
-        print(name)
         if name is not None:
             instance = eval('self.module.'+name)
         else:
@@ -80,14 +78,3 @@ class Topas():
             efile.write(err)
             ofile.close()
             efile.close()
-
-        """
-        # Update please...
-        import multiprocessing as mp
-        for cmds in commands:
-            for item in cmds:
-                proc = mp.Process(target=call_subprocess, args=(item,))
-                proc.start()
-            for item in cmds:
-                proc.join()
-        """

@@ -18,25 +18,25 @@ class RTSinfo:
     ID: int = None
 
 class Simulation():
-    def __init__(self, outdir=None, nozzle=None, patient=None, parameters=None):
+    def __init__(self, outdir=None, nozzle_type=None, patient=None, parameters=None):
         self.name = "New Simulation"
         self.outdir = outdir
         self.parameters = parameters
+
+        self.nozzle_type = nozzle_type
 
         self.nbeams = 1
         self.nparallel = 1
 
         self.workable = False
-        self.requirements = {'Nozzle':[None, None]}
-        if nozzle is not None:
-            self.requirements['Nozzle'] = [nozzle, nozzle]
+        self.requirements = {}
   
         # For TOPAS Inputs
-        self.keys = ["Record","Read","Others"]
-        self.outnames = {i:f"{i}PhaseSpace" for i in self.keys}
-        self.order = {"Record":0, "Read":1, "Others":2}
+        self.keys = []
+        self.outnames = {}
+        self.order = {}
 
-        self.imported = {i:[] for i in self.keys}
+        self.imported = {}
         self.writting = {}
         self.templates = {}
 
@@ -44,11 +44,10 @@ class Simulation():
         self.RTP = []
         self.RTS = []
 
-        self.phases = {i:[] for i in self.keys}
-        self.filters = [{'OutName':'','RawText':''}]
+        self.phases = {}
+        self.filters = {}
 
     def is_workable(self):
-        workable = True
         requirements = [] # variable name : set up(T/F)
         
         for key, value in self.requirements.items():
@@ -71,7 +70,7 @@ class Simulation():
         patient = self.requirements['Patient'][1]
         if patient.directory == '': return
         if patient.RTP is None:
-            self.nbeams = 1
+            self.nbeams = len(self.keys)
         else:
             RTP = dicom.dcmread(os.path.join(self.patient.directory, self.patient.RTP))
             self.nbeams = RTP.FractionGroupSequence[0].NumberOfBeams
@@ -85,8 +84,24 @@ class Simulation():
             RTS = dicom.dcmread(os.path.join(self.patient.directory, self.patient.RTS))
             self.nparallel = len(RTS.ROIContourSequence)
 
+    def update_keys(self, key):
+        if not any(key == i for i in self.keys):
+            self.keys.append(key)
+
+        if not any(key == i for i in self.imported.keys()):
+            self.imported[key] = []
+        
+        if not any(key == i for i in self.templates.keys()):
+            self.templates[key] = []
+
+        if not any(key == i for i in self.phases.keys()):
+            self.phases[key] = []
+
     def set_import_files(self, key, lst):
-        self.imported[key] = lst
+        if not any(key == i for i in self.keys):
+            self.update_keys(key)
+        tmp = [i+'.tps' for i in lst]
+        self.imported[key] = tmp
         
     def set_templates(self, writting, templates):
         self.writting = writting
@@ -155,11 +170,11 @@ class Simulation():
         pass
 
     def save_phase(self, ibeam, **kwargs):
-        if not self.workable: return
+        if not self.is_workable(): return
         for key in self.keys:
-            phase = data.Component(self.requirements['Nozzle'][1])
+            phase = data.Component(self.nozzle_type)
             for ctype, templates in self.templates.items():
-                if not any(ctype == i[0] for i in self.writting[key]): continue
+                #if not any(ctype == i[0] for i in self.writting[key]): continue
                 for template in templates:
                     if not any(template.name == i[1] for i in self.writting[key]):
                         continue
@@ -169,7 +184,7 @@ class Simulation():
                 phase.ctype = ctype
             for item in self.imported[key]:
                 phase.modify_file(item)
-            phase.outname = os.path.join(self.outdir, f'{self.outnames[key]}{ibeam}.tps')
+            phase.outname = f'Phase_{key}_{ibeam+1}'
             self.phases[key].append(phase)
 
     def run(self):
@@ -188,7 +203,8 @@ class Simulation():
             kwargs = self.set_parameters(ibeam)
             if kwargs is None: kwargs = {}
             filters = self.save_filters(ibeam)
-            self.filters += filters
+            if filters is not None:
+                self.filters[self.keys[ibeam]] = filters
             self.save_phase(ibeam, **kwargs)
         
         return self.phases, self.filters

@@ -1,29 +1,25 @@
 import os, sys
+import xlwings as xw
 
 class GetParaFromConvAlgo():
-    fscatterer = None # first scatterer
-    sscatterer = None # second scatterer
-    modulator = None # range modulator
-    stop = None # stop position
-    energy = None # beam energy
-    bcm_name = None
-    bwt = None # beam weigth time
-    bcm = None
-
     def __init__(self, path, conv):
         self.path = path
         self.conv = conv
-        if conv.endswith('xls'):
-            self._get_data_by_xlrd()
-        else:
-            self._get_data_by_openpyxl()
+        self.fscatterer = None # first scatterer
+        self.sscatterer = None # second scatterer
+        self.modulator = None # range modulator
+        self.stop = None # stop position
+        self.energy = None # beam energy
+        self.bcm_name = None
+        self.bwt = None # beam weigth time
+        self.bcm = None # beam current modulation
 
-    def _get_data_by_xlrd(self):
-        import xlrd as xl 
-        wb = xl.open_workbook(os.path.join(self.path, self.conv))
-        main = wb.sheet_by_name('Main')
-        bcm = main.cell_value(35,2)
-        GetParaFromConvAlgo.bcm_name = bcm
+
+
+    def get_data(self):
+        wb = xw.Book(os.path.join(self.path, self.conv))
+        main = wb.sheets['Summary']
+        self.bcm_name = main['C36']
 
         GetParaFromConvAlgo.fscatterer = []
         for col in range(2,main.ncols):

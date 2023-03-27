@@ -10,13 +10,17 @@ class Painter(QWidget):
             QSizePolicy.Preferred,
             QSizePolicy.Expanding
         )
+
+        self.components = []
+
         self.painter = QPainter()
         self.paintEvent(self)
-                
+
         self.zmax = 0.00
         self.zeros = None
 
-    def trigger_refresh(self):
+    def trigger_refresh(self, components):
+        self.components = components
         self.update()
 
     def paintEvent(self, event):
@@ -41,7 +45,7 @@ class Painter(QWidget):
     def draw(self):
         #if len(g_component) < 1:
         #    return
-        for component in var.G_COMPONENT:
+        for component in self.components:
             if component.ctype == "Beam": continue
             self.container(component)
 

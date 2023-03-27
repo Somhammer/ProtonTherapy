@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1298</width>
-    <height>784</height>
+    <height>782</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -21,7 +21,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../../../.designer/icons/ncc.png</normaloff>../../../.designer/icons/ncc.png</iconset>
+    <normaloff>../../../../../../.designer/icons/ncc.png</normaloff>../../../../../../.designer/icons/ncc.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_3">
@@ -30,21 +30,8 @@
       <property name="spacing">
        <number>6</number>
       </property>
-      <item row="0" column="0" colspan="2">
-       <widget class="QGroupBox" name="groupNozzleMode">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="title">
-         <string>Mode</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0" colspan="2">
-       <widget class="QListWidget" name="listTemplates">
+      <item row="3" column="0" colspan="3">
+       <widget class="QListWidget" name="listComponents">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -53,57 +40,175 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0" colspan="2">
-       <widget class="QLabel" name="label_2">
+      <item row="5" column="0" colspan="3">
+       <widget class="QFrame" name="frameParameters">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>330</height>
+         </size>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Plain</enum>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_6">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QTabWidget" name="tabParameters">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="3">
+       <widget class="QLabel" name="labelComp">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
         <property name="text">
-         <string>Nozzle</string>
+         <string>Nozzle Component</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
-      <item row="3" column="0" rowspan="2" colspan="2">
-       <widget class="QGroupBox" name="groupConvalgo">
+      <item row="0" column="0" colspan="3">
+       <widget class="QLabel" name="labelNozzle">
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Nozzle</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="labelNozzlePara">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Parameters</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="3">
+       <widget class="QGroupBox" name="groupNozzleMode">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="title">
-         <string>Parameters for scattering beam mode</string>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
         </property>
+        <property name="title">
+         <string>Type</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_5">
+         <item row="0" column="0">
+          <widget class="QRadioButton" name="radioFBRT1">
+           <property name="text">
+            <string>FBRT 1</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QRadioButton" name="radioGTR2">
+           <property name="text">
+            <string>GTR 2</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QRadioButton" name="radioGTR3">
+           <property name="text">
+            <string>GTR 3</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
+      </item>
+      <item row="4" column="1" colspan="2">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Preferred</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </item>
     <item row="0" column="3" rowspan="2">
      <layout class="QGridLayout" name="gridLayout_4">
-      <item row="5" column="0">
-       <widget class="QLabel" name="labelRD">
-        <property name="text">
-         <string>RD</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0" colspan="4">
-       <widget class="QListWidget" name="listPatientCT">
+      <item row="5" column="1" colspan="2">
+       <widget class="QLineEdit" name="lineRTP">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
-      <item row="1" column="0" colspan="4">
+      <item row="3" column="0" colspan="3">
        <widget class="QLabel" name="labelCT">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -116,27 +221,7 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="labelRTS">
-        <property name="text">
-         <string>RTS</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="labelRTP">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>RTP</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1" colspan="3">
+      <item row="6" column="1" colspan="2">
        <widget class="QLineEdit" name="lineRTS">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -144,52 +229,12 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-       </widget>
-      </item>
-      <item row="5" column="1" colspan="3">
-       <widget class="QLineEdit" name="lineRD">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+        <property name="readOnly">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="3" column="1" colspan="3">
-       <widget class="QLineEdit" name="lineRTP">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="labelMacro">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Macro</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="1" colspan="3">
-       <widget class="QLineEdit" name="lineMacro">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="labelPatientDir">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -202,7 +247,43 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1" colspan="3">
+      <item row="8" column="0">
+       <widget class="QLabel" name="labelMacro">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Macro</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="labelRTP">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>RTP</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0" colspan="3">
+       <widget class="QListWidget" name="listPatientCT">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1" colspan="2">
        <widget class="QLineEdit" name="linePatientDir">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -210,19 +291,88 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
        </widget>
+      </item>
+      <item row="0" column="0" colspan="3">
+       <widget class="QLabel" name="labelScorer">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Scorer</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1" colspan="2">
+       <widget class="QLineEdit" name="lineMacro">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1" colspan="2">
+       <widget class="QLineEdit" name="lineRD">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="labelRTS">
+        <property name="text">
+         <string>RTS</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="labelRD">
+        <property name="text">
+         <string>RD</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="3">
+       <widget class="QTabWidget" name="tabScorer"/>
       </item>
      </layout>
     </item>
     <item row="0" column="1" rowspan="2" colspan="2">
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="2" column="0">
+      <item row="4" column="0">
        <widget class="QTableWidget" name="tableComp">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
         </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
@@ -378,28 +528,47 @@
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QLabel" name="labelComp">
+       <widget class="QLabel" name="labelPreview">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
         <property name="text">
-         <string>Applied Components</string>
+         <string>2D Preview</string>
         </property>
        </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QWidget" name="widgetNozzle" native="true"/>
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="labelGeometry">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
         <property name="text">
-         <string>Geometry Preview</string>
+         <string>Geometry</string>
         </property>
        </widget>
       </item>
@@ -407,13 +576,25 @@
     </item>
    </layout>
   </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
      <width>1298</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -430,17 +611,17 @@
     <property name="title">
      <string>Component</string>
     </property>
-    <addaction name="actionCompAdd"/>
+    <addaction name="actionCompNew"/>
     <addaction name="actionCompModify"/>
     <addaction name="actionCompDelete"/>
    </widget>
-   <widget class="QMenu" name="menuPatient">
+   <widget class="QMenu" name="menuScorer">
     <property name="title">
-     <string>Patient</string>
+     <string>Scorer</string>
     </property>
-    <addaction name="actionPatientSetup"/>
-    <addaction name="actionPatientView"/>
-    <addaction name="actionPatientConv"/>
+    <addaction name="actionScorerNew"/>
+    <addaction name="actionScorerModify"/>
+    <addaction name="actionScorerDelete"/>
    </widget>
    <widget class="QMenu" name="menuSimulation">
     <property name="title">
@@ -448,37 +629,15 @@
     </property>
     <addaction name="actionSimLoad"/>
    </widget>
-   <widget class="QMenu" name="menuTemplate">
-    <property name="title">
-     <string>Template</string>
-    </property>
-    <addaction name="actionTempNew"/>
-    <addaction name="actionTempLoad"/>
-    <addaction name="actionTempModify"/>
-    <addaction name="actionTempDelete"/>
-   </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuTemplate"/>
    <addaction name="menuComp"/>
-   <addaction name="menuPatient"/>
+   <addaction name="menuScorer"/>
    <addaction name="menuSimulation"/>
-  </widget>
-  <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QToolBar" name="toolBar">
-   <property name="windowTitle">
-    <string>toolBar</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
   </widget>
   <action name="actionFileNew">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/new.png</normaloff>../../../.designer/icons/new.png</iconset>
+     <normaloff>../../../../../../.designer/icons/new.png</normaloff>../../../../../../.designer/icons/new.png</iconset>
    </property>
    <property name="text">
     <string>New</string>
@@ -493,7 +652,7 @@
   <action name="actionFileOpen">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/open.png</normaloff>../../../.designer/icons/open.png</iconset>
+     <normaloff>../../../../../../.designer/icons/open.png</normaloff>../../../../../../.designer/icons/open.png</iconset>
    </property>
    <property name="text">
     <string>Open</string>
@@ -505,7 +664,7 @@
   <action name="actionFileSave">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/save.png</normaloff>../../../.designer/icons/save.png</iconset>
+     <normaloff>../../../../../../.designer/icons/save.png</normaloff>../../../../../../.designer/icons/save.png</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -517,7 +676,7 @@
   <action name="actionExit">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/exit.png</normaloff>../../../.designer/icons/exit.png</iconset>
+     <normaloff>../../../../../../.designer/icons/exit.png</normaloff>../../../../../../.designer/icons/exit.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -532,25 +691,25 @@
   <action name="actionSimLoad">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/open.png</normaloff>../../../.designer/icons/open.png</iconset>
+     <normaloff>../../../../../../.designer/icons/open.png</normaloff>../../../../../../.designer/icons/open.png</iconset>
    </property>
    <property name="text">
     <string>Simulation</string>
    </property>
   </action>
-  <action name="actionPatientSetup">
+  <action name="actionScorerNew">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/open.png</normaloff>../../../.designer/icons/open.png</iconset>
+     <normaloff>../../../../../../.designer/icons/open.png</normaloff>../../../../../../.designer/icons/open.png</iconset>
    </property>
    <property name="text">
-    <string>Setup</string>
+    <string>New</string>
    </property>
   </action>
   <action name="actionPatientView">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/view.png</normaloff>../../../.designer/icons/view.png</iconset>
+     <normaloff>../../../../../../.designer/icons/view.png</normaloff>../../../../../../.designer/icons/view.png</iconset>
    </property>
    <property name="text">
     <string>View</string>
@@ -562,7 +721,7 @@
   <action name="actionTempNew">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/new.png</normaloff>../../../.designer/icons/new.png</iconset>
+     <normaloff>../../../../../../.designer/icons/new.png</normaloff>../../../../../../.designer/icons/new.png</iconset>
    </property>
    <property name="text">
     <string>New</string>
@@ -571,7 +730,7 @@
   <action name="actionTempLoad">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/open.png</normaloff>../../../.designer/icons/open.png</iconset>
+     <normaloff>../../../../../../.designer/icons/open.png</normaloff>../../../../../../.designer/icons/open.png</iconset>
    </property>
    <property name="text">
     <string>Load</string>
@@ -589,21 +748,21 @@
   <action name="actionTempModify">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/write.png</normaloff>../../../.designer/icons/write.png</iconset>
+     <normaloff>../../../../../../.designer/icons/write.png</normaloff>../../../../../../.designer/icons/write.png</iconset>
    </property>
    <property name="text">
     <string>Modify</string>
    </property>
   </action>
-  <action name="actionPatientConv">
+  <action name="actionScorerModify">
    <property name="text">
-    <string>ConvAlgo</string>
+    <string>Modify</string>
    </property>
   </action>
   <action name="actionTempDelete">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/delete.png</normaloff>../../../.designer/icons/delete.png</iconset>
+     <normaloff>../../../../../../.designer/icons/delete.png</normaloff>../../../../../../.designer/icons/delete.png</iconset>
    </property>
    <property name="text">
     <string>Delete</string>
@@ -612,7 +771,7 @@
   <action name="actionCompAdd">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/new.png</normaloff>../../../.designer/icons/new.png</iconset>
+     <normaloff>../../../../../../.designer/icons/new.png</normaloff>../../../../../../.designer/icons/new.png</iconset>
    </property>
    <property name="text">
     <string>Add</string>
@@ -631,7 +790,7 @@
   <action name="actionCompModify">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/write.png</normaloff>../../../.designer/icons/write.png</iconset>
+     <normaloff>../../../../../../.designer/icons/write.png</normaloff>../../../../../../.designer/icons/write.png</iconset>
    </property>
    <property name="text">
     <string>Modify</string>
@@ -640,8 +799,18 @@
   <action name="actionCompDelete">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/icons/delete.png</normaloff>../../../.designer/icons/delete.png</iconset>
+     <normaloff>../../../../../../.designer/icons/delete.png</normaloff>../../../../../../.designer/icons/delete.png</iconset>
    </property>
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+  <action name="actionCompNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="actionScorerDelete">
    <property name="text">
     <string>Delete</string>
    </property>

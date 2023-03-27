@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Scorer</class>
- <widget class="QWidget" name="Scorer">
+ <class>ScorerWindow</class>
+ <widget class="QWidget" name="ScorerWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -38,6 +38,23 @@
   <layout class="QGridLayout" name="gridLayout_4">
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="1">
+      <widget class="QComboBox" name="comboMacro">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0" colspan="2">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Nozzle Component</string>
+       </property>
+      </widget>
+     </item>
      <item row="1" column="0" colspan="2">
       <widget class="QLabel" name="labelRequirement">
        <property name="sizePolicy">
@@ -56,36 +73,6 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="comboMacro">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="labelImport">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Import Files</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QPushButton" name="pushOpenFile">
-       <property name="text">
-        <string>Open</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
@@ -93,30 +80,8 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0" colspan="2">
-      <widget class="QListWidget" name="listRequirement">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>200</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>300</width>
-         <height>200</height>
-        </size>
-       </property>
-      </widget>
-     </item>
      <item row="4" column="0" colspan="2">
-      <widget class="QTabWidget" name="tabImport">
+      <widget class="QTabWidget" name="tabRun">
        <property name="minimumSize">
         <size>
          <width>300</width>
@@ -133,6 +98,9 @@
         <number>-1</number>
        </property>
       </widget>
+     </item>
+     <item row="2" column="0" colspan="2">
+      <widget class="QTabWidget" name="tabRequirement"/>
      </item>
     </layout>
    </item>
@@ -289,7 +257,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Simulation Components</string>
+        <string>Scorer Components</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -297,7 +265,7 @@
       </widget>
      </item>
      <item row="2" column="0" colspan="3">
-      <widget class="QTabWidget" name="tabComponents"/>
+      <widget class="QTabWidget" name="tabScorer"/>
      </item>
     </layout>
    </item>

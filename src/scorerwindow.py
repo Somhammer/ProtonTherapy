@@ -1,4 +1,5 @@
 import yaml
+import copy
 
 from PySide6.QtWidgets import *
 from PySide6.QtCore import *
@@ -6,23 +7,34 @@ from PySide6.QtCore import *
 from src.variables import *
 from src.data import *
 
-from src.ui_simulationwindow import Ui_SimulationWindow
+from src.ui_scorerwindow import Ui_ScorerWindow
 from src.data import *
 from src.painter import *
 from src.item import *
 from src.classreader import Proton
 from src.modifyparameter import ModifyParameter
 
-class SimulationWindow(QDialog, Ui_SimulationWindow):
-    def __init__(self, parent):
-        super(SimulationWindow, self).__init__(parent)
+class ScorerWindow(QDialog, Ui_ScorerWindow):
+    def __init__(self, outdir, nozzle_type, nfields, components):
+        super(ScorerWindow, self).__init__()
         self.setupUi(self)
+
+        self.outdir = outdir
+
+        self.scorer_container = {}
+
+        self.nozzle_type = nozzle_type
+        self.nfields = nfields
+        self.component_names = components # only names
 
         self.instance = None
         self.templates = {}
         self.components = {}
+        self.field_checklist = {}
+        self.scorer_container = {}
+        self.filter_container = {}
         self.set_action()
-        self.show()
+        #self.show()
 
     def set_action(self):
         #self.pushLoad.clicked.connect(lambda: self.load_cfg(push=True))
@@ -30,7 +42,6 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
         self.pushMake.clicked.connect(self.write_output)
         self.pushClear.clicked.connect(self.clear_all)
         self.pushCancel.clicked.connect(self.click_cancel)
-        self.pushOpenFile.clicked.connect(self.add_import)
         self.pushAddNewPara.clicked.connect(self.add_element)
         self.pushAppendComp.clicked.connect(self.add_template)
         
@@ -40,29 +51,48 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
         self.comboMacro.addItem('Save')
         self.comboMacro.currentTextChanged.connect(self.open_macro)
 
+        self.tabAddBtn = QToolButton()
+        self.tabAddBtn.setAutoRaise(True)
+        self.tabAddBtn.setIcon(QIcon(os.path.join(var.BASE_PATH,"icons/new.png")))
+        self.tabAddBtn.clicked.connect(lambda: self.add_run())
+
+        self.tabAddBtn2 = QToolButton()
+        self.tabAddBtn2.setAutoRaise(True)
+        self.tabAddBtn2.setIcon(QIcon(os.path.join(var.BASE_PATH,"icons/new.png")))
+        self.tabAddBtn2.clicked.connect(lambda: self.add_run())
+
+        self.tabRun.setCornerWidget(self.tabAddBtn, Qt.TopRightCorner)
+        self.tabRequirement.setCornerWidget(self.tabAddBtn2, Qt.TopRightCorner)
+
+        if self.tabRun.count() == 0: self.add_run()
+
         self.comboComp.addItem('Select')
         self.comboComp.addItem('New')
         self.comboComp.insertSeparator(3)
-        temp = Component(btype=var.G_NOZZLE_TYPE, phase=True)
-        for key in temp.component_list().keys():
-            self.comboComp.addItem(key)
+        temp = Component(self.nozzle_type)
+        for name in temp.component_list(True).keys():
+            self.comboComp.addItem(name)
         del temp
         self.comboComp.currentTextChanged.connect(lambda: self.new_template(self.comboComp.currentText()))
 
         self.listTemplates.setContextMenuPolicy(Qt.ActionsContextMenu)
+        actionShow = QAction("Show", self.listTemplates)
+        actionShow.triggered.connect(self.show_component)
         actionAdd = QAction("Add", self.listTemplates)
         actionAdd.triggered.connect(self.add_component)        
         self.listTemplates.addAction(actionAdd)
+        self.listTemplates.addAction(actionShow)
         self.listTemplates.itemDoubleClicked.connect(self.add_component)
 
     def clear_all(self):
         self.instance = None
         self.templates = {}
         self.components = {}
-        self.listRequirement.clear()
-        self.tabImport.clear()
+        self.scorer_container = {}
+        self.tabRequirement.clear()
+        self.tabRun.clear()
         self.listTemplates.clear()
-        self.tabComponents.clear()
+        self.tabScorer.clear()
 
     def open_macro(self):
         if self.comboMacro.currentText() == 'Select': return
@@ -102,18 +132,7 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
         for key in self.instance.keys:
             if self.comboComp.findText(key) < 0:
                 self.comboComp.addItem(key)
-
-        for key in self.instance.keys:
-            listImport = QListWidget()
-            listImport.setContextMenuPolicy(Qt.ActionsContextMenu)
-            for component in var.G_COMPONENT:
-                witem = QListWidgetItem(listImport)
-                item = Item()
-                item.add_checkbox(component.name, path=component.outname)
-                listImport.setItemWidget(witem, item)
-                listImport.addItem(witem)
-                witem.setSizeHint(item.sizeHint())
-            self.tabImport.addTab(listImport, key)
+            self.add_run(key)
 
         for key in self.instance.keys:
             listComponent = QListWidget()
@@ -122,7 +141,7 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
             actionDel.triggered.connect(self.delete_component)
             listComponent.addAction(actionDel)
             listComponent.itemDoubleClicked.connect(self.delete_component)
-            self.tabComponents.addTab(listComponent, key)
+            self.tabScorer.addTab(listComponent, key)
 
         self.load_cfg(fname)
 
@@ -144,9 +163,9 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
             fout.write(f"  {name}:\n    Type: {component.ctype}\n    Text: >\n{fulltext}\n\n")
 
         tmp_dict = {i:[] for i in self.instance.keys}
-        for idx in range(self.tabComponents.count()):
-            name = self.tabComponents.tabText(idx)
-            widget = self.tabComponents.widget(idx)
+        for idx in range(self.tabScorer.count()):
+            name = self.tabScorer.tabText(idx)
+            widget = self.tabScorer.widget(idx)
             for idx2 in range(widget.count()):
                 item = widget.itemWidget(widget.item(idx2))
                 text = item.label.text()
@@ -169,7 +188,7 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
         with open(os.path.join(var.BASE_PATH, 'plugin', fname.replace('.py', '.nzl')), 'r') as f:
             cfg = yaml.load(f, Loader=yaml.FullLoader)
         for name, comp_info in cfg['Template'].items():
-            template = Component(btype=var.G_NOZZLE_TYPE, phase=True)
+            template = Component(nozzle_type=self.nozzle_type, phase=True)
             template.load(comp_info['Text'], load=True)
             template.name = name
             template.ctype = comp_info['Type']
@@ -182,9 +201,9 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
             self.listTemplates.addItem(witem)
             witem.setSizeHint(item.sizeHint())
 
-        for idx in range(self.tabComponents.count()):
-            tabname = self.tabComponents.tabText(idx)
-            widget = self.tabComponents.widget(idx)
+        for idx in range(self.tabScorer.count()):
+            tabname = self.tabScorer.tabText(idx)
+            widget = self.tabScorer.widget(idx)
             if not tabname in cfg: continue
             for text in cfg[tabname]:
                 witem = QListWidgetItem(widget)
@@ -207,29 +226,66 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
                 vname = item.lineValue.text()
                 vari = item.lineValue.text()
             self.instance.set_requirement(vtype=vtype, vname=vname, vari=vari)
-        
-    def add_import(self):
-        if self.comboMacro.currentText() == 'Select': return
 
-        fname = QFileDialog.getOpenFileName(self, "Import",  os.path.join(var.BASE_PATH,'data/components'), selectedFilter = var.G_TEXT_EXTENSION[0], filter='\n'.join(i for i in var.G_TEXT_EXTENSION))[0]
-        if fname == '': return
-        widget = self.tabImport.currentWidget()
-        witem = QListWidgetItem(widget)
-        item = Item()
-        item.add_checkbox(fname.split('/')[-1].replace('.tps',''), path=fname)
-        widget.setItemWidget(witem, item)
-        widget.addItem(witem)
-        witem.setSizeHint(item.sizeHint())
+    def set_field(self, field_name):
+        idx = self.tabRequirement.currentIndex()
+        run_name = self.tabRun.tabText(idx)
+        self.field_checklist[run_name] = field_name
+        print(self.field_checklist)
+
+    def add_run(self, run_name=''):
+        if run_name == '':
+            self.scorer_container[f"Run{len(self.scorer_container)}"] = self.component_names
+        else:
+            self.scorer_container[run_name] = self.component_names
+
+        widgetRequirement = QWidget()
+        gridRequirement = QGridLayout(widgetRequirement)
+        labelField = QLabel("Field:")
+        comboField = QComboBox()
+        comboField.addItem(f"")
+        for idx in range(self.nfields):
+            comboField.addItem(f"Field{idx+1}")
+        comboField.currentTextChanged.connect(lambda: self.set_field(comboField.currentText()))
+
+        gridRequirement.addWidget(labelField, 0, 0, 1, 1)
+        gridRequirement.addWidget(comboField, 0, 1, 1, 2)
+        gridRequirement.setAlignment(Qt.AlignLeft)
+
+        widgetRun = QWidget()
+        gridlayout = QGridLayout(widgetRun)
+        for idx, component in enumerate(self.component_names):
+            item = Item()
+            item.add_checkbox(component)
+            gridlayout.addWidget(item, idx, 0, 1, 1)
+        gridlayout.setAlignment(Qt.AlignLeft)
+
+        empty_widget = QWidget()
+        empty_list_widget = QListWidget()
+        empty_list_widget.itemDoubleClicked.connect(self.delete_component)
+        vboxlayout = QVBoxLayout(empty_widget)
+        vboxlayout.addWidget(empty_list_widget)
+
+        if run_name == '':
+            self.tabRequirement.addTab(widgetRequirement, f"Run{len(self.scorer_container)}")
+            self.tabRun.addTab(widgetRun, f"Run{len(self.scorer_container)}")
+            self.tabScorer.addTab(empty_widget, f"Run{len(self.scorer_container)}")
+        else:
+            self.tabRequirement.addTab(widgetRequirement, f"{run_name}")
+            self.tabRun.addTab(widgetRun, f"{run_name}")
+            self.tabScorer.addTab(empty_widget, f"{run_name}")
+
+        self.tabRequirement.setCurrentIndex(self.tabRequirement.count()-1)
+        self.tabRun.setCurrentIndex(self.tabRun.count()-1)
+        self.tabScorer.setCurrentIndex(self.tabScorer.count()-1)
 
     def new_template(self, cname):
-        if self.comboMacro.currentText() == 'Select': return
-
-        if cname == '' or cname == 'Select':
-            return
+        if cname == '' or cname == 'Select': return
         self.tabComp.clear()
+
         if cname == "New":
             self.tabComp.clear()
-            template = Component(btype=var.G_NOZZLE_TYPE)
+            template = Component(nozzle_type=self.nozzle_type)
             template.name = ''
             template.ctype = ''
             modify = ModifyParameter(parent=self, name=template.name, value=template.ctype, label_name="Name", label_value="Type")
@@ -245,12 +301,10 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
                 action = QAction(key, listPara)
                 action.triggered.connect(value)
                 listPara.addAction(action)
-            listPara.itemDoubleClicked.connect(lambda: self.modify_element())
-            self.tabComp.addTab(listPara, template.name)
-            self.templates[template.name] = template
-        elif any(cname == i for i in self.instance.keys):
+            listPara.itemDoubleClicked.connect(self.modify_element)
+        elif self.instance is not None and any(cname == i for i in self.instance.keys):
             self.tabComp.clear()
-            template = Component(btype=var.G_NOZZLE_TYPE)
+            template = Component(nozzle_type=self.nozzle_type)
             template.name = cname
             template.ctype = cname
             listPara = QListWidget()
@@ -261,13 +315,13 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
                 action = QAction(key, listPara)
                 action.triggered.connect(value)
                 listPara.addAction(action)
-            listPara.itemDoubleClicked.connect(lambda: self.modify_element())
+            listPara.itemDoubleClicked.connect(self.modify_element)
             self.tabComp.addTab(listPara, template.name)
             self.templates[template.name] = template
         else:
             dirname = os.path.join(var.BASE_PATH, 'data/components', self.comboComp.currentText())
             for f in os.listdir(dirname):
-                template = Component(btype=var.G_NOZZLE_TYPE, phase=True)
+                template = Component(nozzle_type=self.nozzle_type, phase=True)
                 template.load(fname=os.path.join(dirname, f))
                 template.ctype = cname
                 listPara = QListWidget()
@@ -279,7 +333,7 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
                     action = QAction(key, listPara)
                     action.triggered.connect(value)
                     listPara.addAction(action)
-                listPara.itemDoubleClicked.connect(lambda: self.modify_element())
+                listPara.itemDoubleClicked.connect(self.modify_element)
 
                 paras = [i for i in template.subcomponent['Basis'].parameters]
                 for para in paras:
@@ -287,8 +341,8 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
                     witem = QListWidgetItem(listPara)
                     item = Item()
                     item.add_lineedit(name, para.value)
-                    item.lineValue.textChanged.connect(lambda: self.modify_element(True))
-                    item.lineValue.returnPressed.connect(lambda: self.modify_element(True))
+                    item.lineValue.textChanged.connect(self.modify_element)
+                    item.lineValue.returnPressed.connect(self.modify_element)
                     listPara.setItemWidget(witem, item)
                     listPara.addItem(witem)
                     witem.setSizeHint(item.sizeHint())
@@ -306,18 +360,21 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
         witem.setSizeHint(item.sizeHint())
         self.components[self.templates[name].name] = self.templates[name]
 
+    def show_component(self):
+        pass
+
     def add_component(self):
-        widget = self.tabComponents.currentWidget()
-        witem = QListWidgetItem(widget)
+        list_widget = self.tabScorer.currentWidget().findChildren(QListWidget)[0]
+        witem = QListWidgetItem(list_widget)
         item = Item()
         i = self.listTemplates.itemWidget(self.listTemplates.currentItem())
         item.add_label(i.label.text())
-        widget.setItemWidget(witem, item)
-        widget.addItem(witem)
+        list_widget.setItemWidget(witem, item)
+        list_widget.addItem(witem)
         witem.setSizeHint(item.sizeHint())
     
     def delete_component(self):
-        widget = self.tabComponents.currentWidget()
+        widget = self.tabScorer.currentWidget().findChildren(QListWidget)[0]
         item = widget.takeItem(widget.currentRow())
 
     def add_element(self):
@@ -346,56 +403,79 @@ class SimulationWindow(QDialog, Ui_SimulationWindow):
         self.templates[subcomp].modify_parameter('Basis',{name:value},delete=True)
         widget.takeItem(widget.currentRow())
         
-    def modify_element(self,direct=False):
+    def modify_element(self):
         # FIXME
-        # widget 클릭 안하고 lineEdit 건드려서 엔터쳐서 이게 돌아가면 아이템 NoneType 되서 터짐.... 
         widget = self.tabComp.currentWidget()
         idx = widget.currentRow()
         item = widget.itemWidget(widget.item(idx))
         if item is None: return
         subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
         name = self.templates[subcomp].subcomponent['Basis'].parameters[idx].fullname()
-        value = self.templates[subcomp].subcomponent['Basis'].parameters[idx].value
-        if not direct:
-            modify = ModifyParameter(self,name,value)
-            r = modify.return_para()
-            if r:
-                name = modify.name
-                value = modify.value
-        else:
-            value = item.lineValue.text()
+        print(self.templates[subcomp])
+        value = item.lineValue.text()
         self.templates[subcomp].modify_parameter('Basis', {name:value})
         item.lineValue.setText(value)
+        print(self.templates[subcomp])
         
     def write_output(self):
-        if not self.instance.is_workable():
-            QMessageBox.warning(self, "Message", "Please, Fill requirements", QMessageBox.Ok)
-            return
+        if self.instance is not None:
+            if not self.instance.is_workable():
+                QMessageBox.warning(self, "Message", "Please, Fill requirements", QMessageBox.Ok)
+                return
+            tmp_dict = {i:[] for i in self.instance.keys}
+            for idx in range(self.tabRun.count()):
+                name = self.tabRun.tabText(idx)
+                widget = self.tabRun.widget(idx)
+                tmp = []
+                for idx2 in range(widget.count()):
+                    item = widget.itemWidget(widget.item(idx2))
+                    if item.checkbox.isChecked():
+                        text = item.label.text()[1:-1]
+                        tmp.append(text)
+                self.instance.set_import_files(name, tmp)
             
-        tmp_dict = {i:[] for i in self.instance.keys}
+                widget = self.tabScorer.widget(idx)
+                for idx2 in range(widget.count()):
+                    item = widget.itemWidget(widget.item(idx2))
+                    text = item.label.text()
+                    tmp = text.replace(' - ','-').split('-')
+                    tmp = (tmp[0], tmp[1])
+                    tmp_dict[name].append(tmp)
 
-        for idx in range(self.tabImport.count()):
-            name = self.tabImport.tabText(idx)
-            widget = self.tabImport.widget(idx)
-            tmp = []
-            for idx2 in range(widget.count()):
-                item = widget.itemWidget(widget.item(idx2))
-                if item.checkbox.isChecked():
-                    text = item.label.text()[1:-1]
-                    tmp.append(text)
-            self.instance.set_import_files(name, tmp)
-        
-            widget = self.tabComponents.widget(idx)
-            for idx2 in range(widget.count()):
-                item = widget.itemWidget(widget.item(idx2))
-                text = item.label.text()
-                tmp = text.replace(' - ','-').split('-')
-                tmp = (tmp[0], tmp[1])
-                tmp_dict[name].append(tmp)
+            self.instance.set_templates(tmp_dict, self.components)
+            self.scorer_container, self.filter_container = self.instance.run()
+        else:
+            from plugin.simulation import Simulation
+            self.instance = Simulation(outdir=self.outdir, nozzle_type=self.nozzle_type)
+            self.instance.nbeams = self.tabRun.count()
+            tmp_dict = {}
+            for idx in range(self.tabRun.count()):
+                run_name = self.tabRun.tabText(idx)
+                self.instance.update_keys(run_name)
+                tmp_dict[run_name] = []
 
-        self.instance.set_templates(tmp_dict, self.components)
-        var.G_PHASE, var.G_FILTER = self.instance.run()
-        #g_order = self.instance.order
+                runWidget = self.tabRun.widget(idx)
+                tmp = []
+                widgets = runWidget.findChildren(Item)
+                for item in widgets:
+                    checkbox = item.get_checkbox()
+                    if checkbox.isChecked():
+                        text = checkbox.text()#[1:-1]
+                        tmp.append(text)
+                self.instance.set_import_files(run_name, tmp)
+
+                scrWidget = self.tabScorer.widget(idx)
+                lstWidget = scrWidget.findChild(QListWidget)
+                for idx2 in range(lstWidget.count()):
+                    item = lstWidget.itemWidget(lstWidget.item(idx2))
+                    text = item.label.text()
+                    tmp = text.replace(' - ','-').split('-')
+                    tmp = (tmp[0], tmp[1])
+                    tmp_dict[run_name].append(tmp)
+            self.instance.set_templates(tmp_dict, self.components)
+
+            self.scorer_container, self.filter_container = self.instance.run()
+
         self.click_ok()
 
     def click_ok(self):

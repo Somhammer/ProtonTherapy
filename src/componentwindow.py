@@ -5,14 +5,14 @@ from PySide6.QtGui import *
 import src.variables as var
 from src.data import *
 
+from src.ui_newtabwindow import Ui_NewtabWindow
 from src.ui_componentwindow import Ui_ComponentWindow
 
 from src.item import *
 
-class NewTab(QDialog):
+class NewTab(QDialog, Ui_NewtabWindow):
     def __init__(self, parent, components):
         super(NewTab, self).__init__(parent)
-        uic.loadUi(os.path.join(var.BASE_PATH,'ui','newtab.ui'), self)
         self.setWindowTitle("New tab")
         
         for item in components:
@@ -38,18 +38,23 @@ class NewTab(QDialog):
         return super().exec_()
 
 class ComponentWindow(QDialog, Ui_ComponentWindow):
-    def __init__(self, parent, fname=None, modify_component=False):
-        super(ComponentWindow, self).__init__(parent)
+    def __init__(self, nozzle_type, fname=None, modify_component=False):
+        super(ComponentWindow, self).__init__()
         self.setupUi(self)
 
-        self.template = Component(var.G_NOZZLE_TYPE)
-        self.modify_component = modify_component
+        self.nozzle_type = nozzle_type
+        self.nozzle_component = None
+        self.template = Component(self.nozzle_type)
         self.fname = fname
-        if self.fname is not None:
-            self.preload()
+
+        self.modify_component = modify_component
 
         self.set_action()
-        self.show()
+
+    def show(self, preload=False):
+        if preload:
+            self.preload()
+        super().show()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
@@ -156,8 +161,8 @@ class ComponentWindow(QDialog, Ui_ComponentWindow):
             witem = QListWidgetItem(listPara)
             item = Item()
             item.add_lineedit(name, para.value)
-            item.lineValue.textChanged.connect(lambda: self.modify_element(True))
-            item.lineValue.returnPressed.connect(lambda: self.modify_element(True))
+            item.lineValue.textChanged.connect(self.modify_element)
+            item.lineValue.returnPressed.connect(self.modify_element)
             listPara.setItemWidget(witem, item)
             listPara.addItem(witem)
             witem.setSizeHint(item.sizeHint())
@@ -171,7 +176,7 @@ class ComponentWindow(QDialog, Ui_ComponentWindow):
         if item == '' or item == 'Select':
             return
         self.tabComp.clear()
-        self.template = Component(var.G_NOZZLE_TYPE)
+        self.template = Component(self.nozzle_type)
         if item == "New":
             self.clear_all()
             self.template.name = ''
@@ -267,7 +272,7 @@ class ComponentWindow(QDialog, Ui_ComponentWindow):
         widget.takeItem(widget.currentRow())
         self.update_preview()
         
-    def modify_element(self,direct=False):
+    def modify_element(self):
         # FIXME
         # widget 클릭 안하고 lineEdit 건드려서 엔터쳐서 이게 돌아가면 아이템 NoneType 되서 터짐.... 
         widget = self.tabComp.currentWidget()
@@ -276,15 +281,8 @@ class ComponentWindow(QDialog, Ui_ComponentWindow):
         if item is None: return
         subcomp = self.tabComp.tabText(self.tabComp.currentIndex())
         name = self.template.subcomponent[subcomp].parameters[idx].fullname()
-        value = self.template.subcomponent[subcomp].parameters[idx].value
-        if not direct:
-            modify = ModifyParameter(self,name,value)
-            r = modify.return_para()
-            if r:
-                name = modify.name
-                value = modify.value
-        else:
-            value = item.lineValue.text()
+        #value = self.template.subcomponent[subcomp].parameters[idx].value
+        value = item.lineValue.text()
         self.template.modify_parameter(subcomp, {name:value})
         item.lineValue.setText(value)
         self.update_preview()
@@ -329,15 +327,9 @@ class ComponentWindow(QDialog, Ui_ComponentWindow):
         self.update_preview()
 
     def preload(self):
-        if type(self.fname) == int:
-            if self.modify_component:
-                self.template = var.G_COMPONENT[self.fname]
-            else:
-                self.template = var.G_TEMPLATE[self.fname]
-        elif type(self.fname) == str:
+        print("fname:",self.fname)
+        if self.fname is not None:
             self.template.load(self.fname)
-        else:
-            return
 
         for i in range(len(self.template.imported)):
             self.draw_import_widget(fname=self.template.imported[i])
@@ -352,10 +344,7 @@ class ComponentWindow(QDialog, Ui_ComponentWindow):
         self.update_preview()
 
     def click_make(self):
-        if self.modify_component:
-            var.G_COMPONENT[self.fname] = self.template
-        else:
-            var.G_TEMPLATE.append(self.template)
+        self.nozzle_component = self.template
         self.accept()
         
     def click_cancel(self, event=None):

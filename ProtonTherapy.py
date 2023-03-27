@@ -6,6 +6,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 
 from src.variables import *
+BASE_PATH = os.path.abspath(os.path.dirname(__file__))
 
 sys.path.append(BASE_PATH)
 
