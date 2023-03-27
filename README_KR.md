@@ -19,7 +19,7 @@ ProtonTherapy를 실행하기 위해서는 python이 필요합니다. 개발과 
 #### 라이브러리들
 ProtonTherapy는 다음의 라이브러리들을 사용합니다.
 
-* pyqt5
+* pyside6
 * pydicom
 * numpy
 * matplotlib
@@ -69,7 +69,7 @@ conda deactivate
 가상환경을 활성화 했다면, 필요한 패키지들을 다음과 같은 방법으로 설치할 수 있습니다.
 
 ```python
-conda install pyqt5
+pip3 install pyside6
 conda install matplotlib
 conda install -c conda-forge pydicom
 conda install numpy
