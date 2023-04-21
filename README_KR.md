@@ -25,14 +25,14 @@ ProtonTherapy는 다음의 라이브러리들을 사용합니다.
 * matplotlib
 * pandas
 * openpyxl
-* xlrd
+* xlwings
 * yaml
 
 pip을 이용한다면 쉽게 위 라이브러리들을 설치할 수 있습니다. 또한 pip은 다음과 같이 사용합니다.
 
 ```
 # 사용법 : pip install libraries
-pip install pyqt5 pydicom numpy matplotlib pandas openpyxl xlrd pyyaml
+pip install pyqt5 pydicom numpy matplotlib pandas openpyxl xlwings pyyaml
 ```
 
 #### Anaconda 가상환경에서 샤용하기
