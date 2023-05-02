@@ -55,7 +55,7 @@ class Unit:
             return f'{self.prefix}{self.unit}'
         
 @dataclass(order=True)
-class Parameter:
+class Variable:
     type: Type
     directory: Directory
     unit: Unit = None
@@ -74,7 +74,7 @@ class Component():
     def __init__(self, file_name='NewFile', component_name='NewComponent'):
         self.file_name = file_name
         self.imported = list()
-        self.parameters = {component_name:[]} # {myname:parameters}
+        self.variables = {component_name:[]} # {myname:variables}
         self.family_relations = {component_name:None} # child:parent
 
     def get_family_tree(self, myname):
@@ -88,31 +88,48 @@ class Component():
         return family_tree
 
     def add_family(self, parent_name, child_name):
-        if not child_name in self.parameters.keys():
-            self.parameters[child_name] = []
+        if not child_name in self.variables.keys():
+            self.variables[child_name] = []
             if not child_name in self.family_relations.keys():
                 self.family_relations[child_name] = parent_name
 
-    def add_parameter(self, para_dict):
-        tmp = {k: None for k in [f.name for f in fields(Parameter)]}
+    def delete_family(self, child_name):
+        if child_name in self.variables.keys():
+            del self.variables[child_name]
+            del self.family_relations[child_name]
+
+    def change_myname(self, myname, newname):
+        self.family_relations[newname] = self.family_relations.pop(myname)
+        self.variables[newname] = self.variables.pop(myname)
+
+    def add_import_file(self, path):
+        if path not in self.imported:
+            self.imported.append(path)
+
+    def delete_import_file(self, path):
+        if path in self.imported:
+            self.imported.remove(path)
+
+    def add_variable(self, vari_dict):
+        tmp = {k: None for k in [f.name for f in fields(Variable)]}
         tmp['myname'] = ""
-        tmp.update(para_dict)
-        para_dict = tmp
+        tmp.update(vari_dict)
+        vari_dict = tmp
         
-        for name, parameters in self.parameters.items():
-            if name != para_dict['myname']: continue
-            for parameter in parameters:
-                list_for_comparison = [para_dict['type'], para_dict['directory'], para_dict['unit'], para_dict['parent'], para_dict['name'], para_dict['value']]
-                exist_flag = parameter.compare(list_for_comparison)
+        for name, variables in self.variables.items():
+            if name != vari_dict['myname']: continue
+            for variable in variables:
+                list_for_comparison = [vari_dict['type'], vari_dict['directory'], vari_dict['unit'], vari_dict['parent'], vari_dict['name'], vari_dict['value']]
+                exist_flag = variable.compare(list_for_comparison)
                 if exist_flag: return
 
-        if para_dict['unit'] is not None:
+        if vari_dict['unit'] is not None:
             for si_unit in si_unit_dict.keys():
-                if si_unit in para_dict['unit']:
+                if si_unit in vari_dict['unit']:
                     postfix = si_unit
-                    last_index = para_dict['unit'].rfind(si_unit)  # 문자열의 마지막 인덱스 찾기
-                    if last_index != -1:  # 문자열에서 찾은 문자열이 있으면
-                        prefix = para_dict['unit'][:last_index]
+                    last_index = vari_dict['unit'].rfind(si_unit)
+                    if last_index != -1:
+                        prefix = vari_dict['unit'][:last_index]
                     else:
                         prefix = ''
             prefix.strip()
@@ -123,70 +140,154 @@ class Component():
         else:
             unit = None
 
-        if para_dict['type'] is None:
-            parameter = Parameter(type=None, directory=Directory[para_dict['directory']],
-                                  unit=unit, name=para_dict['name'], value=para_dict['value'])
+        if vari_dict['type'] is None:
+            variable = Variable(type=None, directory=Directory[vari_dict['directory']],
+                                  unit=unit, name=vari_dict['name'], value=vari_dict['value'])
         else:
-            parameter = Parameter(type=Type[para_dict['type']], directory=Directory[para_dict['directory']],
-                                  unit=unit, name=para_dict['name'], value=para_dict['value'])
-        if para_dict['myname'] in self.family_relations.keys():
-            parameter.parent = self.family_relations[para_dict['myname']]        
+            variable = Variable(type=Type[vari_dict['type']], directory=Directory[vari_dict['directory']],
+                                  unit=unit, name=vari_dict['name'], value=vari_dict['value'])
+        if vari_dict['myname'] in self.family_relations.keys():
+            variable.parent = self.family_relations[vari_dict['myname']]        
         
-        self.parameters[para_dict['myname']].append(parameter)
+        self.variables[vari_dict['myname']].append(variable)
     
-    def modify_parmeter(self, para_dict):
-        tmp = {k: None for k in [f.name for f in fields(Parameter)]}
+    def modify_variable(self, vari_dict):
+        tmp = {k: None for k in [f.name for f in fields(Variable)]}
         tmp['myname'] = ""
-        tmp.update(para_dict)
-        para_dict = tmp
+        tmp.update(vari_dict)
+        vari_dict = tmp
 
-        for name, parameters in self.parameters.items():
-            if name != para_dict['myname']: continue
-            for parameter in parameters:
-                list_for_comparison = [para_dict['type'], para_dict['directory'], para_dict['unit'], para_dict['parent'], para_dict['name'], parameter.value]
-                exist_flag = parameter.compare(list_for_comparison)
+        for name, variables in self.variables.items():
+            if name != vari_dict['myname']: continue
+            for variable in variables:
+                list_for_comparison = [vari_dict['type'], vari_dict['directory'], variable.unit, vari_dict['parent'], vari_dict['name'], variable.value]
+                exist_flag = variable.compare(list_for_comparison)
                 if exist_flag:
-                    parameter.value = para_dict['value']
+                    variable.value = vari_dict['value']
 
-    def delete_parameter(self, para_dict):
-        tmp = {k: None for k in [f.name for f in fields(Parameter)]}
+    def delete_variable(self, vari_dict):
+        tmp = {k: None for k in [f.name for f in fields(Variable)]}
         tmp['myname'] = ""
-        tmp.update(para_dict)
-        para_dict = tmp
+        tmp.update(vari_dict)
+        vari_dict = tmp
         
-        for name, parameters in self.parameters.items():
-            if name != para_dict['myname']: continue
-            for idx, parameter in enumerate(parameters):
-                list_for_comparison = [para_dict['type'], para_dict['directory'], para_dict['unit'], para_dict['parent'], para_dict['name'], para_dict['value']]
-                exist_flag = parameter.compare(list_for_comparison)
+        for name, variables in self.variables.items():
+            if name != vari_dict['myname']: continue
+            for idx, variable in enumerate(variables):
+                list_for_comparison = [vari_dict['type'], vari_dict['directory'], vari_dict['unit'], vari_dict['parent'], vari_dict['name'], vari_dict['value']]
+                exist_flag = variable.compare(list_for_comparison)
                 if exist_flag:
-                    parameters.pop(idx)
+                    variables.pop(idx)
 
     def apply_value_from_extern(self, values):
-            for parameters in self.parameters.values():
-                for parameter in parameters:
+            for variables in self.variables.values():
+                for variable in variables:
                     pattern = r"\{([^\{\}]+)\}"
-                    name_keys = re.findall(pattern, parameter.name)
-                    value_keys = re.findall(pattern, parameter.value)
+                    name_keys = re.findall(pattern, variable.name)
+                    value_keys = re.findall(pattern, variable.value)
                     for key in name_keys:
-                        parameter.name = parameter.name.replace("{"+key+"}", str(values[key]))
+                        variable.name = variable.name.replace("{"+key+"}", str(values[key]))
                     for key in value_keys:
-                        parameter.value = parameter.value.replace("{"+key+"}", str(values[key]))
+                        variable.value = variable.value.replace("{"+key+"}", str(values[key]))
 
-    def convert_parameter_to_str(self, myname, parameter):
+    def convert_variable_to_str(self, myname, variable):
         family_tree = self.get_family_tree(myname)
-        if parameter.type is None:
-            text = f"{parameter.directory}/{family_tree}/{parameter.name} = {parameter.value}"
+        if variable.type is None:
+            text = f"{variable.directory}/{family_tree}/{variable.name} = {variable.value}"
         else:
-            text = f"{parameter.type}:{parameter.directory}/{family_tree}/{parameter.name} = {parameter.value}"
-        if parameter.unit is not None:
-            text = text + f" {parameter.unit}"
+            text = f"{variable.type}:{variable.directory}/{family_tree}/{variable.name} = {variable.value}"
+        if variable.unit is not None:
+            text = text + f" {variable.unit}"
 
         return text
+    
+    def generate_vari_dict_from_str(self, string):
+        string = string.replace("\n", "")
+        if len(string.replace(" ", "")) < 1 or string[0] == "#" : return
+        if "include" in string: return
+
+        vari_dict = {k: None for k in [f.name for f in fields(Variable)]}
+        vari_dict['myname'] = None
+        
+        tmp = string.split("=")
+        fullname, value = tmp[0], tmp[1]
+        fullname = fullname.strip()
+        tmp = fullname.split(":")
+        mytype = None
+        if len(tmp) == 1:
+            fullname = tmp[-1]
+        else:
+            mytype = tmp[0]
+            fullname = tmp[-1]
+
+        vari_dict['type'] = mytype
+
+        names = fullname.split("/")
+        if len(names) < 2: return
+        if len(names) == 2:
+            vari_dict['directory'] = names[0]
+            vari_dict['name'] = names[-1]
+        elif len(names) == 3:
+            vari_dict['directory'] = names[0]
+            vari_dict['myname'] = names[1]
+            vari_dict['name'] = names[2]
+        else:
+            vari_dict['directory'] = names[0]
+            vari_dict['parent'] = names[-3]
+            vari_dict['myname'] = names[-2]
+            vari_dict['name'] = names[-1]
+
+        value = value.split("#")[0].strip()
+        parts = re.split(r'[= ]+', value)
+        if mytype is not None:
+            if 'd' in mytype:
+                vari_dict['unit'] = parts[-1]
+                vari_dict['value'] = ' '.join(parts[:-1])
+            else:
+                vari_dict['value'] = ' '.join(parts[:])
+        else:
+            vari_dict['value'] = ' '.join(parts[:])
+
+        return vari_dict
+
+    def add_variable_from_str(self, string):
+        vari_dict = self.generate_vari_dict_from_str(string)
+        self.add_family(vari_dict['parent'], vari_dict['myname'])            
+        self.add_variable(vari_dict)
+
+    def modify_variable_from_str(self, string):
+        vari_dict = self.generate_vari_dict_from_str(string)
+        self.modify_variable(vari_dict)
+
+    def delete_variable_from_str(self, string):
+        vari_dict = self.generate_vari_dict_from_str(string)
+        self.delete_variable(vari_dict)
 
     # TODO
+    ### Need to contain geometry structure of subcomponents
     def get_geometry(self):
-        pass
+        ancestor = None
+        for child, parent in self.family_relations.items():
+            if parent is None:
+                ancestor = child
+                break
+
+        if ancestor is None: return
+
+        geometry = {'HLX':"0.0 mm",'HLY':"0.0 mm",'HLZ':"0.0 mm",
+               'RMin':"0.0 mm",'RMax':"0.0 mm",
+               'HL':"0.0 mm", 'SPhi':"0.0 deg", 'DPhi':"0.0 deg",
+               'RotX':"0.0 deg",'RotY':"0.0 deg",'RotZ':"0.0 deg",
+               'TransX':"0.0 mm",'TransY':"0.0 mm",'TransZ':"0.0 mm"}
+        for variable in self.variables[ancestor]:
+            if 'Type' in variable.name:
+                ancestor_type = variable.value
+            for key in geometry.keys():
+                if key in variable.name:
+                    geometry[key] = f"{variable.value} {variable.unit}"
+                    break
+                   
+        return {ancestor_type:geometry}
 
     def get_fulltext(self):
         text = ""
@@ -194,62 +295,57 @@ class Component():
                 text += f"includeFile = {item}\n"
         text += "\n"
 
-        for myname, parameters in self.parameters.items():
-            for parameter in parameters:
-                text += self.convert_parameter_to_str(myname, parameter) + '\n'
+        ancestors = {} # rank: names
+        writing_order = {} # rank: names
+        i = 0
+        found_names = []
+        while set(found_names) != set(self.variables.keys()):
+            if i == 20: break
+            if not i in writing_order.keys():
+                writing_order[i] = []
+                ancestors[i] = []
+            for child, parent in self.family_relations.items():
+                if child in found_names: 
+                    continue
+                if i == 0 and parent is None:
+                    ancestors[i].append(child)
+                    writing_order[i].append(child)
+                    found_names.append(child)
+                else:
+                    if i > 0 and parent in ancestors[i-1]:
+                        ancestors[i].append(child)
+                        writing_order[i].append(child)
+                        found_names.append(child)
+            i += 1
+
+        for rank, names in writing_order.items():
+            names.sort()
+            for myname in names:
+                for variable in self.variables[myname]:
+                    text += self.convert_variable_to_str(myname, variable) + '\n'
         return text
     
-    def get_parameters_from_textfile(self, filename):
+    def get_variables_from_textfile(self, filename, initialize=False):
         try:
             with open(filename, 'r') as f:
                 lines = f.readlines()
         except:
             return
         self.file_name, ext = os.path.splitext(os.path.basename(filename))
-        self.parameters = {}
-        self.family_relations = {}
+        if initialize:
+            self.imported = list()
+            self.variables = {}
+            self.family_relations = {}
 
         for line in lines:
             line = line.replace("\n", "")
             if len(line.replace(" ", "")) < 1 or line[0] == "#" : continue
-            para_dict = {k: None for k in [f.name for f in fields(Parameter)]}
-            para_dict['myname'] = None
-            
-            tmp = line.split("=")
-            fullname, value = tmp[0], tmp[1]
-            fullname = fullname.strip()
-            tmp = fullname.split(":")
-            mytype = None
-            if len(tmp) == 1:
-                fullname = tmp[-1]
-            else:
-                mytype = tmp[0]
-                fullname = tmp[-1]
 
-            para_dict['type'] = mytype
+            if "include" in line:
+                tmp = line.split("=")
+                tmp = tmp[-1]
+                tmp = tmp.strip()
+                self.imported.append(tmp)
+                continue
 
-            names = fullname.split("/")
-            if len(names) < 2: continue
-            if len(names) == 2:
-                para_dict['directory'] = names[0]
-                para_dict['name'] = names[-1]
-            elif len(names) == 3:
-                para_dict['directory'] = names[0]
-                para_dict['myname'] = names[1]
-                para_dict['name'] = names[2]
-            else:
-                para_dict['directory'] = names[0]
-                para_dict['parent'] = names[-3]
-                para_dict['myname'] = names[-2]
-                para_dict['name'] = names[-1]
-
-            value = value.split("#")[0].strip()
-            parts = re.split(r'[= ]+', value)
-            if 'd' in mytype:
-                para_dict['unit'] = parts[-1]
-                para_dict['value'] = ' '.join(parts[:-1])
-            else:
-                para_dict['value'] = ' '.join(parts[:])
-
-            self.add_family(para_dict['parent'], para_dict['myname'])            
-            self.add_parameter(para_dict)
+            self.add_variable_from_str(line)
