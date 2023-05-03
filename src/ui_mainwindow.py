@@ -17,7 +17,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1298, 782)
+        MainWindow.resize(1267, 782)
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -102,217 +102,11 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.gridLayout_3 = QGridLayout(self.centralwidget)
         self.gridLayout_3.setObjectName(u"gridLayout_3")
-        self.gridLayout = QGridLayout()
-        self.gridLayout.setSpacing(6)
-        self.gridLayout.setObjectName(u"gridLayout")
-        self.listComponents = QListWidget(self.centralwidget)
-        self.listComponents.setObjectName(u"listComponents")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.listComponents.sizePolicy().hasHeightForWidth())
-        self.listComponents.setSizePolicy(sizePolicy1)
-
-        self.gridLayout.addWidget(self.listComponents, 3, 0, 1, 3)
-
-        self.frameParameters = QFrame(self.centralwidget)
-        self.frameParameters.setObjectName(u"frameParameters")
-        self.frameParameters.setMinimumSize(QSize(0, 330))
-        self.frameParameters.setFrameShape(QFrame.NoFrame)
-        self.frameParameters.setFrameShadow(QFrame.Plain)
-        self.gridLayout_6 = QGridLayout(self.frameParameters)
-        self.gridLayout_6.setSpacing(0)
-        self.gridLayout_6.setObjectName(u"gridLayout_6")
-        self.gridLayout_6.setContentsMargins(0, 0, 0, 0)
-        self.tabParameters = QTabWidget(self.frameParameters)
-        self.tabParameters.setObjectName(u"tabParameters")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.tabParameters.sizePolicy().hasHeightForWidth())
-        self.tabParameters.setSizePolicy(sizePolicy2)
-
-        self.gridLayout_6.addWidget(self.tabParameters, 0, 0, 1, 1)
-
-
-        self.gridLayout.addWidget(self.frameParameters, 5, 0, 1, 3)
-
-        self.labelComp = QLabel(self.centralwidget)
-        self.labelComp.setObjectName(u"labelComp")
-        sizePolicy2.setHeightForWidth(self.labelComp.sizePolicy().hasHeightForWidth())
-        self.labelComp.setSizePolicy(sizePolicy2)
-        font1 = QFont()
-        font1.setPointSize(10)
-        self.labelComp.setFont(font1)
-        self.labelComp.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
-
-        self.gridLayout.addWidget(self.labelComp, 2, 0, 1, 3)
-
-        self.labelNozzle = QLabel(self.centralwidget)
-        self.labelNozzle.setObjectName(u"labelNozzle")
-        font2 = QFont()
-        font2.setPointSize(12)
-        self.labelNozzle.setFont(font2)
-
-        self.gridLayout.addWidget(self.labelNozzle, 0, 0, 1, 3)
-
-        self.labelNozzlePara = QLabel(self.centralwidget)
-        self.labelNozzlePara.setObjectName(u"labelNozzlePara")
-        sizePolicy3 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        sizePolicy3.setHorizontalStretch(0)
-        sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.labelNozzlePara.sizePolicy().hasHeightForWidth())
-        self.labelNozzlePara.setSizePolicy(sizePolicy3)
-        self.labelNozzlePara.setFont(font1)
-
-        self.gridLayout.addWidget(self.labelNozzlePara, 4, 0, 1, 1)
-
-        self.groupNozzleMode = QGroupBox(self.centralwidget)
-        self.groupNozzleMode.setObjectName(u"groupNozzleMode")
-        sizePolicy2.setHeightForWidth(self.groupNozzleMode.sizePolicy().hasHeightForWidth())
-        self.groupNozzleMode.setSizePolicy(sizePolicy2)
-        self.groupNozzleMode.setFont(font1)
-        self.gridLayout_5 = QGridLayout(self.groupNozzleMode)
-        self.gridLayout_5.setObjectName(u"gridLayout_5")
-        self.radioFBRT1 = QRadioButton(self.groupNozzleMode)
-        self.radioFBRT1.setObjectName(u"radioFBRT1")
-
-        self.gridLayout_5.addWidget(self.radioFBRT1, 0, 0, 1, 1)
-
-        self.radioGTR2 = QRadioButton(self.groupNozzleMode)
-        self.radioGTR2.setObjectName(u"radioGTR2")
-
-        self.gridLayout_5.addWidget(self.radioGTR2, 0, 1, 1, 1)
-
-        self.radioGTR3 = QRadioButton(self.groupNozzleMode)
-        self.radioGTR3.setObjectName(u"radioGTR3")
-
-        self.gridLayout_5.addWidget(self.radioGTR3, 0, 2, 1, 1)
-
-
-        self.gridLayout.addWidget(self.groupNozzleMode, 1, 0, 1, 3)
-
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Preferred, QSizePolicy.Minimum)
-
-        self.gridLayout.addItem(self.horizontalSpacer, 4, 1, 1, 2)
-
-
-        self.gridLayout_3.addLayout(self.gridLayout, 0, 0, 2, 1)
-
-        self.gridLayout_4 = QGridLayout()
-        self.gridLayout_4.setObjectName(u"gridLayout_4")
-        self.lineRTP = QLineEdit(self.centralwidget)
-        self.lineRTP.setObjectName(u"lineRTP")
-        sizePolicy4 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.lineRTP.sizePolicy().hasHeightForWidth())
-        self.lineRTP.setSizePolicy(sizePolicy4)
-        self.lineRTP.setReadOnly(True)
-
-        self.gridLayout_4.addWidget(self.lineRTP, 5, 1, 1, 2)
-
-        self.labelCT = QLabel(self.centralwidget)
-        self.labelCT.setObjectName(u"labelCT")
-        sizePolicy3.setHeightForWidth(self.labelCT.sizePolicy().hasHeightForWidth())
-        self.labelCT.setSizePolicy(sizePolicy3)
-
-        self.gridLayout_4.addWidget(self.labelCT, 3, 0, 1, 3)
-
-        self.lineRTS = QLineEdit(self.centralwidget)
-        self.lineRTS.setObjectName(u"lineRTS")
-        sizePolicy4.setHeightForWidth(self.lineRTS.sizePolicy().hasHeightForWidth())
-        self.lineRTS.setSizePolicy(sizePolicy4)
-        self.lineRTS.setReadOnly(True)
-
-        self.gridLayout_4.addWidget(self.lineRTS, 6, 1, 1, 2)
-
-        self.labelPatientDir = QLabel(self.centralwidget)
-        self.labelPatientDir.setObjectName(u"labelPatientDir")
-        sizePolicy3.setHeightForWidth(self.labelPatientDir.sizePolicy().hasHeightForWidth())
-        self.labelPatientDir.setSizePolicy(sizePolicy3)
-
-        self.gridLayout_4.addWidget(self.labelPatientDir, 2, 0, 1, 1)
-
-        self.labelMacro = QLabel(self.centralwidget)
-        self.labelMacro.setObjectName(u"labelMacro")
-        sizePolicy.setHeightForWidth(self.labelMacro.sizePolicy().hasHeightForWidth())
-        self.labelMacro.setSizePolicy(sizePolicy)
-
-        self.gridLayout_4.addWidget(self.labelMacro, 8, 0, 1, 1)
-
-        self.labelRTP = QLabel(self.centralwidget)
-        self.labelRTP.setObjectName(u"labelRTP")
-        sizePolicy5 = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
-        sizePolicy5.setHorizontalStretch(0)
-        sizePolicy5.setVerticalStretch(0)
-        sizePolicy5.setHeightForWidth(self.labelRTP.sizePolicy().hasHeightForWidth())
-        self.labelRTP.setSizePolicy(sizePolicy5)
-
-        self.gridLayout_4.addWidget(self.labelRTP, 5, 0, 1, 1)
-
-        self.listPatientCT = QListWidget(self.centralwidget)
-        self.listPatientCT.setObjectName(u"listPatientCT")
-        sizePolicy.setHeightForWidth(self.listPatientCT.sizePolicy().hasHeightForWidth())
-        self.listPatientCT.setSizePolicy(sizePolicy)
-
-        self.gridLayout_4.addWidget(self.listPatientCT, 4, 0, 1, 3)
-
-        self.linePatientDir = QLineEdit(self.centralwidget)
-        self.linePatientDir.setObjectName(u"linePatientDir")
-        sizePolicy4.setHeightForWidth(self.linePatientDir.sizePolicy().hasHeightForWidth())
-        self.linePatientDir.setSizePolicy(sizePolicy4)
-        self.linePatientDir.setReadOnly(True)
-
-        self.gridLayout_4.addWidget(self.linePatientDir, 2, 1, 1, 2)
-
-        self.labelScorer = QLabel(self.centralwidget)
-        self.labelScorer.setObjectName(u"labelScorer")
-        sizePolicy3.setHeightForWidth(self.labelScorer.sizePolicy().hasHeightForWidth())
-        self.labelScorer.setSizePolicy(sizePolicy3)
-        self.labelScorer.setFont(font2)
-
-        self.gridLayout_4.addWidget(self.labelScorer, 0, 0, 1, 3)
-
-        self.lineMacro = QLineEdit(self.centralwidget)
-        self.lineMacro.setObjectName(u"lineMacro")
-        sizePolicy4.setHeightForWidth(self.lineMacro.sizePolicy().hasHeightForWidth())
-        self.lineMacro.setSizePolicy(sizePolicy4)
-        self.lineMacro.setReadOnly(True)
-
-        self.gridLayout_4.addWidget(self.lineMacro, 8, 1, 1, 2)
-
-        self.lineRD = QLineEdit(self.centralwidget)
-        self.lineRD.setObjectName(u"lineRD")
-        sizePolicy4.setHeightForWidth(self.lineRD.sizePolicy().hasHeightForWidth())
-        self.lineRD.setSizePolicy(sizePolicy4)
-        self.lineRD.setReadOnly(True)
-
-        self.gridLayout_4.addWidget(self.lineRD, 7, 1, 1, 2)
-
-        self.labelRTS = QLabel(self.centralwidget)
-        self.labelRTS.setObjectName(u"labelRTS")
-
-        self.gridLayout_4.addWidget(self.labelRTS, 6, 0, 1, 1)
-
-        self.labelRD = QLabel(self.centralwidget)
-        self.labelRD.setObjectName(u"labelRD")
-
-        self.gridLayout_4.addWidget(self.labelRD, 7, 0, 1, 1)
-
-        self.tabScorer = QTabWidget(self.centralwidget)
-        self.tabScorer.setObjectName(u"tabScorer")
-
-        self.gridLayout_4.addWidget(self.tabScorer, 1, 0, 1, 3)
-
-
-        self.gridLayout_3.addLayout(self.gridLayout_4, 0, 3, 2, 1)
-
         self.gridLayout_2 = QGridLayout()
         self.gridLayout_2.setObjectName(u"gridLayout_2")
         self.tableComp = QTableWidget(self.centralwidget)
-        if (self.tableComp.columnCount() < 17):
-            self.tableComp.setColumnCount(17)
+        if (self.tableComp.columnCount() < 16):
+            self.tableComp.setColumnCount(16)
         __qtablewidgetitem = QTableWidgetItem()
         __qtablewidgetitem.setTextAlignment(Qt.AlignCenter);
         self.tableComp.setHorizontalHeaderItem(0, __qtablewidgetitem)
@@ -361,12 +155,11 @@ class Ui_MainWindow(object):
         __qtablewidgetitem15 = QTableWidgetItem()
         __qtablewidgetitem15.setTextAlignment(Qt.AlignCenter);
         self.tableComp.setHorizontalHeaderItem(15, __qtablewidgetitem15)
-        __qtablewidgetitem16 = QTableWidgetItem()
-        __qtablewidgetitem16.setTextAlignment(Qt.AlignCenter);
-        self.tableComp.setHorizontalHeaderItem(16, __qtablewidgetitem16)
         self.tableComp.setObjectName(u"tableComp")
         sizePolicy.setHeightForWidth(self.tableComp.sizePolicy().hasHeightForWidth())
         self.tableComp.setSizePolicy(sizePolicy)
+        font1 = QFont()
+        font1.setPointSize(10)
         self.tableComp.setFont(font1)
         self.tableComp.setFrameShape(QFrame.StyledPanel)
         self.tableComp.setFrameShadow(QFrame.Sunken)
@@ -378,8 +171,11 @@ class Ui_MainWindow(object):
 
         self.labelPreview = QLabel(self.centralwidget)
         self.labelPreview.setObjectName(u"labelPreview")
-        sizePolicy3.setHeightForWidth(self.labelPreview.sizePolicy().hasHeightForWidth())
-        self.labelPreview.setSizePolicy(sizePolicy3)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.labelPreview.sizePolicy().hasHeightForWidth())
+        self.labelPreview.setSizePolicy(sizePolicy1)
         self.labelPreview.setMaximumSize(QSize(16777215, 16777215))
         self.labelPreview.setFont(font1)
 
@@ -392,14 +188,129 @@ class Ui_MainWindow(object):
 
         self.labelGeometry = QLabel(self.centralwidget)
         self.labelGeometry.setObjectName(u"labelGeometry")
-        sizePolicy3.setHeightForWidth(self.labelGeometry.sizePolicy().hasHeightForWidth())
-        self.labelGeometry.setSizePolicy(sizePolicy3)
+        sizePolicy1.setHeightForWidth(self.labelGeometry.sizePolicy().hasHeightForWidth())
+        self.labelGeometry.setSizePolicy(sizePolicy1)
+        font2 = QFont()
+        font2.setPointSize(12)
         self.labelGeometry.setFont(font2)
 
         self.gridLayout_2.addWidget(self.labelGeometry, 0, 0, 1, 1)
 
 
         self.gridLayout_3.addLayout(self.gridLayout_2, 0, 1, 2, 2)
+
+        self.gridLayout = QGridLayout()
+        self.gridLayout.setSpacing(6)
+        self.gridLayout.setObjectName(u"gridLayout")
+        self.labelNozzlePara = QLabel(self.centralwidget)
+        self.labelNozzlePara.setObjectName(u"labelNozzlePara")
+        sizePolicy1.setHeightForWidth(self.labelNozzlePara.sizePolicy().hasHeightForWidth())
+        self.labelNozzlePara.setSizePolicy(sizePolicy1)
+        self.labelNozzlePara.setFont(font1)
+
+        self.gridLayout.addWidget(self.labelNozzlePara, 5, 0, 1, 1)
+
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Preferred, QSizePolicy.Minimum)
+
+        self.gridLayout.addItem(self.horizontalSpacer, 5, 1, 1, 2)
+
+        self.labelComp = QLabel(self.centralwidget)
+        self.labelComp.setObjectName(u"labelComp")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.labelComp.sizePolicy().hasHeightForWidth())
+        self.labelComp.setSizePolicy(sizePolicy2)
+        self.labelComp.setFont(font1)
+        self.labelComp.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
+
+        self.gridLayout.addWidget(self.labelComp, 3, 0, 1, 3)
+
+        self.labelNozzle = QLabel(self.centralwidget)
+        self.labelNozzle.setObjectName(u"labelNozzle")
+        self.labelNozzle.setFont(font2)
+
+        self.gridLayout.addWidget(self.labelNozzle, 1, 0, 1, 3)
+
+        self.frameFields = QFrame(self.centralwidget)
+        self.frameFields.setObjectName(u"frameFields")
+        self.frameFields.setMinimumSize(QSize(0, 330))
+        self.frameFields.setFrameShape(QFrame.NoFrame)
+        self.frameFields.setFrameShadow(QFrame.Plain)
+        self.gridLayout_6 = QGridLayout(self.frameFields)
+        self.gridLayout_6.setSpacing(0)
+        self.gridLayout_6.setObjectName(u"gridLayout_6")
+        self.gridLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.tabFields = QTabWidget(self.frameFields)
+        self.tabFields.setObjectName(u"tabFields")
+        sizePolicy2.setHeightForWidth(self.tabFields.sizePolicy().hasHeightForWidth())
+        self.tabFields.setSizePolicy(sizePolicy2)
+
+        self.gridLayout_6.addWidget(self.tabFields, 0, 0, 1, 1)
+
+
+        self.gridLayout.addWidget(self.frameFields, 6, 0, 1, 3)
+
+        self.listComponents = QListWidget(self.centralwidget)
+        self.listComponents.setObjectName(u"listComponents")
+        sizePolicy3 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.listComponents.sizePolicy().hasHeightForWidth())
+        self.listComponents.setSizePolicy(sizePolicy3)
+
+        self.gridLayout.addWidget(self.listComponents, 4, 0, 1, 3)
+
+        self.groupNozzleMode = QGroupBox(self.centralwidget)
+        self.groupNozzleMode.setObjectName(u"groupNozzleMode")
+        sizePolicy2.setHeightForWidth(self.groupNozzleMode.sizePolicy().hasHeightForWidth())
+        self.groupNozzleMode.setSizePolicy(sizePolicy2)
+        self.groupNozzleMode.setFont(font1)
+        self.gridLayout_5 = QGridLayout(self.groupNozzleMode)
+        self.gridLayout_5.setObjectName(u"gridLayout_5")
+        self.radioFBRT1 = QRadioButton(self.groupNozzleMode)
+        self.radioFBRT1.setObjectName(u"radioFBRT1")
+
+        self.gridLayout_5.addWidget(self.radioFBRT1, 0, 0, 1, 1)
+
+        self.radioGTR2 = QRadioButton(self.groupNozzleMode)
+        self.radioGTR2.setObjectName(u"radioGTR2")
+
+        self.gridLayout_5.addWidget(self.radioGTR2, 0, 1, 1, 1)
+
+        self.radioGTR3 = QRadioButton(self.groupNozzleMode)
+        self.radioGTR3.setObjectName(u"radioGTR3")
+
+        self.gridLayout_5.addWidget(self.radioGTR3, 0, 2, 1, 1)
+
+
+        self.gridLayout.addWidget(self.groupNozzleMode, 2, 0, 1, 3)
+
+        self.checkLocal = QCheckBox(self.centralwidget)
+        self.checkLocal.setObjectName(u"checkLocal")
+
+        self.gridLayout.addWidget(self.checkLocal, 0, 0, 1, 3)
+
+
+        self.gridLayout_3.addLayout(self.gridLayout, 0, 0, 2, 1)
+
+        self.gridLayout_4 = QGridLayout()
+        self.gridLayout_4.setObjectName(u"gridLayout_4")
+        self.tabScorer = QTabWidget(self.centralwidget)
+        self.tabScorer.setObjectName(u"tabScorer")
+
+        self.gridLayout_4.addWidget(self.tabScorer, 1, 0, 1, 2)
+
+        self.labelScorer = QLabel(self.centralwidget)
+        self.labelScorer.setObjectName(u"labelScorer")
+        sizePolicy1.setHeightForWidth(self.labelScorer.sizePolicy().hasHeightForWidth())
+        self.labelScorer.setSizePolicy(sizePolicy1)
+        self.labelScorer.setFont(font2)
+
+        self.gridLayout_4.addWidget(self.labelScorer, 0, 0, 1, 2)
+
+
+        self.gridLayout_3.addLayout(self.gridLayout_4, 0, 3, 2, 1)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QStatusBar(MainWindow)
@@ -410,7 +321,7 @@ class Ui_MainWindow(object):
         MainWindow.addToolBar(Qt.TopToolBarArea, self.toolBar)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1298, 22))
+        self.menubar.setGeometry(QRect(0, 0, 1267, 22))
         self.menuFile = QMenu(self.menubar)
         self.menuFile.setObjectName(u"menuFile")
         self.menuComp = QMenu(self.menubar)
@@ -480,56 +391,49 @@ class Ui_MainWindow(object):
         self.actionCompDelete.setText(QCoreApplication.translate("MainWindow", u"Delete", None))
         self.actionCompNew.setText(QCoreApplication.translate("MainWindow", u"New", None))
         self.actionScorerDelete.setText(QCoreApplication.translate("MainWindow", u"Delete", None))
+        ___qtablewidgetitem = self.tableComp.horizontalHeaderItem(0)
+        ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"Name", None));
+        ___qtablewidgetitem1 = self.tableComp.horizontalHeaderItem(1)
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("MainWindow", u"Type", None));
+        ___qtablewidgetitem2 = self.tableComp.horizontalHeaderItem(2)
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"TransX", None));
+        ___qtablewidgetitem3 = self.tableComp.horizontalHeaderItem(3)
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"TransY", None));
+        ___qtablewidgetitem4 = self.tableComp.horizontalHeaderItem(4)
+        ___qtablewidgetitem4.setText(QCoreApplication.translate("MainWindow", u"TransZ", None));
+        ___qtablewidgetitem5 = self.tableComp.horizontalHeaderItem(5)
+        ___qtablewidgetitem5.setText(QCoreApplication.translate("MainWindow", u"RotX", None));
+        ___qtablewidgetitem6 = self.tableComp.horizontalHeaderItem(6)
+        ___qtablewidgetitem6.setText(QCoreApplication.translate("MainWindow", u"RotY", None));
+        ___qtablewidgetitem7 = self.tableComp.horizontalHeaderItem(7)
+        ___qtablewidgetitem7.setText(QCoreApplication.translate("MainWindow", u"RotZ", None));
+        ___qtablewidgetitem8 = self.tableComp.horizontalHeaderItem(8)
+        ___qtablewidgetitem8.setText(QCoreApplication.translate("MainWindow", u"HLX", None));
+        ___qtablewidgetitem9 = self.tableComp.horizontalHeaderItem(9)
+        ___qtablewidgetitem9.setText(QCoreApplication.translate("MainWindow", u"HLY", None));
+        ___qtablewidgetitem10 = self.tableComp.horizontalHeaderItem(10)
+        ___qtablewidgetitem10.setText(QCoreApplication.translate("MainWindow", u"HLZ", None));
+        ___qtablewidgetitem11 = self.tableComp.horizontalHeaderItem(11)
+        ___qtablewidgetitem11.setText(QCoreApplication.translate("MainWindow", u"RMin", None));
+        ___qtablewidgetitem12 = self.tableComp.horizontalHeaderItem(12)
+        ___qtablewidgetitem12.setText(QCoreApplication.translate("MainWindow", u"RMax", None));
+        ___qtablewidgetitem13 = self.tableComp.horizontalHeaderItem(13)
+        ___qtablewidgetitem13.setText(QCoreApplication.translate("MainWindow", u"HL", None));
+        ___qtablewidgetitem14 = self.tableComp.horizontalHeaderItem(14)
+        ___qtablewidgetitem14.setText(QCoreApplication.translate("MainWindow", u"SPhi", None));
+        ___qtablewidgetitem15 = self.tableComp.horizontalHeaderItem(15)
+        ___qtablewidgetitem15.setText(QCoreApplication.translate("MainWindow", u"DPhi", None));
+        self.labelPreview.setText(QCoreApplication.translate("MainWindow", u"2D Preview", None))
+        self.labelGeometry.setText(QCoreApplication.translate("MainWindow", u"Geometry", None))
+        self.labelNozzlePara.setText(QCoreApplication.translate("MainWindow", u"Parameters", None))
         self.labelComp.setText(QCoreApplication.translate("MainWindow", u"Nozzle Component", None))
         self.labelNozzle.setText(QCoreApplication.translate("MainWindow", u"Nozzle", None))
-        self.labelNozzlePara.setText(QCoreApplication.translate("MainWindow", u"Parameters", None))
         self.groupNozzleMode.setTitle(QCoreApplication.translate("MainWindow", u"Type", None))
         self.radioFBRT1.setText(QCoreApplication.translate("MainWindow", u"FBRT 1", None))
         self.radioGTR2.setText(QCoreApplication.translate("MainWindow", u"GTR 2", None))
         self.radioGTR3.setText(QCoreApplication.translate("MainWindow", u"GTR 3", None))
-        self.labelCT.setText(QCoreApplication.translate("MainWindow", u"CT", None))
-        self.labelPatientDir.setText(QCoreApplication.translate("MainWindow", u"Directory", None))
-        self.labelMacro.setText(QCoreApplication.translate("MainWindow", u"Macro", None))
-        self.labelRTP.setText(QCoreApplication.translate("MainWindow", u"RTP", None))
+        self.checkLocal.setText(QCoreApplication.translate("MainWindow", u"Run TOPAS locally", None))
         self.labelScorer.setText(QCoreApplication.translate("MainWindow", u"Scorer", None))
-        self.labelRTS.setText(QCoreApplication.translate("MainWindow", u"RTS", None))
-        self.labelRD.setText(QCoreApplication.translate("MainWindow", u"RD", None))
-        ___qtablewidgetitem = self.tableComp.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(QCoreApplication.translate("MainWindow", u"Name", None));
-        ___qtablewidgetitem1 = self.tableComp.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("MainWindow", u"Component", None));
-        ___qtablewidgetitem2 = self.tableComp.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("MainWindow", u"Parent", None));
-        ___qtablewidgetitem3 = self.tableComp.horizontalHeaderItem(3)
-        ___qtablewidgetitem3.setText(QCoreApplication.translate("MainWindow", u"HLX", None));
-        ___qtablewidgetitem4 = self.tableComp.horizontalHeaderItem(4)
-        ___qtablewidgetitem4.setText(QCoreApplication.translate("MainWindow", u"HLY", None));
-        ___qtablewidgetitem5 = self.tableComp.horizontalHeaderItem(5)
-        ___qtablewidgetitem5.setText(QCoreApplication.translate("MainWindow", u"HLZ", None));
-        ___qtablewidgetitem6 = self.tableComp.horizontalHeaderItem(6)
-        ___qtablewidgetitem6.setText(QCoreApplication.translate("MainWindow", u"RMin", None));
-        ___qtablewidgetitem7 = self.tableComp.horizontalHeaderItem(7)
-        ___qtablewidgetitem7.setText(QCoreApplication.translate("MainWindow", u"RMax", None));
-        ___qtablewidgetitem8 = self.tableComp.horizontalHeaderItem(8)
-        ___qtablewidgetitem8.setText(QCoreApplication.translate("MainWindow", u"HL", None));
-        ___qtablewidgetitem9 = self.tableComp.horizontalHeaderItem(9)
-        ___qtablewidgetitem9.setText(QCoreApplication.translate("MainWindow", u"SPhi", None));
-        ___qtablewidgetitem10 = self.tableComp.horizontalHeaderItem(10)
-        ___qtablewidgetitem10.setText(QCoreApplication.translate("MainWindow", u"DPhi", None));
-        ___qtablewidgetitem11 = self.tableComp.horizontalHeaderItem(11)
-        ___qtablewidgetitem11.setText(QCoreApplication.translate("MainWindow", u"RotX", None));
-        ___qtablewidgetitem12 = self.tableComp.horizontalHeaderItem(12)
-        ___qtablewidgetitem12.setText(QCoreApplication.translate("MainWindow", u"RotY", None));
-        ___qtablewidgetitem13 = self.tableComp.horizontalHeaderItem(13)
-        ___qtablewidgetitem13.setText(QCoreApplication.translate("MainWindow", u"RotZ", None));
-        ___qtablewidgetitem14 = self.tableComp.horizontalHeaderItem(14)
-        ___qtablewidgetitem14.setText(QCoreApplication.translate("MainWindow", u"TransX", None));
-        ___qtablewidgetitem15 = self.tableComp.horizontalHeaderItem(15)
-        ___qtablewidgetitem15.setText(QCoreApplication.translate("MainWindow", u"TransY", None));
-        ___qtablewidgetitem16 = self.tableComp.horizontalHeaderItem(16)
-        ___qtablewidgetitem16.setText(QCoreApplication.translate("MainWindow", u"TransZ", None));
-        self.labelPreview.setText(QCoreApplication.translate("MainWindow", u"2D Preview", None))
-        self.labelGeometry.setText(QCoreApplication.translate("MainWindow", u"Geometry", None))
         self.toolBar.setWindowTitle(QCoreApplication.translate("MainWindow", u"toolBar", None))
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
         self.menuComp.setTitle(QCoreApplication.translate("MainWindow", u"Component", None))

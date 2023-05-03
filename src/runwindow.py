@@ -7,7 +7,6 @@ from scp import SCPClient
 from datetime import datetime
 import yaml
 
-
 from PySide6.QtCore import *  # type: ignore
 from PySide6.QtGui import *  # type: ignore
 from PySide6.QtWidgets import *  # type: ignore
@@ -59,7 +58,7 @@ class RunThread(QThread):
                 if not '.tps' in outname:
                     outname = outname + '.tps'
                 f = open(outname,'w')
-                f.write(component.fulltext())
+                f.write(component.get_fulltext())
             self.progressbar_signal.emit(10)
             total_run = len(self.scorers)
             i = 1
@@ -91,86 +90,111 @@ class RunThread(QThread):
         except BaseException as err:
             self.logger_signal.emit("ERROR", f"{str(err)}: Generation is failed.")
             return
-        
-        ### Send generated files to NCC Server
-        self.logger_signal.emit("INFO", "Connect to server and transfer files")
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         from ProtonTherapy import BASE_PATH
-        with open(os.path.join(BASE_PATH, 'server_info.yaml'), 'r') as f:
-            info = yaml.safe_load(f)
-
-        if info['key'].startswith("./"):
-            key_path = os.path.join(BASE_PATH, info['key'].replace('./', ''))
-        else:
-            key_path = info['key']
-
-        key = paramiko.RSAKey.from_private_key_file(key_path)
-        try:
-            ssh.connect(info['IP'], port=info['port'], username=info['username'], pkey=key)
-            self.ssh = ssh
-        except paramiko.AuthenticationException:
-            self.logger_signal.emit("ERROR", 'Authorification Failed.')
-            return
-        except paramiko.SSHException:
-            self.logger_signal.emit("ERROR", f'Cannot connect to {info["IP"]}:{info["port"]}.')
-            return
-
-        self.progressbar_signal.emit(60)
-
-        ### check TOPAS installation
-        topas_cmd = info['topas']
-        stdin, stdout, stderr = ssh.exec_command(topas_cmd)
-        error = stderr.read().decode('utf-8')
-        if 'command not found' in error:
-            self.logger_signal.emit("WARNING", f'TOPAS is not installed.')
-        self.progressbar_signal.emit(65)
-        # TODO
-        ## Modify this job submit process. Slurm must run TOPAS using singularity.
-        ### Generate Slurm shell script file and transfer
-        #for run, scorers in self.scorers.items():
-        with SCPClient(self.ssh.get_transport()) as scp:
-            scp.get("/data/ProtonTherapy_data/submit.sh", self.outdir)
         today = datetime.now().strftime("%y%m%d")
-        for run in self.scorers.keys():
-            with open(os.path.join(self.outdir, 'submit.sh'), 'r', newline='') as f:
-                script = f.read()
-                script = script.format(username=info['username'], date=today)
-            script = script.replace("\r\n", "\n")
-            with open(os.path.join(self.outdir, 'submit.sh'), 'w', newline='\n') as f:
-                f.write(script)
-        
-        self.progressbar_signal.emit(75)
 
-        try:
-            with SCPClient(self.ssh.get_transport()) as scp:
-                scp.put(self.outdir, info['dest'], recursive=True)
-        except:
-            self.logger_signal.emit("ERROR", f'Transfer is failed.')
-            return
+        if var.G_TOPAS_LOCAL:
+            # FIXME
+            with open(os.path.join(BASE_PATH, 'local_info.yaml'), 'r') as f:
+                info = yaml.safe_load(f)
 
-        ### Slurm Job Submit
-        command_list = []
-        for run in self.scorers.keys():
-            # TODO
-            #if run has dependency:
-            # command = f"sbatch submit.sh --dependency=afterok:{previous_run} {topas_cmd} {run}"
-            command_list.append(f"sbatch submit.sh {topas_cmd} {run}.tps")
+            ### check TOPAS installation
+            topas_cmd = info['topas']
+            process = QProcess()
+            process.start(topas_cmd)
+            output = process.readAllStandardOutput().data().decode('utf-8')
+            if any(i in output for i in ['command not found', "is not recognized as a name of a cmdlet"]):
+                self.logger_signal.emit("WARNING", f'TOPAS is not installed.')
+            self.progressbar_signal.emit(65)
 
-        for command in command_list:
-            self.logger_signal.emit("INFO", command)
-            stdin, stdout, stderr = ssh.exec_command(f'cd {info["dest"]}/{today} && {command}')
-            #stdin, stdout, stderr = ssh.exec_command(f'cd {info["dest"]} && ls')
+            command_list = []
+            for run in self.scorers.keys():
+                command = f"cd {info['dest']}/{today} && {topas_cmd} {run}.tps"
+                process.start(command)
+                output = process.readAllStandardOutput().data().decode('utf-8')
+                error = process.readAllStandardError().data().decode('utf-8')
+                self.logger_signal.emit("INFO", output)
+                if len(error) > 0:
+                    self.logger_signal.emit("ERROR", error)
 
-            print(f'cd {info["dest"]} && {command}')
-            out = stdout.read().decode('utf-8')
-            error = stderr.read().decode("utf-8")
-            print("ERROR: ", error, len(error))
-            if error is not None and len(error) > 0:
-                self.logger_signal.emit("ERROR", error)
+        else:
+            ### Send generated files to NCC Server
+            self.logger_signal.emit("INFO", "Connect to server and transfer files")
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+            with open(os.path.join(BASE_PATH, 'server_info.yaml'), 'r') as f:
+                info = yaml.safe_load(f)
+
+            if info['key'].startswith("./"):
+                key_path = os.path.join(BASE_PATH, info['key'].replace('./', ''))
             else:
-                self.logger_signal.emit("INFO", out)
+                key_path = info['key']
+
+            key = paramiko.RSAKey.from_private_key_file(key_path)
+            try:
+                ssh.connect(info['IP'], port=info['port'], username=info['username'], pkey=key)
+                self.ssh = ssh
+            except paramiko.AuthenticationException:
+                self.logger_signal.emit("ERROR", 'Authorification Failed.')
+                return
+            except paramiko.SSHException:
+                self.logger_signal.emit("ERROR", f'Cannot connect to {info["IP"]}:{info["port"]}.')
+                return
+
+            self.progressbar_signal.emit(60)
+
+            ### check TOPAS installation
+            topas_cmd = info['topas']
+            stdin, stdout, stderr = ssh.exec_command(topas_cmd)
+            error = stderr.read().decode('utf-8')
+            if 'command not found' in error:
+                self.logger_signal.emit("WARNING", f'TOPAS is not installed.')
+            self.progressbar_signal.emit(65)
+            # TODO
+            ## Modify this job submit process. Slurm must run TOPAS using singularity.
+            ### Generate Slurm shell script file and transfer
+            #for run, scorers in self.scorers.items():
+            with SCPClient(self.ssh.get_transport()) as scp:
+                scp.get("/data/ProtonTherapy_data/submit.sh", self.outdir)
+
+            for run in self.scorers.keys():
+                with open(os.path.join(self.outdir, 'submit.sh'), 'r', newline='') as f:
+                    script = f.read()
+                    script = script.format(username=info['username'], date=today)
+                script = script.replace("\r\n", "\n")
+                with open(os.path.join(self.outdir, 'submit.sh'), 'w', newline='\n') as f:
+                    f.write(script)
+            
+            self.progressbar_signal.emit(75)
+
+            try:
+                with SCPClient(self.ssh.get_transport()) as scp:
+                    scp.put(self.outdir, info['dest'], recursive=True)
+            except:
+                self.logger_signal.emit("ERROR", f'Transfer is failed.')
+                return
+
+            ### Slurm Job Submit
+            command_list = []
+            for run in self.scorers.keys():
+                # TODO
+                #if run has dependency:
+                # command = f"sbatch submit.sh --dependency=afterok:{previous_run} {topas_cmd} {run}"
+                command_list.append(f"sbatch submit.sh {topas_cmd} {run}.tps")
+
+            for command in command_list:
+                self.logger_signal.emit("INFO", command)
+                stdin, stdout, stderr = ssh.exec_command(f'cd {info["dest"]}/{today} && {command}')
+                #stdin, stdout, stderr = ssh.exec_command(f'cd {info["dest"]} && ls')
+
+                out = stdout.read().decode('utf-8')
+                error = stderr.read().decode("utf-8")
+                if error is not None and len(error) > 0:
+                    self.logger_signal.emit("ERROR", error)
+                else:
+                    self.logger_signal.emit("INFO", out)
 
         self.progressbar_signal.emit(100)
 

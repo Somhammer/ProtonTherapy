@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'run.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.1.2
+## Created by: Qt User Interface Compiler version 6.1.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -35,6 +35,12 @@ class Ui_RunWindow(object):
         self.textLog.setFont(font)
 
         self.gridLayout.addWidget(self.textLog, 0, 0, 1, 2)
+
+        self.progressBar = QProgressBar(Run)
+        self.progressBar.setObjectName(u"progressBar")
+        self.progressBar.setValue(0)
+
+        self.gridLayout.addWidget(self.progressBar, 1, 0, 1, 1)
 
 
         self.retranslateUi(Run)

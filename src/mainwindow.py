@@ -27,15 +27,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         today =  datetime.datetime.now().strftime("%y%m%d")
         self.outdir = os.path.join(var.BASE_PATH, 'prod', today)
 
+        self.tick = 1 # mm
+        self.selected_component = None
+        self.field_count = 1
+
         self.widgetNozzle = Painter()
         self.gridLayout_2.addWidget(self.widgetNozzle,1,0)
 
         self.comp_to_table_map = {}
         self.macros = []
 
-        self.nozzle_type = None
-        self.field_container = OrderedDict()
-        self.nozzle_container = OrderedDict()
+        self.container = Container()
+
+        self.container.nozzle_type = None
+        self.field_checklist = []
+        self.container.fields = OrderedDict()
+        self.container.components = OrderedDict()
         self.scorer_container = OrderedDict()
         self.filter_container = OrderedDict()
         self.ct_directory = ""
@@ -44,6 +51,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.set_actions()
 
         self.show()
+
+    def keyPressEvent(self, event):
+        if event.modifiers() & Qt.ControlModifier:
+            if any(i == event.key() for i in [Qt.Key_Right, Qt.Key_Left, Qt.Key_Up, Qt.Key_Down]):
+                self.move_component(event.key())
+        elif event.modifiers() == Qt.ShiftModifier:
+            if any(i == event.key() for i in [Qt.Key_Up, Qt.Key_Down]):
+                self.modify_tick(event.key())
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            pos = event.position()
+            widget = self.childAt(QPoint(pos.x(), pos.y()))
+            if widget == self.widgetNozzle:
+                self.selected_component = self.widgetNozzle.find_component(QPoint(pos.x(), pos.y()))
+                self.update_statusbar()
+
+    def mouseDoubleClickEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            pos = event.position()
+            widget = self.childAt(QPoint(pos.x(), pos.y()))
+            if widget == self.widgetNozzle:
+                self.widgetNozzle.show3D(QPoint(pos.x(), pos.y()))
+                self.update_statusbar()
 
     def set_icons(self):
         # Remove this function when coding is completed.
@@ -87,6 +118,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #self.actionScorerModify.setIcon(write)
         #self.actionScorerDelete.setIcon(delete)
         ### Simulation
+        def run_locally(checkLocal):
+            if checkLocal.isChecked():
+                var.G_TOPAS_LOCAL = True
+            else:
+                var.G_TOPAS_LOCAL = False
+        self.checkLocal.clicked.connect(lambda: run_locally(self.checkLocal))
         #self.actionSimLoad.triggered.connect(self.simulation)
         ### Run
         self.actionRun = QAction(QIcon(os.path.join(var.BASE_PATH,'icons/run.png')), 'Run', self)
@@ -122,6 +159,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.toolBar.addAction(self.actionRun)
         self.toolBar.setIconSize(QSize(32,32))
         
+        # Statusbar
+        labelForMoving = QLabel(f"Component: {self.selected_component}, Tick: {self.tick} mm")
+        self.statusbar.addPermanentWidget(labelForMoving)
+
         # Nozzle Mode
         self.radioFBRT1.clicked.connect(lambda: self.set_beam_mode(var.FBRT1))
         self.radioGTR2.clicked.connect(lambda: self.set_beam_mode(var.GTR2))
@@ -138,20 +179,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tableComp.addAction(self.actionCompDelete)
         self.tableComp.itemDoubleClicked.connect(self.modify_component)
 
-        # Parameters
-        #self.pushConValgo.clicked.connect(self.load_convalgo)
-
         # Field parameters
         self.tabAddBtn = QToolButton()
-        self.tabParameters.setCornerWidget(self.tabAddBtn, Qt.TopRightCorner)
+        self.tabFields.setCornerWidget(self.tabAddBtn, Qt.TopRightCorner)
+        self.tabFields.setContextMenuPolicy(Qt.ActionsContextMenu)
+        actions = {"Delete":self.delete_field}
+        for key, value in actions.items():
+            action = QAction(key, self.tabFields)
+            action.triggered.connect(value)
+            self.tabFields.addAction(action)
         self.tabAddBtn.setAutoRaise(True)
         self.tabAddBtn.setIcon(QIcon(os.path.join(var.BASE_PATH,"icons/new.png")))
         self.tabAddBtn.clicked.connect(self.add_field)
 
-        # Patient
-        self.listPatientCT.setContextMenuPolicy(Qt.ActionsContextMenu)
-        self.listPatientCT.addAction(self.actionPatientView)
-        self.listPatientCT.itemDoubleClicked.connect(self.patient_view)
+        self.tabScorer.tabBar().setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
 
     def new_simulation(self):
         reply = QMessageBox.question(self, "Message", "Are you sure to remove all?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -160,13 +201,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             return
 
+    # TODO
     def save_cfg(self):
         fname = QFileDialog.getSaveFileName(self, 'Save', os.path.join(var.BASE_PATH,'prod'), filter="Nozzle files (*.nzl)")[0]
         if not fname.endswith('.nzl'):
             fname = fname + '.nzl'
         fout = open(fname, 'w')
-        fout.write(f"Nozzle: {self.nozzle_type}\n")
-        for name, component in self.nozzle_container.items():
+        fout.write(f"Nozzle: {self.container.nozzle_type}\n")
+        for name, component in self.container.components.items():
             fulltext = component.fulltext().split('\n')
             for idx, text in enumerate(fulltext):
                 fulltext[idx] = '  ' + text
@@ -175,38 +217,41 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         fout.close()
 
     def open_cfg(self):
-        fname = QFileDialog.getOpenFileName(self, 'Open', os.path.join(var.BASE_PATH,'prod'), filter = "Nozzle files (*.nzl)")[0]
+        fname = QFileDialog.getOpenFileName(self, 'Open', os.path.join(var.BASE_PATH,'data'), filter = "Nozzle files (*.nzl)")[0]
         if fname == '' or fname is None: return
         if not fname.endswith('.nzl'): return
         with open(fname, 'r') as f:
             self.clear_all()
             cfg = yaml.load(f, Loader=yaml.FullLoader)
         
-        self.nozzle_type = int(cfg['Nozzle'])
-        if self.nozzle_type == var.FBRT1: self.radioFBRT1.setChecked(True)
-        if self.nozzle_type == var.GTR2: self.radioGTR2.setChecked(True)
-        if self.nozzle_type == var.GTR3: self.radioGTR3.setChecked(True)
+        self.container.nozzle_type = int(cfg['Nozzle'])
+        if self.container.nozzle_type == var.FBRT1: self.radioFBRT1.setChecked(True)
+        if self.container.nozzle_type == var.GTR2: self.radioGTR2.setChecked(True)
+        if self.container.nozzle_type == var.GTR3: self.radioGTR3.setChecked(True)
 
-        if self.tabParameters.count() == 0:
+        if self.tabFields.count() == 0:
             self.add_field()
 
-        for name, text in cfg.items():
+        for name, filename in cfg.items():
             if name == 'Nozzle': continue
-            component = Component(self.nozzle_type)
-            component.load(text, load=True, draw_all=True)
-            component.name = name
-            self.nozzle_container[name] = component
+            component = Component(filename=name)
+            component.get_variables_from_textfile(filename=filename, initialize=True)
+            self.container.components[name] = component
 
         self.update_geometry()
 
     def clear_all(self):
-        self.nozzle_type = None
-        for key in self.nozzle_container.keys():
-            del self.nozzle_container[key]
-        for key in self.field_container.keys():
-            del self.field_container[key]
+        self.container.nozzle_type = None
+
+        for key in self.container.components.keys():
+            del self.container.components[key]
+        for key in self.container.fields.keys():
+            del self.container.fields[key]
         for key in self.scorer_container.keys():
             del self.scorer_container[key]
+        for key in self.filter_container.keys():
+            del self.filter_container[key]
+
         self.radioFBRT1.setCheckable(False)
         self.radioGTR2.setCheckable(False)
         self.radioGTR3.setCheckable(False)
@@ -216,66 +261,50 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.listComponents.clear()
 
-        self.tabParameters.clear()
+        self.tabFields.clear()
 
         self.tableComp.setRowCount(0)
-        self.widgetNozzle.trigger_refresh(self.nozzle_container.values())
-
-        self.linePatientDir.clear()
-        self.listPatientCT.clear()
-        self.lineRTS.clear()
-        self.lineRTP.clear()
-        self.lineRD.clear()
-        self.lineMacro.clear()
+        self.widgetNozzle.trigger_refresh(self.container.components.values())
 
     def update_geometry(self):
         if not self.check_beam_mode(): return
-        if len(self.nozzle_container) < 1: return
+        if len(self.container.components) < 1: return
 
         self.listComponents.clear()
         self.tableComp.setRowCount(0)
 
-        for name, component in self.nozzle_container.items():
+        for name, component in self.container.components.items():
             item = QListWidgetItem(self.listComponents)
             f = Item()
             f.add_label(name)
             self.listComponents.setItemWidget(item, f)
             self.listComponents.addItem(item)
             item.setSizeHint(f.sizeHint())
-
-            geometry_info = {'Name':'','Component':'','Parent':'',
-                        'HLX':"0.0 mm",'HLY':"0.0 mm",'HLZ':"0.0 mm",
-                        'RMin':"0.0 mm",'RMax':"0.0 mm",
-                        'HL':"0.0 mm", 'SPhi':"0.0 deg", 'DPhi':"0.0 deg",
-                        'RotX':"0.0 deg",'RotY':"0.0 deg",'RotZ':"0.0 deg",
-                        'TransX':"0.0 mm",'TransY':"0.0 mm",'TransZ':"0.0 mm"}
-            for subname, subcomp in component.subcomponent.items():
-                if subname == 'Basis': 
-                    geometry_info['Name'] = component.name
-                    geometry_info['Component'] = component.ctype
-                    for para in subcomp.parameters:
-                        if any(para.name.lower() == i.lower() for i in geometry_info.keys()):
-                            geometry_info[para.name] = para.value
+            geometry_info = component.get_geometry()
 
             row_count = self.tableComp.rowCount()
             self.tableComp.setRowCount(row_count + 1)
             row = self.tableComp.rowCount()
+            self.tableComp.setItem(row-1, 0, QTableWidgetItem(str(name)))
+            self.tableComp.setItem(row-1, 1, QTableWidgetItem(str(geometry_info['Type'])))
+
             for icol in range(self.tableComp.columnCount()):
                 colname = self.tableComp.horizontalHeaderItem(icol).text()
-                value = geometry_info[colname]
-                self.tableComp.setItem(row-1, icol, QTableWidgetItem(str(value)))
+                if colname in geometry_info.keys():
+                    value = geometry_info[colname]
+                    self.tableComp.setItem(row-1, icol, QTableWidgetItem(str(value)))
+
         self.tableComp.resizeColumnsToContents()
-        self.widgetNozzle.trigger_refresh(self.nozzle_container.values())
+        self.widgetNozzle.trigger_refresh(self.container.components.values())
 
     def new_component(self):
         if not self.check_beam_mode(): return
 
-        component = ComponentWindow(self.nozzle_type)
-        component.show()
-        r = component.return_para()
+        cwindow = ComponentWindow(self.container.nozzle_type)
+        r = cwindow.return_para()
         if r:
-            if component.nozzle_component is not None:
-                self.nozzle_container[component.nozzle_component.name] = component.nozzle_component
+            self.container.components[cwindow.component.file_name] = cwindow.component
+        
         self.update_geometry()
 
     def modify_component(self):
@@ -283,20 +312,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         text = None
         item = self.listComponents.currentItem()
-        idx = self.listComponents.currentRow()
         if item is not None:
             label_widget = self.listComponents.itemWidget(item)
             label = label_widget.get_label()
             text = label.text()
         
-        component = ComponentWindow(self)
-        component.template = self.nozzle_container[text]
-        component.show(True)
-        r = component.return_para()
+        component = self.container.components.pop(text)
+
+        cwindow = ComponentWindow(self.container.nozzle_type)
+        cwindow.load(component)
+        r = cwindow.return_para()
         if r:
-            if component.nozzle_component is not None:
-                self.nozzle_container.pop(text)
-                self.nozzle_container[text] = component.nozzle_component
+            self.container.components[cwindow.component.file_name] = cwindow.component
         self.update_geometry()
 
     def delete_component(self):
@@ -304,58 +331,47 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         text = None
         item = self.listComponents.currentItem()
-        idx = self.listComponents.currentRow()
         if item is not None:
             label_widget = self.listComponents.itemWidget(item)
             label = label_widget.get_label()
             text = label.text()
 
-        self.nozzle_container.pop(text)
-
+        self.container.components.pop(text)
+        item = self.listComponents.takeItem(self.listComponents.currentRow())
+        del item
         self.update_geometry()
 
     def add_field(self, reset=False):
         widget = QWidget()
         gridlayout = QGridLayout(widget)
-        if self.nozzle_type == var.FBRT1:
+        if self.container.nozzle_type == var.FBRT1:
             parameters = ['1st Scatterer', '2nd Scatterer', 'Range Modulator', 'Stop Position', 'Beam Energy', 'Range in patients', 'SOBP', 'SSD', 'BCM']
-        elif self.nozzle_type == var.GTR2:
+        elif self.container.nozzle_type == var.GTR2:
             parameters = ['1st Scatterer', '2nd Scatterer', 'Range Modulator', 'Stop Position', 'Beam Energy', 'Range in patients', 'SOBP', 'SSD', 'BCM']
-        elif self.nozzle_type == var.GTR3:
+        elif self.container.nozzle_type == var.GTR3:
             parameters = ['Beam Energy']
         else:
             return
 
         if reset:
-            self.tabParameters.clear()
-            self.field_container.clear()
+            self.tabFields.clear()
+            self.container.fields.clear()
 
-        self.field_container[f"Field{len(self.field_container)+1}"] = {para:[] for para in parameters}
+        field_name = f"Field{self.field_count}"
+        self.field_count += 1
+        self.container.fields[field_name] = {para:[] for para in parameters}
 
         def update_parameter(tab):
             field = tab.tabText(tab.currentIndex())
-            #field_number = tab.currentIndex() + 1
+            field_number = tab.currentIndex() + 1
             layout = tab.currentWidget().layout()
             for irow in range(layout.rowCount()):
-                label = layout.itemAtPosition(irow, 0).widget()
                 name = layout.itemAtPosition(irow, 0).widget().text()
                 value = layout.itemAtPosition(irow, 1).widget().text()
-                delimiter = ''
-                if ',' in value:
-                    delimiter = ','
-                elif ' ' in value:
-                    delimiter = ' '
-                elif ';' in value:
-                    delimiter = ';'
-                else:
-                    delimiter = '\n'
-                value = value.split(delimiter)
-                self.field_container[field][name] = []
-                for val in value:
-                    val = val.replace(',','').replace(';','').replace(' ','')
-                    if any(i == val for i in ['',' ',';','\n']): continue
-                    self.field_container[field][name].append(val)
-
+                value = re.sub(r'\s+', ' ', value)
+                items = [item for item in re.split('[,;.\s]', value) if item != ""]
+                self.container.fields[field][name] = items
+                    
         for idx, para in enumerate(parameters):
             label = QLabel(para)
             line = QLineEdit()
@@ -366,39 +382,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 gridlayout.addWidget(label2, idx, 2)
             else:
                 gridlayout.addWidget(line, idx, 1, 1, 2)
-            line.textChanged.connect(lambda: update_parameter(self.tabParameters))
-            line.returnPressed.connect(lambda: update_parameter(self.tabParamters))
+            line.textChanged.connect(lambda: update_parameter(self.tabFields))
+            line.returnPressed.connect(lambda: update_parameter(self.tabFields))
 
-        self.tabParameters.addTab(widget, f"Field{len(self.field_container)}")
-        self.tabParameters.setCurrentIndex(self.tabParameters.count()-1)
+        self.tabFields.addTab(widget, field_name)
+        self.tabFields.setCurrentIndex(self.tabFields.count()-1)
 
-    def update_scorer(self):
-        if len(self.scorer_container) < 1: return
-        for run, scorers in self.scorer_container.items():
-            widget = QWidget()
-            gridlayout = QGridLayout(widget)
+    def delete_field(self):
+        current_index = self.tabFields.currentIndex()
+        current_name = self.tabFields.tabText(current_index)
+        del self.container.fields[current_name]
+        self.tabFields.removeTab(current_index)
 
-            for idx, scorer in enumerate(scorers):
-                for idx2, name in enumerate(scorer.subcomponent.keys()):
-                    if name == "Basis": continue
-                    label = QLabel(name)
-                    print("Label:", label.text())
-                    gridlayout.addWidget(label, idx2, 0, 1, 1)
-        
-            if len(self.filter_container) > 0:
-                filters = self.filter_container[run]
-                for idx, filter in enumerate(filters):
-                    if filter is not None:
-                        label = QLabel(filter['name'])
-                        gridlayout.addWidget(label, idx2+idx, 0, 1, 1)
-
-            self.tabScorer.addTab(widget, f"{run}")
-            self.tabScorer.setCurrentIndex(self.tabScorer.count()-1)
-
+    # TODO
     def new_scorer(self):
         if not self.check_beam_mode(): return
         
-        scorer = ScorerWindow(self, self.nozzle_type, len(self.field_container.keys()), self.nozzle_container.keys())
+        scorer = ScorerWindow(self, self.container.nozzle_type, len(self.container.fields.keys()), self.container.components.keys())
         scorer.show()
         r = scorer.return_para()
         if r:
@@ -411,87 +411,66 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.update_scorer()
         self.update_geometry()
 
+    # TODO
+    def update_scorer(self):
+        if len(self.scorer_container) < 1: return
+        for run, scorers in self.scorer_container.items():
+            widget = QWidget()
+            vblayout = QVBoxLayout(widget)
+
+            for idx, scorer in enumerate(scorers):
+                for idx2, name in enumerate(scorer.subcomponent.keys()):
+                    if name == "Basis": continue
+                    label = QLabel(name)
+                    vblayout.addWidget(label)
+
+        
+            if len(self.filter_container) > 0:
+                filters = self.filter_container[run]
+                for idx, filter in enumerate(filters):
+                    if filter is not None:
+                        label = QLabel(filter['name'])
+                        vblayout.addWidget(label)
+            vblayout.addStretch(1)
+
+            self.tabScorer.addTab(widget, f"{run}")
+            self.tabScorer.setCurrentIndex(self.tabScorer.count()-1)
+
     # Functions
     def set_beam_mode(self, ngtr):
-        if self.nozzle_type == ngtr: return
+        if self.container.nozzle_type == ngtr: return
         else:
-            self.nozzle_type = ngtr
+            self.container.nozzle_type = ngtr
 
-        if self.tabParameters.count() == 0:
+        if self.tabFields.count() == 0:
             self.add_field()
         else:
             self.add_field(reset=True)
 
     def check_beam_mode(self):
-        if self.nozzle_type is None:
+        if self.container.nozzle_type is None:
             QMessageBox.warning(self, "Warning", "Please, select nozzle type")
             return False
         else:
             return True
-    
-    def patient_setup(self):
-        directory = QFileDialog.getExistingDirectory(self, "Select Patient CT directory")
-        if directory == "": return
-        var.G_PATIENT.patient_setup(directory)
-        self.linePatientDir.setText(var.G_PATIENT.directory)
-        for f in var.G_PATIENT.CT:
-            self.listPatientCT.addItem(QListWidgetItem(str(f)))
-        self.lineRTS.setText(var.G_PATIENT.RTS)
-        self.lineRTP.setText(var.G_PATIENT.RTP)
-        self.lineRD.setText(var.G_PATIENT.RD)
-        
-    def patient_view(self):
-        if self.listPatientCT.count() != 0:
-            if self.listPatientCT.currentItem() is None:
-                current = self.listPatientCT.item(0).text()
-            else:
-                current = self.listPatientCT.currentItem().text()
-        else:
-            current = ""
-        pat = PatientWindow(self, current)
-        r = pat.return_para()
-        if r:
-            self.linePatientDir.setText(var.G_PATIENT.directory)
-            self.listPatientCT.clear()
-            for f in var.G_PATIENT.CT:
-                self.listPatientCT.addItem(QListWidgetItem(str(f)))
-            self.lineRTS.setText(var.G_PATIENT.RTS)
-            self.lineRTP.setText(var.G_PATIENT.RTP)
-            self.lineRD.setText(var.G_PATIENT.RD)
 
     def run(self):
         if not self.check_beam_mode(): return
-        run = RunWindow(self.outdir, self.nozzle_type, self.field_checklist, self.field_container, self.nozzle_container, self.scorer_container, self.filter_container)
+        run = RunWindow(self.outdir, self.container.nozzle_type, self.field_checklist, self.container.fields, self.container.components, self.scorer_container, self.filter_container)
         run.show()
         r = run.return_para()
         if r:
             del run
 
-    def load_convalgo(self):
+    # TODO!
+    def find_component(self, x, y):
         pass
-        """
-        fname = QFileDialog.getOpenFileName(self, filter = var.G_EXCEL_EXTENSION[0])[0]
-        if fname == '': return
-    
-        #if self.nozzle_type is not var.FBRT1: return
-        # FIXME
-        #setup_convalgo(fname=fname)
 
-        def convert(item, typ):
-            if typ == "int": i = int(item)
-            elif typ == "float": i = round(float(item),3)
-            else: i = item
-            return i
-        for idx, name in enumerate(g_convalgo.keys()):
-            value = g_convalgo[name]
-            if str(type(value[0])) == "<class 'list'>":
-                for i, val in enumerate(value[0]):
-                    value[0][i] = convert(val, value[1])
-                if len(value[0]) == 1:
-                    s = str(value[0][0])
-                else:
-                    s = ', '.join(str(j) for j in value[0])
-            else:
-                s = convert(value[0], value[1])
-            self.conv_values[idx].setText(f'{s}')
-        """
+    def update_statusbar(self):
+        pass
+
+    def move_component(self, key):
+        pass
+
+    def modify_tick(self, key):
+        pass

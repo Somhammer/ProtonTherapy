@@ -2,6 +2,7 @@ import os
 import re
 from enum import Enum
 from dataclasses import dataclass, fields
+from collections import OrderedDict
 from copy import copy 
 
 #import variables as var
@@ -70,9 +71,17 @@ class Variable:
             return (str(self.type), str(self.directory), str(self.unit), str(self.parent), str(self.name), str(self.value)) == (str(other[0]), str(other[1]), str(other[2]), str(other[3]), str(other[4]), str(other[5]))
         return NotImplemented
 
+@dataclass
+class Container:
+    nozzle_type: int = None
+    fields: OrderedDict = None
+    components: OrderedDict = None 
+    scorers: OrderedDict = None
+    ct_directory: str = None
+
 class Component():
-    def __init__(self, file_name='NewFile', component_name='NewComponent'):
-        self.file_name = file_name
+    def __init__(self, filename='NewFile', component_name='NewComponent'):
+        self.filename = filename
         self.imported = list()
         self.variables = {component_name:[]} # {myname:variables}
         self.family_relations = {component_name:None} # child:parent
@@ -274,20 +283,21 @@ class Component():
 
         if ancestor is None: return
 
-        geometry = {'HLX':"0.0 mm",'HLY':"0.0 mm",'HLZ':"0.0 mm",
+        geometry = {'Type':'TsBox','HLX':"0.0 mm",'HLY':"0.0 mm",'HLZ':"0.0 mm",
                'RMin':"0.0 mm",'RMax':"0.0 mm",
                'HL':"0.0 mm", 'SPhi':"0.0 deg", 'DPhi':"0.0 deg",
                'RotX':"0.0 deg",'RotY':"0.0 deg",'RotZ':"0.0 deg",
                'TransX':"0.0 mm",'TransY':"0.0 mm",'TransZ':"0.0 mm"}
         for variable in self.variables[ancestor]:
-            if 'Type' in variable.name:
-                ancestor_type = variable.value
             for key in geometry.keys():
                 if key in variable.name:
-                    geometry[key] = f"{variable.value} {variable.unit}"
+                    if variable.unit is not None:
+                        geometry[key] = f"{variable.value} {variable.unit}"
+                    else:
+                        geometry[key] = f"{variable.value}"
                     break
                    
-        return {ancestor_type:geometry}
+        return geometry
 
     def get_fulltext(self):
         text = ""
@@ -331,7 +341,7 @@ class Component():
                 lines = f.readlines()
         except:
             return
-        self.file_name, ext = os.path.splitext(os.path.basename(filename))
+        self.filename, ext = os.path.splitext(os.path.basename(filename))
         if initialize:
             self.imported = list()
             self.variables = {}

@@ -1,6 +1,43 @@
+from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import *
-
 from src.variables import G_TEXT_EXTENSION, G_EXCEL_EXTENSION
+
+class MyLineEdit(QLineEdit):
+    def __init__(self):
+        super().__init__()
+        self.prev_text = None
+        self.allWords = ['ocean', 'coding', 'python', 'pizza']
+        self.trigger_word = "{"
+        self.completer = QCompleter(self.allWords)
+        #self.completer = MyCompleter(self.allWords)
+        self.completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
+        #self.completer.highlighted.connect(self.on_completer_highlighted)
+        self.completer.activated.connect(lambda: self.on_completer_activated())
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.text() == self.trigger_word:
+            self.setCompleter(self.completer)
+            self.completer.highlighted.connect(self.on_completer_highlighted)
+            self.completer.complete()
+        else:
+            self.setCompleter(None)
+        super().keyPressEvent(event)
+        self.prev_text = self.text()
+
+    def on_completer_highlighted(self, completion: str):
+        print("on_completer_highlighted;", self.prev_text, ";", self.text(), ";", completion)
+        text = f"{self.prev_text}{completion}}}"
+        self.setText(text)
+
+    def insert_completion(self):
+        print("insert_completion;", self.prev_text, ";")
+        text = f"{self.prev_text}"
+        print(text)
+        self.setText(text)
+
+    def on_completer_activated(self):
+        self.completer.popup().hide()
+        QTimer.singleShot(1, lambda: self.insert_completion())
 
 class Item(QWidget):
     def __init__(self):
